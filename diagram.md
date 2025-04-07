@@ -301,3 +301,290 @@ flowchart LR
     class PostgreSQL,RedisCache,MinIO,MessageBroker database;
     class AuthFlow,MessagingFlow,DocumentFlow,VideoFlow flow;
 ```
+
+## FastAPI Backend Architecture
+
+```mermaid
+flowchart TD
+    %% FastAPI Application Structure
+    subgraph FastAPI["FastAPI Backend Architecture"]
+        subgraph CoreAPI["Core API Structure"]
+            App[FastAPI Main App] --> Router[API Router]
+            Router --> Auth[Auth Routes]
+            Router --> Users[User Routes]
+            Router --> Messenger[Messenger Routes]
+            Router --> Calendar[Calendar Routes]
+            Router --> Docs[Docs Routes]
+            Router --> Drive[Drive Routes]
+            Router --> Email[Email Routes]
+            Router --> Tasks[Tasks Routes]
+            Router --> Approval[Approval Routes]
+            Router --> Video[Video Routes]
+            Router --> Admin[Admin Routes]
+            Router --> Platform[Platform API Routes]
+        end
+        
+        subgraph Middleware["Middleware Layer"]
+            AuthMiddleware[Authentication Middleware]
+            CORSMiddleware[CORS Middleware]
+            LoggingMiddleware[Logging Middleware]
+            RateLimitMiddleware[Rate Limiting]
+            I18nMiddleware[Internationalization]
+        end
+        
+        subgraph Dependencies["Dependencies"]
+            AuthDep[Authentication]
+            RoleDep[Role & Permissions]
+            PaginationDep[Pagination]
+            FilteringDep[Filtering]
+            ValidationDep[Data Validation]
+        end
+        
+        subgraph Services["Service Layer"]
+            AuthService[Auth Service]
+            UserService[User Service]
+            MessengerService[Messenger Service]
+            CalendarService[Calendar Service]
+            DocsService[Docs Service]
+            DriveService[Drive Service]
+            EmailService[Email Service]
+            TasksService[Tasks Service]
+            ApprovalService[Approval Service]
+            VideoService[Video Service]
+            AdminService[Admin Service]
+            PlatformService[Platform Service]
+        end
+        
+        subgraph Models["Data Models"]
+            subgraph Schemas["Pydantic Schemas"]
+                RequestSchemas[Request Models]
+                ResponseSchemas[Response Models]
+                ValidationSchemas[Validation Models]
+            end
+            
+            subgraph DBModels["Database Models"]
+                SQLModels[SQLAlchemy Models]
+            end
+        end
+        
+        subgraph Database["Database Layer"]
+            DBSession[Session Management]
+            QueryBuilder[Query Builder]
+            Migrations[Alembic Migrations]
+        end
+        
+        subgraph BackgroundTasks["Background Processing"]
+            Celery[Celery Workers]
+            TaskQueue[Task Queue]
+            ScheduledJobs[Scheduled Jobs]
+            WebsocketManager[WebSocket Manager]
+        end
+    end
+
+    %% External Connections
+    FastAPI -->|HTTP/WebSockets| Clients[Client Applications]
+    Database -->|SQL Queries| PostgreSQL[(PostgreSQL)]
+    BackgroundTasks -->|Cache/Pub-Sub| Redis[(Redis)]
+    Services -->|Object Storage| MinIO[(MinIO)]
+    BackgroundTasks -->|Message Queue| RabbitMQ[(RabbitMQ/Kafka)]
+    
+    %% Communications between components
+    Router --> Dependencies
+    Router --> Services
+    Services --> Models
+    Services --> Database
+    Services --> BackgroundTasks
+    App --> Middleware
+    
+    %% Legend
+    classDef api fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef service fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef data fill:#dfd,stroke:#333,stroke-width:2px;
+    classDef external fill:#fcf,stroke:#333,stroke-width:1px;
+    
+    class CoreAPI,Router,Auth,Users,Messenger,Calendar,Docs,Drive,Email,Tasks,Approval,Video,Admin,Platform api;
+    class Services,AuthService,UserService,MessengerService,CalendarService,DocsService,DriveService,EmailService,TasksService,ApprovalService,VideoService,AdminService,PlatformService service;
+    class Models,Schemas,DBModels,Database data;
+    class PostgreSQL,Redis,MinIO,RabbitMQ,Clients external;
+```
+
+## FastAPI Service Implementation Details
+
+```mermaid
+flowchart TD
+    %% Example of a detailed FastAPI Service implementation
+    subgraph MessengerService["Messenger Service Implementation"]
+        subgraph Routes["API Routes"]
+            GetConversations[GET /conversations]
+            GetMessages[GET /conversations/{id}/messages]
+            PostMessage[POST /conversations/{id}/messages]
+            CreateConversation[POST /conversations]
+            AddMembers[PUT /conversations/{id}/members]
+            GetPresence[GET /users/presence]
+            UpdatePresence[PUT /users/presence]
+            SearchMessages[GET /messages/search]
+        end
+        
+        subgraph ServiceLayer["Service Functions"]
+            CreateMessageSvc[create_message]
+            GetMessagesSvc[get_messages]
+            CreateConversationSvc[create_conversation]
+            GetConversationsSvc[get_conversations]
+            ManageMembersSvc[manage_members]
+            NotifyUsersSvc[notify_users]
+            SearchMessagesSvc[search_messages]
+        end
+        
+        subgraph Models["Data Models"]
+            MessageSchema[MessageSchema]
+            ConversationSchema[ConversationSchema]
+            UserPresenceSchema[UserPresenceSchema]
+            MessageDB[MessageDBModel]
+            ConversationDB[ConversationDBModel]
+            UserPresenceDB[UserPresenceDBModel]
+        end
+        
+        subgraph RealTime["Real-time Functions"]
+            WebSocketHandler[WebSocket Handler]
+            MessageBroadcaster[Message Broadcaster]
+            PresenceUpdater[Presence Updater]
+            TypingIndicator[Typing Indicator]
+        end
+        
+        subgraph BackgroundTasks["Background Jobs"]
+            ProcessAttachmentJob[Process Attachments]
+            StoreMessagesJob[Store Messages]
+            GenerateNotificationsJob[Generate Notifications]
+            IndexMessagesJob[Index Messages for Search]
+        end
+    end
+    
+    %% Connections
+    GetConversations --> GetConversationsSvc
+    GetMessages --> GetMessagesSvc
+    PostMessage --> CreateMessageSvc
+    CreateConversation --> CreateConversationSvc
+    AddMembers --> ManageMembersSvc
+    UpdatePresence --> PresenceUpdater
+    SearchMessages --> SearchMessagesSvc
+    
+    CreateMessageSvc --> MessageSchema
+    CreateMessageSvc --> MessageDB
+    CreateMessageSvc --> NotifyUsersSvc
+    GetMessagesSvc --> MessageDB
+    CreateConversationSvc --> ConversationSchema
+    CreateConversationSvc --> ConversationDB
+    
+    NotifyUsersSvc --> WebSocketHandler
+    NotifyUsersSvc --> MessageBroadcaster
+    PresenceUpdater --> WebSocketHandler
+    PostMessage --> ProcessAttachmentJob
+    CreateMessageSvc --> StoreMessagesJob
+    NotifyUsersSvc --> GenerateNotificationsJob
+    StoreMessagesJob --> IndexMessagesJob
+    
+    %% External connections
+    MessageBroadcaster -->|Pub/Sub| Redis[(Redis)]
+    StoreMessagesJob -->|Store| PostgreSQL[(PostgreSQL)]
+    ProcessAttachmentJob -->|Upload| ObjectStorage[(MinIO)]
+    GenerateNotificationsJob -->|Push| NotificationService[Notification Service]
+    IndexMessagesJob -->|Index| SearchIndex[(Full-text Search)]
+    
+    %% Legend
+    classDef route fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef service fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef model fill:#dfd,stroke:#333,stroke-width:2px;
+    classDef realtime fill:#fdf,stroke:#333,stroke-width:1px;
+    classDef job fill:#ffd,stroke:#333,stroke-width:1px;
+    
+    class GetConversations,GetMessages,PostMessage,CreateConversation,AddMembers,GetPresence,UpdatePresence,SearchMessages route;
+    class CreateMessageSvc,GetMessagesSvc,CreateConversationSvc,GetConversationsSvc,ManageMembersSvc,NotifyUsersSvc,SearchMessagesSvc service;
+    class MessageSchema,ConversationSchema,UserPresenceSchema,MessageDB,ConversationDB,UserPresenceDB model;
+    class WebSocketHandler,MessageBroadcaster,PresenceUpdater,TypingIndicator realtime;
+    class ProcessAttachmentJob,StoreMessagesJob,GenerateNotificationsJob,IndexMessagesJob job;
+```
+
+## Containerized FastAPI Microservices Architecture
+
+```mermaid
+flowchart LR
+    subgraph DockerEnv["Docker Environment"]
+        subgraph APIGateway["API Gateway (Traefik/Kong)"]
+            GatewayService[Gateway Service]
+            AuthHandler[Auth Handler]
+            RouteHandler[Route Handler]
+            RateLimit[Rate Limiter]
+        end
+        
+        subgraph CoreServices["Core Microservices"]
+            AuthService[Auth Service\nFastAPI + JWT]
+            UserService[User Service\nFastAPI]
+            AdminService[Admin Service\nFastAPI]
+        end
+        
+        subgraph AppServices["Application Microservices"]
+            MessengerService[Messenger Service\nFastAPI + WebSockets]
+            CalendarService[Calendar Service\nFastAPI]
+            DocsService[Docs Service\nFastAPI + Yjs]
+            DriveService[Drive Service\nFastAPI]
+            EmailService[Email Service\nFastAPI]
+            TasksService[Tasks Service\nFastAPI]
+            ApprovalService[Approval Service\nFastAPI]
+            VideoService[Video Service\nFastAPI + WebRTC]
+            PlatformService[Platform Service\nFastAPI]
+        end
+        
+        subgraph DataServices["Data Services"]
+            PostgreSQLService[PostgreSQL]
+            RedisService[Redis]
+            MinIOService[MinIO]
+            RabbitMQService[RabbitMQ]
+            ElasticsearchService[Elasticsearch]
+        end
+        
+        subgraph SupportServices["Support Services"]
+            CeleryService[Celery Workers]
+            LoggingService[Logging Service]
+            MonitoringService[Monitoring\nPrometheus + Grafana]
+        end
+    end
+    
+    %% External Clients
+    Clients[Client Apps\nWeb/Mobile/Desktop] -->|HTTPS| APIGateway
+    
+    %% Gateway to Services
+    GatewayService --> AuthService
+    GatewayService --> CoreServices
+    GatewayService --> AppServices
+    
+    %% Service Dependencies
+    CoreServices -->|Authentication| AuthService
+    AppServices -->|Authentication| AuthService
+    CoreServices -->|Database| PostgreSQLService
+    AppServices -->|Database| PostgreSQLService
+    MessengerService & DocsService & VideoService -->|Real-time| RedisService
+    DriveService -->|Object Storage| MinIOService
+    AppServices --> CoreServices
+    AppServices & CoreServices -->|Background Tasks| CeleryService
+    CeleryService --> RabbitMQService
+    MessengerService & DocsService -->|Search| ElasticsearchService
+    
+    %% Monitoring
+    LoggingService -.->|Collect Logs| CoreServices & AppServices & APIGateway
+    MonitoringService -.->|Monitor| CoreServices & AppServices & DataServices & SupportServices
+    
+    %% Legend
+    classDef gateway fill:#f96,stroke:#333,stroke-width:2px;
+    classDef core fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef app fill:#9cf,stroke:#333,stroke-width:2px;
+    classDef data fill:#bd8,stroke:#333,stroke-width:2px;
+    classDef support fill:#ffc,stroke:#333,stroke-width:1px;
+    classDef client fill:#fcf,stroke:#333,stroke-width:1px;
+    
+    class APIGateway,GatewayService,AuthHandler,RouteHandler,RateLimit gateway;
+    class CoreServices,AuthService,UserService,AdminService core;
+    class AppServices,MessengerService,CalendarService,DocsService,DriveService,EmailService,TasksService,ApprovalService,VideoService,PlatformService app;
+    class DataServices,PostgreSQLService,RedisService,MinIOService,RabbitMQService,ElasticsearchService data;
+    class SupportServices,CeleryService,LoggingService,MonitoringService support;
+    class Clients client;
+```
