@@ -49,7 +49,7 @@
 |    +-----------------------------------------------------------------+     |
 |                                                                             |
 |    +-----------------+  +---------------+  +------------------+             |
-|    | SQLite Database |  | Redis Cache   |  |  Local Storage   |             |
+|    |    PostgreSQL   |  | Redis Cache   |  |  Local Storage   |             |
 |    | (Primary Data)  |  | (Cache/PubSub)|  |  (File System)   |             |
 |    +-----------------+  +---------------+  +------------------+             |
 |                                                                             |
@@ -91,7 +91,7 @@ flowchart TD
     APIGateway --> OpenPlatform[Open Platform Module]
     
     %% Data Storage
-    SQLite[(SQLite Database)] <--> FastAPI
+    PostgreSQL[(PostgreSQL Database)] <--> FastAPI
     Redis[(Redis\nCache & PubSub)] <--> FastAPI
     FileStorage[(Local File Storage)] <--> Drive
     FileStorage <--> Docs
@@ -119,15 +119,15 @@ flowchart TD
     BackgroundTasks[Background Tasks\nCelery/APScheduler] <--> FastAPI
     BackgroundTasks -->|Email Sending| EmailServer[Email Server]
     BackgroundTasks -->|File Processing| FileStorage
-    BackgroundTasks -->|Scheduled Jobs| SQLite
+    BackgroundTasks -->|Scheduled Jobs| PostgreSQL
     
     %% Monitoring & Backup
     Monitor[Monitoring\nLogging & Metrics] <--> FastAPI
-    BackupSystem[Backup System] --> SQLite
+    BackupSystem[Backup System] --> PostgreSQL
     BackupSystem --> FileStorage
     
     %% Admin Functions
-    AdminConsole -->|User Management| SQLite
+    AdminConsole -->|User Management| PostgreSQL
     AdminConsole -->|System Config| ConfigStore[(Configuration)]
     AdminConsole -->|Monitoring| Monitor
     
@@ -144,7 +144,7 @@ flowchart TD
     classDef client fill:#dfd,stroke:#333,stroke-width:2px;
     
     class Messenger,Calendar,Docs,Drive,Email,Tasks,Approval,VideoConf,AdminConsole,OpenPlatform module;
-    class SQLite,Redis,FileStorage,ConfigStore,WorkflowDB storage;
+    class PostgreSQL,Redis,FileStorage,ConfigStore,WorkflowDB storage;
     class WebClient,MobileClient,DesktopClient client;
 ```
 
@@ -216,9 +216,12 @@ flowchart TD
             FastAPI --> BGTasks[Background Tasks]
         end
         
-        WinService --> SQLiteDB[(SQLite\nDatabase)]
+        WinService --> PostgreSQL[(PostgreSQL\nDatabase)]
         WinService --> RedisCache[(Redis\nCache Server)]
         WinService --> FileSystem[(Local\nFile System)]
+        
+        PgBouncer[PgBouncer\nConnection Pooling] --> PostgreSQL
+        WinService --> PgBouncer
     end
     
     subgraph Monitoring
@@ -228,7 +231,7 @@ flowchart TD
     end
     
     subgraph BackupSystem
-        BackupJob[Scheduled\nBackup Job] --> SQLiteDB
+        BackupJob[Scheduled\nBackup Job] --> PostgreSQL
         BackupJob --> FileSystem
         BackupJob --> BackupStorage[(Backup\nStorage)]
     end
@@ -244,6 +247,6 @@ flowchart TD
     classDef storage fill:#dfd,stroke:#333,stroke-width:2px;
     
     class Internet,WebClient,MobileApp,DesktopApp external;
-    class WinService,RProxy,ASGI,FastAPI,Modules,WebSock,BGTasks internal;
-    class SQLiteDB,RedisCache,FileSystem,BackupStorage storage;
+    class WinService,RProxy,ASGI,FastAPI,Modules,WebSock,BGTasks,PgBouncer internal;
+    class PostgreSQL,RedisCache,FileSystem,BackupStorage storage;
 ```
