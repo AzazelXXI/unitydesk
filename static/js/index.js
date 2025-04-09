@@ -15,33 +15,48 @@ let init = async () => {
 }
 
 let connect = async (callback) => {
-    let roomName = window.location.pathname.split("/")[1];
-    socket = new WebSocket(`ws://localhost:8000/ws/${roomName}"`);
+    let roomName = decodeURIComponent(window.location.pathname.split("/")[1]);
+    let clientId = Math.random().toString(36).substring(2, 15); // Tạo client_id ngẫu nhiên
+    socket = new WebSocket(`ws://localhost:8000/ws/${roomName}/${clientId}`);
     socket.onopen = async (_) => {
-        await callback()
+        await callback();
     };
 
     socket.onmessage = handleMessage;
+    console.log("Room Name:", roomName);
 };
 
 let handleMessage = async ({ data }) => {
     data = JSON.parse(data);
-    if (data["type"] == "USER_JOIN") {
-        debugger
-        polite = true
+    if (data["type"] === "USER_JOIN") {
+        polite = true;
         createAndSendOffer();
     }
     if (data["type"] === "OFFER") {
-        console.log("received offer")
-        handlePerfectNegotiation(data)
+        console.log("Received offer");
+        await createAndSendAnswer(data["message"]);
     }
     if (data["type"] === "ANSWER") {
-        console.log("received answer")
-        handlePerfectNegotiation(data)
+        console.log("Received answer");
+        await peerConnection.setRemoteDescription(data["message"]);
     }
     if (data["type"] === "candidate") {
-        handleIceCandidate(data)
+        console.log("Received ICE candidate");
+        await handleIceCandidate(data["candidate"]);
     }
+};
+
+let createAndSendAnswer = async (message) => {
+    await createStreams();
+    await peerConnection.setRemoteDescription(message);
+    let answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+    socket.send(
+        JSON.stringify({
+            type: "ANSWER",
+            message: peerConnection.localDescription,
+        })
+    );
 };
 
 let handleOffers = async ({ message }) => {
@@ -54,7 +69,7 @@ let handleAnswers = async ({ message }) => {
 
 let handleIceCandidate = async ({ candidate }) => {
     if (peerConnection && peerConnection.remoteDescription) {
-        peerConnection.addIceCandidate(candidate);
+        await peerConnection.addIceCandidate(candidate);
     }
 };
 
@@ -142,9 +157,14 @@ let createStreams = async () => {
 
 let createAndSendOffer = async () => {
     await createStreams();
-    // let offer = await peerConnection.createOffer();
-    // await peerConnection.setLocalDescription(offer);
-
+    let offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+    socket.send(
+        JSON.stringify({
+            type: "OFFER",
+            message: peerConnection.localDescription,
+        })
+    );
 };
 
 // let createAndSendAnswer = async (message) => {

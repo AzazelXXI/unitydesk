@@ -29,15 +29,17 @@ app.add_middleware(
 async def home(request: Request):
     return templates.TemplateResponse(request=request, name="home.html")
 
-@app.websocket("/ws/{client_id}")
-async def connet_websocket(websocket: WebSocket, client_id: str):
-    await meeting_manager.join(client_id, websocket)
+@app.websocket("/ws/{room_name}/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, room_name: str, client_id: str):
+    await meeting_manager.join(room_name, websocket)
     try:
         while True:
+            # Receive signaling data from a client
             data = await websocket.receive_json()
-            await meeting_manager.rooms[client_id].broadcast(data, websocket)
+            # Broadcast signaling data to other clients in the same room
+            await meeting_manager.broadcast(room_name, data, websocket)
     except WebSocketDisconnect:
-        meeting_manager.leave(client_id, websocket)
+        meeting_manager.leave(room_name, websocket)
 
 @app.get("/room/{roomName}")
 def get_video(request: Request, roomName:str):

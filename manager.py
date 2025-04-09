@@ -39,3 +39,6 @@ class MeetingManager:
         self.rooms[id].disconnect(websocket)
         if self.rooms[id].is_empty:
             del self.rooms[id]
+    async def broadcast(self, room_id: str, message: dict, websocket: WebSocket):
+        if room_id in self.rooms:
+            await self.rooms[room_id].broadcast(message, websocket)
