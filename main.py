@@ -31,15 +31,24 @@ async def home(request: Request):
 
 @app.websocket("/ws/{room_name}/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, room_name: str, client_id: str):
-    await meeting_manager.join(room_name, websocket)
+    await websocket.accept()
     try:
         while True:
-            # Receive signaling data from a client
             data = await websocket.receive_json()
-            # Broadcast signaling data to other clients in the same room
-            await meeting_manager.broadcast(room_name, data, websocket)
+            if data["type"] == "OFFER":
+                print("Received SDP offer:", data["message"]["sdp"])
+                
+                # Tạo SDP answer (giả lập)
+                answer = {
+                    "type": "ANSWER",
+                    "message": {
+                        "type": "answer",
+                        "sdp": "v=0\r\no=- 123456789 2 IN IP4 127.0.0.1\r\n..."
+                    }
+                }
+                await websocket.send_json(answer)
     except WebSocketDisconnect:
-        meeting_manager.leave(room_name, websocket)
+        print(f"WebSocket disconnected: room_name={room_name}, client_id={client_id}")
 
 @app.get("/room/{roomName}")
 def get_video(request: Request, roomName:str):

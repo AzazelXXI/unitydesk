@@ -28,12 +28,13 @@ class MeetingManager:
         self.rooms: dict[str, SignalManager] = {} 
 
     async def join(self, id: str, websocket: WebSocket):
+        print(f"Joining room: {id}")
         if id in self.rooms:
             await self.rooms[id].connect(websocket)
         else:
             self.rooms[id] = SignalManager()
             await self.rooms[id].connect(websocket)
-        await self.rooms[id].broadcast({"type":"USER_JOIN"}, websocket)
+        await self.rooms[id].broadcast({"type": "USER_JOIN"}, websocket)
 
     def leave(self, id: str, websocket: WebSocket):
         self.rooms[id].disconnect(websocket)
