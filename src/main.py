@@ -55,24 +55,25 @@ async def home(request: Request):
 
 @app.websocket("/ws/{room_name}/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, room_name: str, client_id: str):
-    await websocket.accept()
     try:
+        app_logger.info(f"Client {client_id} joining room {room_name}")
+        await meeting_manager.join(room_name, websocket)
+        
         while True:
-            data = await websocket.receive_json()
-            if data["type"] == "OFFER":
-                print("Received SDP offer:", data["message"]["sdp"])
-                
-                # Tạo SDP answer (giả lập)
-                answer = {
-                    "type": "ANSWER",
-                    "message": {
-                        "type": "answer",
-                        "sdp": "v=0\r\no=- 123456789 2 IN IP4 127.0.0.1\r\n..."
-                    }
-                }
-                await websocket.send_json(answer)
-    except WebSocketDisconnect:
-        print(f"WebSocket disconnected: room_name={room_name}, client_id={client_id}")
+            try:
+                data = await websocket.receive_json()
+                app_logger.info(f"Received message type: {data.get('type')} from client {client_id}")
+                await meeting_manager.broadcast(room_name, data, websocket)
+            except WebSocketDisconnect:
+                app_logger.info(f"Client {client_id} disconnected from room {room_name}")
+                await meeting_manager.leave(room_name, websocket)
+                break
+            except Exception as e:
+                app_logger.error(f"Error processing message from {client_id}: {str(e)}")
+                continue
+    except Exception as e:
+        app_logger.error(f"Error in websocket connection: {str(e)}")
+        raise
 
 @app.get("/room/{roomName}")
 def get_video(request: Request, roomName:str):

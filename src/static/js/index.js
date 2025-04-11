@@ -6,23 +6,24 @@ let makingOffer = false;
 let polite = false
 
 let init = async () => {
+    // Get local stream and set it to user-1
     localStream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: false,
     });
     document.getElementById("user-1").srcObject = localStream;
 
-    // Khởi tạo PeerConnection và các stream
+    // Initialize PeerConnection and streams
     await createStreams();
 
-    // Kết nối WebSocket
+    // Connect WebSocket
     await connect(createAndSendOffer);
 };
 
 let connect = async (callback) => {
     let roomName = decodeURIComponent(window.location.pathname.split("/")[1]);
     let clientId = Math.random().toString(36).substring(2, 15); // Tạo client_id ngẫu nhiên
-    socket = new WebSocket(`wss://192.168.1.34:8000/ws/${roomName}/${clientId}`);
+    socket = new WebSocket(`wss://192.168.100.111:8000/ws/${roomName}/${clientId}`);
 
     socket.onopen = async (_) => {
         console.log("WebSocket connected!");
@@ -43,187 +44,162 @@ let handleMessage = async ({ data }) => {
         if (data["type"] === "USER_JOIN") {
             polite = true;
             if (!peerConnection) {
-                console.warn("PeerConnection is not initialized. Initializing now...");
                 await createStreams();
             }
-            createAndSendOffer();
+            await createAndSendOffer();
         } else if (data["type"] === "OFFER") {
             console.log("Received offer");
-            await createAndSendAnswer(data["message"]);
+            if (!peerConnection) {
+                await createStreams();
+            }
+
+            const offerCollision = data.message.type === "offer" &&
+                (makingOffer || peerConnection.signalingState !== "stable");
+
+            ignoreOffer = !polite && offerCollision;
+            if (ignoreOffer) {
+                console.log("Ignoring offer due to collision");
+                return;
+            }
+
+            try {
+                await peerConnection.setRemoteDescription(data.message);
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                socket.send(JSON.stringify({
+                    type: "ANSWER",
+                    message: peerConnection.localDescription
+                }));
+            } catch (err) {
+                console.error("Error handling offer:", err);
+            }
         } else if (data["type"] === "ANSWER") {
             console.log("Received answer");
-            await peerConnection.setRemoteDescription(data["message"]);
+            if (peerConnection.signalingState === "have-local-offer") {
+                try {
+                    await peerConnection.setRemoteDescription(data.message);
+                } catch (e) {
+                    console.error("Error setting remote description:", e);
+                }
+            } else {
+                console.log("Ignoring answer - wrong signaling state:", peerConnection.signalingState);
+            }
         } else if (data["type"] === "candidate") {
             console.log("Received ICE candidate");
-            await handleIceCandidate(data["candidate"]);
-        } else {
-            console.warn("Unknown message type:", data["type"]);
+            try {
+                if (data.candidate) {
+                    await peerConnection.addIceCandidate(data.candidate);
+                }
+            } catch (e) {
+                if (!ignoreOffer) {
+                    console.error("Error adding received ice candidate:", e);
+                }
+            }
         }
     } catch (err) {
         console.error("Error handling message:", err);
     }
 };
 
-let createAndSendAnswer = async (message) => {
-    try {
-        if (!peerConnection) {
-            console.warn("PeerConnection is not initialized. Initializing now...");
-            await createStreams();
-        }
-
-        await peerConnection.setRemoteDescription(message);
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-        socket.send(
-            JSON.stringify({
-                type: "ANSWER",
-                message: peerConnection.localDescription,
-            })
-        );
-        console.log("Sent SDP answer:", peerConnection.localDescription);
-    } catch (err) {
-        console.error("Error creating answer:", err);
-    }
-};
-
-let handleOffers = async ({ message }) => {
-    await createAndSendAnswer(message);
-};
-
-let handleAnswers = async ({ message }) => {
-    try {
-        console.log("Received SDP answer:", message.sdp);
-
-        // Thêm dòng `s=` nếu bị thiếu
-        if (!message.sdp.includes("\ns=")) {
-            message.sdp = message.sdp.replace("v=0", "v=0\ns=-");
-        }
-
-        await peerConnection.setRemoteDescription(message);
-        console.log("SDP answer set successfully.");
-    } catch (err) {
-        console.error("Error setting SDP answer:", err);
-    }
-};
-
-let handleIceCandidate = async (candidate) => {
-    try {
-        if (candidate && candidate.candidate) {
-            console.log("Adding ICE candidate:", candidate);
-            await peerConnection.addIceCandidate(candidate);
-        } else {
-            console.warn("Invalid ICE candidate:", candidate);
-        }
-    } catch (err) {
-        console.error("Error adding ICE candidate:", err);
-    }
-};
-
-let handlePerfectNegotiation = async ({ message }) => {
-    try {
-        if (message) {
-            const offerCollision =
-                message.type === "offer" &&
-                (makingOffer || peerConnection.signalingState !== "stable");
-
-            ignoreOffer = !polite && offerCollision;
-            if (ignoreOffer) {
-                return;
-            }
-
-            await peerConnection.setRemoteDescription(message);
-            if (message.type === "offer") {
-                await peerConnection.setLocalDescription();
-                socket.send(JSON.stringify({
-                    type: "ANSWER",
-                    message: peerConnection.localDescription,
-                }));
-            }
-        }
-    } catch (err) {
-        console.error(err);
-    }
-};
-
-const config = {
-    iceServers: [
-        {
-            urls: [
-                "stun:stun1.l.google.com:19302",
-                "stun:stun2.l.google.com:19302",
-            ],
-        },
-        {
-            urls: "turn:your-turn-server",
-            username: "user",
-            credential: "pass",
-        },
-    ],
-};
-
 let createStreams = async () => {
     console.log("Initializing PeerConnection and streams...");
+
+    const config = {
+        iceServers: [
+            {
+                urls: [
+                    'stun:stun1.l.google.com:19302',
+                    'stun:stun2.l.google.com:19302',
+                ]
+            }
+        ],
+        iceCandidatePoolSize: 10,
+    };
+
     peerConnection = new RTCPeerConnection(config);
     remoteStream = new MediaStream();
 
-    localStream.getTracks().forEach((track) => {
+    // Set up local stream if not already set
+    if (!localStream) {
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: false
+            });
+            document.getElementById("user-1").srcObject = localStream;
+        } catch (e) {
+            console.error("Error getting user media:", e);
+            return;
+        }
+    }
+
+    // Add local tracks to peer connection
+    localStream.getTracks().forEach(track => {
         peerConnection.addTrack(track, localStream);
     });
 
+    // Set up remote video element
+    const remoteVideo = document.getElementById("user-2");
+    remoteVideo.srcObject = remoteStream;
+
+    // Handle remote tracks
     peerConnection.ontrack = (event) => {
-        console.log("Adding track to remote stream");
-        event.streams[0]
-            .getTracks()
-            .forEach((track) => remoteStream.addTrack(track));
+        console.log("Received remote track:", event.track.kind);
+        event.streams[0].getTracks().forEach(track => {
+            console.log("Adding track to remote stream:", track.kind);
+            remoteVideo.srcObject = event.streams[0];
+        });
     };
 
-    peerConnection.onicecandidate = async (event) => {
-        if (event.candidate) {
-            console.log("Sending ICE candidate:", event.candidate);
-
-            // Đợi WebSocket sẵn sàng
-            await waitForWebSocket();
-
-            socket.send(
-                JSON.stringify({ type: "candidate", candidate: event.candidate })
-            );
+    // Monitor connection states
+    peerConnection.onconnectionstatechange = () => {
+        console.log("Connection state:", peerConnection.connectionState);
+        if (peerConnection.connectionState === 'connected') {
+            console.log("Peers connected successfully!");
         }
     };
 
+    peerConnection.oniceconnectionstatechange = () => {
+        console.log("ICE connection state:", peerConnection.iceConnectionState);
+    };
+
+    peerConnection.onicegatheringstatechange = () => {
+        console.log("ICE gathering state:", peerConnection.iceGatheringState);
+    };
+
+    peerConnection.onsignalingstatechange = () => {
+        console.log("Signaling state:", peerConnection.signalingState);
+    };
+
+    // Handle ICE candidates
+    peerConnection.onicecandidate = async (event) => {
+        if (event.candidate) {
+            await waitForWebSocket();
+            socket.send(JSON.stringify({
+                type: "candidate",
+                candidate: event.candidate
+            }));
+        }
+    };
+
+    // Handle negotiation
     peerConnection.onnegotiationneeded = async () => {
         try {
+            if (makingOffer) return;
             makingOffer = true;
-            console.log("Starting negotiation...");
 
-            // Đợi WebSocket sẵn sàng
+            await peerConnection.setLocalDescription(await peerConnection.createOffer());
             await waitForWebSocket();
-
-            await peerConnection.setLocalDescription();
-            socket.send(
-                JSON.stringify({
-                    type: "OFFER",
-                    message: peerConnection.localDescription,
-                })
-            );
-            console.log("Sent SDP offer:", peerConnection.localDescription);
+            socket.send(JSON.stringify({
+                type: "OFFER",
+                message: peerConnection.localDescription
+            }));
         } catch (err) {
             console.error("Error during negotiation:", err);
         } finally {
             makingOffer = false;
         }
     };
-
-    // Chèn sự kiện onconnectionstatechange tại đây
-    peerConnection.onconnectionstatechange = () => {
-        console.log("Connection state:", peerConnection.connectionState);
-        if (peerConnection.connectionState === "connected") {
-            console.log("WebRTC connection established!");
-        } else if (peerConnection.connectionState === "disconnected" || peerConnection.connectionState === "failed") {
-            console.warn("WebRTC connection failed or disconnected.");
-        }
-    };
-
-    document.getElementById("user-2").srcObject = remoteStream;
 };
 
 let createAndSendOffer = async () => {
@@ -270,7 +246,7 @@ document.addEventListener(
         await init();
 
         // Kiểm tra kết nối WebSocket
-        let testSocket = new WebSocket("wss://192.168.1.34:8000/ws/room/test-client");
+        let testSocket = new WebSocket("wss://192.168.100.111:8000/ws/room/test-client");
         testSocket.onopen = () => console.log("WebSocket connected!");
         testSocket.onerror = (error) => console.error("WebSocket error:", error);
     },

@@ -1,11 +1,11 @@
 {% extends "main.html" %}
-{% block script  %}
-    <link rel='stylesheet' type='text/css' media='screen' href="{{ url_for('static', path='/css/index.css') }}">
-    <script src="{{ url_for('static', path='/js/index.js') }}""></script>
+{% block script %}
+<link rel='stylesheet' type='text/css' media='screen' href="{{ url_for('static', path='/css/index.css') }}">
+<script src="{{ url_for('static', path='/js/index.js') }}""></script>
 {% endblock %}
 {% block content %}
-    <div id="videos">
-        <video class="video-player" id="user-1" autoplay></video>
-        <video class="video-player" id="user-2" autoplay></video>
+    <div id=" videos">
+        <video class="video-player" id="user-1" autoplay playsinline></video>
+        <video class="video-player" id="user-2" autoplay playsinline></video>
     </div>
 {% endblock %}
