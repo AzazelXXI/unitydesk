@@ -2,17 +2,35 @@ let localStream;
 let peerConnections = {};  // Store multiple peer connections
 let socket;
 let clientId; // Add global clientId variable
+let remoteAudioEnabled = {}; // Track the audio state of each remote peer
 
-// Change this IP when connect to a new network
-const address = '192.168.2.38';
+// Use the fixed server address
+const serverUrl = 'https://csavn.ddns.net:8000';
+const address = 'csavn.ddns.net';
+const port = 8000;
 
 let init = async () => {
-    // Get local stream and set it to localVideo
-    localStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: false,
-    });
-    document.getElementById("localVideo").srcObject = localStream;
+    try {
+        // Get local stream with both video and audio
+        localStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true, // Enable audio capture
+        });
+        document.getElementById("localVideo").srcObject = localStream;
+        
+        // Add audio controls to local video
+        document.getElementById("localVideo").muted = true; // Mute local playback to prevent feedback
+        
+        // Add audio toggle button
+        const audioToggleBtn = document.createElement('button');
+        audioToggleBtn.innerText = 'Mute';
+        audioToggleBtn.className = 'control-button';
+        audioToggleBtn.onclick = toggleAudio;
+        document.getElementById('videos').appendChild(audioToggleBtn);
+    } catch (error) {
+        console.error("Error accessing media devices:", error);
+        alert("Failed to access camera or microphone. Please check your permissions.");
+    }
 
     // Connect WebSocket
     await connect();
@@ -21,8 +39,13 @@ let init = async () => {
 let connect = async () => {
     let roomName = window.location.pathname.split("/").pop();
     clientId = Math.random().toString(36).substring(2, 15); // Store clientId globally
-    socket = new WebSocket(`wss://${address}:8000/ws/${roomName}/${clientId}`);
-
+    
+    // Use secure WebSocket for the HTTPS server
+    const wsUrl = `wss://${address}:${port}/ws/${roomName}/${clientId}`;
+    console.log("Connecting to WebSocket at:", wsUrl);
+    
+    socket = new WebSocket(wsUrl);
+    
     socket.onopen = () => {
         console.log("WebSocket connected!");
         // Announce this user to the room
@@ -31,10 +54,36 @@ let connect = async () => {
             clientId: clientId
         }));
     };
+    
+    socket.onerror = (error) => {
+        console.error("WebSocket error:", error);
+    };
 
     socket.onmessage = handleMessage;
     console.log("Room Name:", roomName);
     console.log("Client ID:", clientId);
+};
+
+// Toggle microphone on/off
+let toggleAudio = () => {
+    const audioTrack = localStream.getAudioTracks()[0];
+    if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        const audioToggleBtn = document.querySelector('.control-button');
+        audioToggleBtn.innerText = audioTrack.enabled ? 'Mute' : 'Unmute';
+        
+        // Send audio state to all peers
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: "AUDIO_TOGGLE",
+                enabled: audioTrack.enabled
+            }));
+        }
+        
+        console.log(`Microphone ${audioTrack.enabled ? 'enabled' : 'disabled'}`);
+    } else {
+        console.warn("No audio track found");
+    }
 };
 
 let createPeerConnection = (remoteClientId) => {
@@ -45,9 +94,21 @@ let createPeerConnection = (remoteClientId) => {
                     'stun:stun1.l.google.com:19302',
                     'stun:stun2.l.google.com:19302',
                 ]
+            },
+            // More reliable TURN servers
+            {
+                urls: [
+                    'turn:relay.metered.ca:80',
+                    'turn:relay.metered.ca:443',
+                    'turn:relay.metered.ca:443?transport=tcp'
+                ],
+                username: 'e734a26b1512cce7fe01c6e5',
+                credential: 'OgVBgEG5BqDQyXeC'
             }
         ],
+        iceTransportPolicy: 'all',
         iceCandidatePoolSize: 10,
+        sdpSemantics: 'unified-plan'
     };
 
     const pc = new RTCPeerConnection(config);
@@ -55,9 +116,7 @@ let createPeerConnection = (remoteClientId) => {
     // Add local tracks to peer connection
     localStream.getTracks().forEach(track => {
         pc.addTrack(track, localStream);
-    });
-
-    // Create video element for remote stream
+    });    // Create video element for remote stream
     const videoContainer = document.createElement('div');
     videoContainer.className = 'video-container';
     videoContainer.id = `container-${remoteClientId}`;
@@ -67,14 +126,53 @@ let createPeerConnection = (remoteClientId) => {
     videoElement.id = `video-${remoteClientId}`;
     videoElement.autoplay = true;
     videoElement.playsinline = true;
+    videoElement.muted = false; // Make sure remote videos are NOT muted
 
     videoContainer.appendChild(videoElement);
-    document.getElementById('videos').appendChild(videoContainer);
-
-    // Handle remote tracks
+    document.getElementById('videos').appendChild(videoContainer);    // Handle remote tracks
     pc.ontrack = (event) => {
-        console.log("Received remote track from:", remoteClientId);
-        videoElement.srcObject = event.streams[0];
+        console.log("Received remote track from:", remoteClientId, event.track.kind);
+        
+        // Wait for both audio and video tracks before setting srcObject
+        // This helps avoid the "play() request was interrupted" errors
+        if (!videoElement.srcObject) {
+            videoElement.srcObject = event.streams[0];
+        }
+        
+        // Ensure audio is enabled
+        videoElement.volume = 1.0;
+        videoElement.muted = false;
+        
+        // Log audio tracks to help with debugging
+        const audioTracks = event.streams[0].getAudioTracks();
+        console.log(`Remote stream has ${audioTracks.length} audio tracks`);
+        if (audioTracks.length > 0) {
+            console.log(`Audio track enabled: ${audioTracks[0].enabled}`);
+        }
+        
+        // Add event listener for loadedmetadata before trying to play
+        videoElement.onloadedmetadata = () => {
+            console.log("Video metadata loaded, attempting to play");
+            // Add user interaction requirement notice if needed
+            const playPromise = videoElement.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(e => {
+                    console.warn("Autoplay prevented:", e);
+                    // Create play button for browsers that block autoplay
+                    if (!document.getElementById(`play-button-${remoteClientId}`)) {
+                        const playButton = document.createElement('button');
+                        playButton.innerText = 'Click to Unmute/Play';
+                        playButton.id = `play-button-${remoteClientId}`;
+                        playButton.className = 'play-button';
+                        playButton.onclick = () => {
+                            videoElement.play();
+                            playButton.style.display = 'none';
+                        };
+                        videoContainer.appendChild(playButton);
+                    }
+                });
+            }
+        };
     };
 
     // Handle ICE candidates
@@ -103,36 +201,60 @@ let createPeerConnection = (remoteClientId) => {
 let handleMessage = async ({ data }) => {
     try {
         data = JSON.parse(data);
-        console.log("Received message:", data);
-
-        switch (data.type) {
+        console.log("Received message:", data);        switch (data.type) {
             case "JOIN":
                 if (data.clientId !== clientId) {
+                    console.log(`New user joined: ${data.clientId}. Creating peer connection...`);
                     // Create new peer connection for new user
                     peerConnections[data.clientId] = createPeerConnection(data.clientId);
-                    // Create and send offer
-                    const offer = await peerConnections[data.clientId].createOffer();
-                    await peerConnections[data.clientId].setLocalDescription(offer);
+                    
+                    // Use a timeout to ensure ICE gathering has started before creating offer
+                    setTimeout(async () => {
+                        try {
+                            // Create offer with specific constraints for better compatibility
+                            const offerOptions = {
+                                offerToReceiveAudio: true,
+                                offerToReceiveVideo: true,
+                                voiceActivityDetection: false,
+                                iceRestart: true
+                            };
+                            
+                            const offer = await peerConnections[data.clientId].createOffer(offerOptions);
+                            await peerConnections[data.clientId].setLocalDescription(offer);
+                            
+                            // Wait briefly to allow some ICE candidates to be gathered
+                            console.log("Waiting for ICE candidates before sending offer...");
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                            
+                            socket.send(JSON.stringify({
+                                type: "OFFER",
+                                offer: peerConnections[data.clientId].localDescription,
+                                target: data.clientId
+                            }));
+                            console.log(`Offer sent to ${data.clientId}`);
+                        } catch (err) {
+                            console.error("Error creating/sending offer:", err);
+                        }
+                    }, 500);
+                }
+                break;            case "OFFER":
+                try {
+                    console.log(`Received offer from ${data.source}`);
+                    if (!peerConnections[data.source]) {
+                        console.log(`Creating peer connection for ${data.source}`);
+                        peerConnections[data.source] = createPeerConnection(data.source);
+                    }
+                    await peerConnections[data.source].setRemoteDescription(data.offer);
+                    const answer = await peerConnections[data.source].createAnswer();
+                    await peerConnections[data.source].setLocalDescription(answer);
                     socket.send(JSON.stringify({
-                        type: "OFFER",
-                        offer: offer,
-                        target: data.clientId
+                        type: "ANSWER",
+                        answer: answer,
+                        target: data.source
                     }));
+                } catch (err) {
+                    console.error("Error handling offer:", err);
                 }
-                break;
-
-            case "OFFER":
-                if (!peerConnections[data.source]) {
-                    peerConnections[data.source] = createPeerConnection(data.source);
-                }
-                await peerConnections[data.source].setRemoteDescription(data.offer);
-                const answer = await peerConnections[data.source].createAnswer();
-                await peerConnections[data.source].setLocalDescription(answer);
-                socket.send(JSON.stringify({
-                    type: "ANSWER",
-                    answer: answer,
-                    target: data.source
-                }));
                 break;
 
             case "ANSWER":
@@ -146,9 +268,15 @@ let handleMessage = async ({ data }) => {
                     await peerConnections[data.source].addIceCandidate(data.candidate);
                 }
                 break;
-
+                
             case "LEAVE":
                 removeRemoteStream(data.clientId);
+                break;
+                
+            case "AUDIO_TOGGLE":
+                // Handle remote user's audio state change
+                console.log(`Remote user ${data.source} ${data.enabled ? 'unmuted' : 'muted'} their microphone`);
+                // You could update UI to show mute status if desired
                 break;
         }
     } catch (err) {
