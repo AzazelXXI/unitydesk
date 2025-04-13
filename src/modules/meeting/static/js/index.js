@@ -3,7 +3,8 @@ let peerConnections = {};  // Store multiple peer connections
 let socket;
 let clientId; // Add global clientId variable
 
-const address = '192.168.1.15';
+// Change this IP when connect to a new network
+const address = '192.168.2.38';
 
 let init = async () => {
     // Get local stream and set it to localVideo
