@@ -185,13 +185,94 @@ let createPeerConnection = (remoteClientId) => {
                 target: remoteClientId
             }));
         }
-    };
-
-    // Connection state monitoring
+    };    // Connection state monitoring
     pc.onconnectionstatechange = () => {
         console.log(`Connection state with ${remoteClientId}:`, pc.connectionState);
-        if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-            removeRemoteStream(remoteClientId);
+        
+        if (pc.connectionState === 'disconnected') {
+            console.log(`Connection with ${remoteClientId} is unstable, waiting to see if it recovers...`);
+            
+            // Create a recovery function that will try multiple times
+            const attemptRecovery = (attempts = 0, maxAttempts = 3) => {
+                if (attempts >= maxAttempts) {
+                    console.log(`Failed to recover connection with ${remoteClientId} after ${maxAttempts} attempts`);
+                    // Don't remove the stream yet, give the ICE connection state handler a chance to try
+                    return;
+                }
+                
+                // Check current state
+                if (pc.connectionState === 'connected') {
+                    console.log(`Connection with ${remoteClientId} recovered successfully`);
+                    return;
+                }
+                
+                console.log(`Recovery attempt ${attempts + 1} for connection with ${remoteClientId}`);
+                
+                // Try ICE restart
+                socket.send(JSON.stringify({
+                    type: "ICE_RESTART",
+                    target: remoteClientId
+                }));
+                
+                // Schedule another attempt after increasing delay (exponential backoff)
+                setTimeout(() => attemptRecovery(attempts + 1, maxAttempts), 3000 * (attempts + 1));
+            };
+            
+            // Start recovery attempts after a short delay
+            setTimeout(() => attemptRecovery(), 2000);
+        } else if (pc.connectionState === 'failed') {
+            // If completely failed after possible restart attempts, try one last aggressive restart
+            console.log(`Connection with ${remoteClientId} has failed, attempting aggressive recovery...`);
+            
+            try {
+                // Try creating a new peer connection as a last resort
+                const newPC = createPeerConnection(remoteClientId);
+                peerConnections[remoteClientId] = newPC;
+                
+                // Create a new offer with ice restart
+                setTimeout(async () => {
+                    try {
+                        const offerOptions = {
+                            offerToReceiveAudio: true,
+                            offerToReceiveVideo: true,
+                            iceRestart: true
+                        };
+                        const offer = await newPC.createOffer(offerOptions);
+                        await newPC.setLocalDescription(offer);
+                        
+                        // Send the offer
+                        socket.send(JSON.stringify({
+                            type: "OFFER",
+                            offer: offer,
+                            target: remoteClientId,
+                            isReconnect: true
+                        }));
+                        console.log(`Last resort reconnect offer sent to ${remoteClientId}`);
+                    } catch (err) {
+                        console.error("Error in last resort recovery:", err);
+                        removeRemoteStream(remoteClientId);
+                    }
+                }, 500);
+            } catch (err) {
+                console.error("Failed aggressive recovery attempt:", err);
+                removeRemoteStream(remoteClientId);
+            }
+        }
+    };
+    
+    // Add specific ICE connection state monitoring
+    pc.oniceconnectionstatechange = () => {
+        console.log(`ICE connection state with ${remoteClientId}: ${pc.iceConnectionState}`);
+        
+        // Handle specific ICE connection states
+        if (pc.iceConnectionState === 'disconnected') {
+            console.log(`ICE connection with ${remoteClientId} is disconnected, waiting...`);
+        } else if (pc.iceConnectionState === 'failed') {
+            console.log(`ICE connection with ${remoteClientId} failed, will attempt restart`);
+            socket.send(JSON.stringify({
+                type: "ICE_RESTART",
+                target: remoteClientId
+            }));
         }
     };
 
@@ -206,8 +287,7 @@ let handleMessage = async ({ data }) => {
                 if (data.clientId !== clientId) {
                     console.log(`New user joined: ${data.clientId}. Creating peer connection...`);
                     // Create new peer connection for new user
-                    peerConnections[data.clientId] = createPeerConnection(data.clientId);
-                    
+                    peerConnections[data.clientId] = createPeerConnection(data.clientId);                    
                     // Use a timeout to ensure ICE gathering has started before creating offer
                     setTimeout(async () => {
                         try {
@@ -219,13 +299,28 @@ let handleMessage = async ({ data }) => {
                                 iceRestart: true
                             };
                             
-                            const offer = await peerConnections[data.clientId].createOffer(offerOptions);
-                            await peerConnections[data.clientId].setLocalDescription(offer);
+                            // Use trickle ICE approach (sending candidates as they arrive)
+                            const pc = peerConnections[data.clientId];
+                            
+                            // Set up a collector for early ICE candidates
+                            const iceCandidatesCache = [];
+                            const originalOnIceCandidate = pc.onicecandidate;
+                            pc.onicecandidate = (event) => {
+                                if (event.candidate) {
+                                    iceCandidatesCache.push(event.candidate);
+                                }
+                                // Still call original handler
+                                if (originalOnIceCandidate) originalOnIceCandidate(event);
+                            };
+                            
+                            const offer = await pc.createOffer(offerOptions);
+                            await pc.setLocalDescription(offer);
                             
                             // Wait briefly to allow some ICE candidates to be gathered
                             console.log("Waiting for ICE candidates before sending offer...");
-                            await new Promise(resolve => setTimeout(resolve, 1000));
+                            await new Promise(resolve => setTimeout(resolve, 2000));
                             
+                            // Send the offer with any collected candidates
                             socket.send(JSON.stringify({
                                 type: "OFFER",
                                 offer: peerConnections[data.clientId].localDescription,
@@ -255,9 +350,7 @@ let handleMessage = async ({ data }) => {
                 } catch (err) {
                     console.error("Error handling offer:", err);
                 }
-                break;
-
-            case "ANSWER":
+                break;            case "ANSWER":
                 if (peerConnections[data.source]) {
                     await peerConnections[data.source].setRemoteDescription(data.answer);
                 }
@@ -266,6 +359,29 @@ let handleMessage = async ({ data }) => {
             case "CANDIDATE":
                 if (peerConnections[data.source]) {
                     await peerConnections[data.source].addIceCandidate(data.candidate);
+                }
+                break;
+                
+            case "ICE_RESTART":
+                if (peerConnections[data.source]) {
+                    try {
+                        console.log(`Attempting ICE restart with ${data.source}`);
+                        const offerOptions = {
+                            offerToReceiveAudio: true,
+                            offerToReceiveVideo: true,
+                            iceRestart: true
+                        };
+                        const offer = await peerConnections[data.source].createOffer(offerOptions);
+                        await peerConnections[data.source].setLocalDescription(offer);
+                        socket.send(JSON.stringify({
+                            type: "OFFER",
+                            offer: offer,
+                            target: data.source,
+                            isIceRestart: true
+                        }));
+                    } catch (err) {
+                        console.error("Error during ICE restart:", err);
+                    }
                 }
                 break;
                 
