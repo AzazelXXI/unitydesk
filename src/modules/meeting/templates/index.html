@@ -1,0 +1,12 @@
+{% extends "main.html" %}
+{% block script %}
+<link rel='stylesheet' type='text/css' media='screen' href="{{ url_for('static', path='/css/index.css') }}">
+<script src="{{ url_for('static', path='/js/index.js') }}"></script>
+{% endblock %}
+{% block content %}
+<div id="videos">
+    <div class="video-container">
+        <video class="video-player" id="localVideo" autoplay playsinline muted></video>
+    </div>
+</div>
+{% endblock %}

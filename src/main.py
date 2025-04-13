@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from starlette.staticfiles import StaticFiles
-from src.manager import MeetingManager
+from src.modules.meeting.manager import MeetingManager
 import ssl
 import logging
 from logging.handlers import RotatingFileHandler
@@ -22,14 +22,12 @@ app_logger.addHandler(log_handler)
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 ssl_context.load_cert_chain('cert.pem', keyfile='key.pem')
 
-
-templates = Jinja2Templates(directory="src/templates")
+templates = Jinja2Templates(directory="src/modules/meeting/templates") 
 
 meeting_manager = MeetingManager()
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="src/static"), name="static")
-
+app.mount("/static", StaticFiles(directory="src/modules/meeting/static"), name="static")
 
 app.add_middleware(
     CORSMiddleware,
@@ -57,16 +55,16 @@ async def home(request: Request):
 async def websocket_endpoint(websocket: WebSocket, room_name: str, client_id: str):
     try:
         app_logger.info(f"Client {client_id} joining room {room_name}")
-        await meeting_manager.join(room_name, websocket)
+        await meeting_manager.join(room_name, client_id, websocket)
         
         while True:
             try:
                 data = await websocket.receive_json()
                 app_logger.info(f"Received message type: {data.get('type')} from client {client_id}")
-                await meeting_manager.broadcast(room_name, data, websocket)
+                await meeting_manager.broadcast(room_name, data, client_id)
             except WebSocketDisconnect:
                 app_logger.info(f"Client {client_id} disconnected from room {room_name}")
-                await meeting_manager.leave(room_name, websocket)
+                await meeting_manager.leave(room_name, client_id)
                 break
             except Exception as e:
                 app_logger.error(f"Error processing message from {client_id}: {str(e)}")
