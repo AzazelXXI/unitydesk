@@ -75,8 +75,8 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str, client_id: st
         app_logger.error(f"Error in websocket connection: {str(e)}")
         raise
 
-@app.get("/room/{roomName}")
-def get_video(request: Request, roomName:str):
+@app.get("/room/{roomID}")
+async def get_video(request: Request, roomID:str):
     return templates.TemplateResponse(request=request, name="index.html")
 
 # Gracefully handle asyncio.CancelledError

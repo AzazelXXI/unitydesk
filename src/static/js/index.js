@@ -5,6 +5,8 @@ let socket;
 let makingOffer = false;
 let polite = false
 
+const address = "192.168.1.15"
+
 let init = async () => {
     // Get local stream and set it to user-1
     localStream = await navigator.mediaDevices.getUserMedia({
@@ -23,7 +25,7 @@ let init = async () => {
 let connect = async (callback) => {
     let roomName = decodeURIComponent(window.location.pathname.split("/")[1]);
     let clientId = Math.random().toString(36).substring(2, 15); // Tạo client_id ngẫu nhiên
-    socket = new WebSocket(`wss://192.168.100.111:8000/ws/${roomName}/${clientId}`);
+    socket = new WebSocket(`wss://${address}:8000/ws/${roomName}/${clientId}`);
 
     socket.onopen = async (_) => {
         console.log("WebSocket connected!");
@@ -246,7 +248,7 @@ document.addEventListener(
         await init();
 
         // Kiểm tra kết nối WebSocket
-        let testSocket = new WebSocket("wss://192.168.100.111:8000/ws/room/test-client");
+        let testSocket = new WebSocket(`wss://${address}:8000/ws/room/test-client`);
         testSocket.onopen = () => console.log("WebSocket connected!");
         testSocket.onerror = (error) => console.error("WebSocket error:", error);
     },

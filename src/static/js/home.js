@@ -1,9 +1,5 @@
 let createRoom = () => {
-    const roomName = document.getElementById("createRoom").value
-    if (roomName){
-        window.location.href = `/room/${roomName}`
-    }
-    else {
-        alert("Room Name cannot be empty")
-    }
+    let roomID = Math.random().toString(36).substring(2, 15);
+    // window.location.href = `/room/${roomID}`
+    window.open(`/room/${roomID}`, "_blank");
 }
