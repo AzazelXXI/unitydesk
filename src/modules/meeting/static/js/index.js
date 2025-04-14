@@ -15,18 +15,77 @@ let init = async () => {
         localStream = await navigator.mediaDevices.getUserMedia({
             video: true,
             audio: true, // Enable audio capture
-        });
-        document.getElementById("localVideo").srcObject = localStream;
+        });        document.getElementById("localVideo").srcObject = localStream;
         
         // Add audio controls to local video
         document.getElementById("localVideo").muted = true; // Mute local playback to prevent feedback
         
-        // Add audio toggle button
+        // Create controls container
+        const controlsContainer = document.createElement('div');
+        controlsContainer.id = 'controls-container';
+        document.body.appendChild(controlsContainer);
+          // Add audio toggle button
         const audioToggleBtn = document.createElement('button');
-        audioToggleBtn.innerText = 'Mute';
-        audioToggleBtn.className = 'control-button';
+        audioToggleBtn.innerHTML = '<i class="mic-icon"></i>';
+        audioToggleBtn.title = 'Mute';
+        audioToggleBtn.className = 'control-button audio-btn';
         audioToggleBtn.onclick = toggleAudio;
-        document.getElementById('videos').appendChild(audioToggleBtn);
+        controlsContainer.appendChild(audioToggleBtn);
+        
+        // Add video toggle button
+        const videoToggleBtn = document.createElement('button');
+        videoToggleBtn.innerHTML = '<i class="camera-icon"></i>';
+        videoToggleBtn.title = 'Turn Off Camera';
+        videoToggleBtn.className = 'control-button video-btn';
+        videoToggleBtn.onclick = toggleVideo;
+        controlsContainer.appendChild(videoToggleBtn);
+          // Add chat button
+        const chatToggleBtn = document.createElement('button');
+        chatToggleBtn.innerHTML = '<i class="chat-icon"></i>';
+        chatToggleBtn.title = 'Chat';
+        chatToggleBtn.className = 'control-button chat-btn';
+        chatToggleBtn.onclick = toggleChat;
+        controlsContainer.appendChild(chatToggleBtn);
+        
+        // Create chat container (initially hidden)
+        const chatContainer = document.createElement('div');
+        chatContainer.id = 'chat-container';
+        chatContainer.className = 'chat-hidden';
+        
+        const chatHeader = document.createElement('div');
+        chatHeader.id = 'chat-header';
+        chatHeader.innerHTML = '<h3>Chat</h3><button class="close-chat">×</button>';
+        chatContainer.appendChild(chatHeader);
+        
+        const chatMessages = document.createElement('div');
+        chatMessages.id = 'chat-messages';
+        chatContainer.appendChild(chatMessages);
+        
+        const chatInputArea = document.createElement('div');
+        chatInputArea.id = 'chat-input-area';
+        
+        const chatInput = document.createElement('input');
+        chatInput.type = 'text';
+        chatInput.id = 'chat-input';
+        chatInput.placeholder = 'Type a message...';
+        chatInputArea.appendChild(chatInput);
+          const sendBtn = document.createElement('button');
+        sendBtn.id = 'send-btn';
+        sendBtn.innerHTML = '<i class="send-icon"></i>';
+        sendBtn.title = 'Send message';
+        chatInputArea.appendChild(sendBtn);
+        
+        chatContainer.appendChild(chatInputArea);
+        document.body.appendChild(chatContainer);
+        
+        // Add event listeners for chat
+        document.querySelector('.close-chat').onclick = toggleChat;
+        sendBtn.onclick = sendChatMessage;
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        });
     } catch (error) {
         console.error("Error accessing media devices:", error);
         alert("Failed to access camera or microphone. Please check your permissions.");
@@ -69,8 +128,17 @@ let toggleAudio = () => {
     const audioTrack = localStream.getAudioTracks()[0];
     if (audioTrack) {
         audioTrack.enabled = !audioTrack.enabled;
-        const audioToggleBtn = document.querySelector('.control-button');
-        audioToggleBtn.innerText = audioTrack.enabled ? 'Mute' : 'Unmute';
+        const audioToggleBtn = document.querySelector('.audio-btn');
+        
+        // Update title/tooltip instead of changing text
+        audioToggleBtn.title = audioTrack.enabled ? 'Mute' : 'Unmute';
+        
+        // Change button appearance based on state
+        if (audioTrack.enabled) {
+            audioToggleBtn.classList.remove('disabled');
+        } else {
+            audioToggleBtn.classList.add('disabled');
+        }
         
         // Send audio state to all peers
         if (socket && socket.readyState === WebSocket.OPEN) {
@@ -83,6 +151,108 @@ let toggleAudio = () => {
         console.log(`Microphone ${audioTrack.enabled ? 'enabled' : 'disabled'}`);
     } else {
         console.warn("No audio track found");
+    }
+};
+
+// Toggle video on/off
+let toggleVideo = () => {
+    const videoTrack = localStream.getVideoTracks()[0];
+    if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        const videoToggleBtn = document.querySelector('.video-btn');
+        
+        // Update title/tooltip instead of changing text
+        videoToggleBtn.title = videoTrack.enabled ? 'Turn Off Camera' : 'Turn On Camera';
+        
+        // Change button appearance based on state
+        if (videoTrack.enabled) {
+            videoToggleBtn.classList.remove('disabled');
+        } else {
+            videoToggleBtn.classList.add('disabled');
+        }
+        
+        // Send video state to all peers
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: "VIDEO_TOGGLE",
+                enabled: videoTrack.enabled
+            }));
+        }
+        
+        console.log(`Camera ${videoTrack.enabled ? 'enabled' : 'disabled'}`);
+    } else {
+        console.warn("No video track found");
+    }
+};
+
+// Toggle chat panel
+let toggleChat = () => {
+    const chatContainer = document.getElementById('chat-container');
+    chatContainer.classList.toggle('chat-hidden');
+    chatContainer.classList.toggle('chat-visible');
+    
+    // Toggle body class to adjust main content
+    document.body.classList.toggle('chat-open');
+    
+    // Focus on input if chat is visible
+    if (chatContainer.classList.contains('chat-visible')) {
+        document.getElementById('chat-input').focus();
+    }
+};
+
+// Send chat message
+let sendChatMessage = () => {
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    
+    if (message) {
+        // Add message to local chat
+        addMessageToChat(message, true);
+        
+        // Send message to peers
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: "CHAT_MESSAGE",
+                message: message
+            }));
+        }
+        
+        // Clear input
+        input.value = '';
+    }
+    
+    // Keep focus on input
+    input.focus();
+};
+
+// Add message to chat container
+let addMessageToChat = (message, isLocal = false) => {
+    const chatMessages = document.getElementById('chat-messages');
+    const messageElement = document.createElement('div');
+    messageElement.className = isLocal ? 'chat-message local' : 'chat-message remote';
+    
+    // Add sender info if remote message
+    if (!isLocal && message.sender) {
+        const senderSpan = document.createElement('span');
+        senderSpan.className = 'message-sender';
+        senderSpan.innerText = message.sender;
+        messageElement.appendChild(senderSpan);
+        messageElement.innerHTML += ': ' + message.text;
+    } else {
+        messageElement.innerText = isLocal ? message : message.text || message;
+    }
+    
+    chatMessages.appendChild(messageElement);
+    
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // Flash chat button if chat is hidden
+    if (document.getElementById('chat-container').classList.contains('chat-hidden')) {
+        document.querySelector('.chat-btn').classList.add('chat-notification');
+        setTimeout(() => {
+            document.querySelector('.chat-btn').classList.remove('chat-notification');
+        }, 2000);
     }
 };
 
@@ -112,6 +282,7 @@ let createPeerConnection = (remoteClientId) => {
     };
 
     const pc = new RTCPeerConnection(config);
+    console.log(pc)
 
     // Add local tracks to peer connection
     localStream.getTracks().forEach(track => {
@@ -388,11 +559,19 @@ let handleMessage = async ({ data }) => {
             case "LEAVE":
                 removeRemoteStream(data.clientId);
                 break;
-                
-            case "AUDIO_TOGGLE":
+                  case "AUDIO_TOGGLE":
                 // Handle remote user's audio state change
                 console.log(`Remote user ${data.source} ${data.enabled ? 'unmuted' : 'muted'} their microphone`);
                 // You could update UI to show mute status if desired
+                break;
+                
+            case "CHAT_MESSAGE":
+                // Handle incoming chat message from another user
+                console.log(`Chat message from ${data.source}: ${data.message}`);
+                addMessageToChat({
+                    sender: `User ${data.source.substring(0, 5)}...`,
+                    text: data.message
+                }, false);
                 break;
         }
     } catch (err) {
