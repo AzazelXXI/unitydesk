@@ -4,10 +4,10 @@ let socket;
 let clientId; // Add global clientId variable
 let remoteAudioEnabled = {}; // Track the audio state of each remote peer
 
-// Use the fixed server address
-const serverUrl = 'https://csavn.ddns.net:8000';
-const address = 'csavn.ddns.net';
-const port = 8000;
+// Use dynamic server address based on the current location
+const serverUrl = window.location.protocol + '//' + window.location.host;
+const address = window.location.hostname;
+const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
 
 let init = async () => {
     try {
@@ -99,8 +99,12 @@ let connect = async () => {
     let roomName = window.location.pathname.split("/").pop();
     clientId = Math.random().toString(36).substring(2, 15); // Store clientId globally
     
-    // Use secure WebSocket for the HTTPS server
-    const wsUrl = `wss://${address}:${port}/ws/${roomName}/${clientId}`;
+    // Build WebSocket URL relative to the current page
+    // This ensures it works regardless of how users access the site
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    
+    // Use relative path approach to avoid hostname/port issues
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws/${roomName}/${clientId}`;
     console.log("Connecting to WebSocket at:", wsUrl);
     
     socket = new WebSocket(wsUrl);
@@ -256,29 +260,42 @@ let addMessageToChat = (message, isLocal = false) => {
     }
 };
 
+// Global debugging function for WebRTC events
+const logRTCEvent = (event, peer, details = {}) => {
+    console.log(`[WebRTC] ${event} - Peer: ${peer}`, details);
+};
+
 let createPeerConnection = (remoteClientId) => {
+    // WebRTC configuration with ICE servers for NAT traversal
+    console.log("Creating new RTCPeerConnection with ICE/TURN configuration");
+    console.warn("🔄 Configuring connection with adaptive traversal strategy");
+    
+    // ICE server configuration - The RTCPeerConnection doesn't "connect to" these servers directly
+    // They are used as part of the ICE protocol for NAT traversal when direct P2P fails
     const config = {
+        // Start with 'all' to try direct connections first, only use relay if necessary
+        // In severe network conditions, can be changed to 'relay' to force TURN usage
+        iceTransportPolicy: 'all',
+        
+        // List potential STUN/TURN servers for the ICE agent to use if needed
         iceServers: [
+            // STUN servers for basic NAT traversal (tried first)
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            
+            // TURN server as fallback for symmetrical NATs or strict firewalls
+            // Uses TLS on port 443 to bypass firewall restrictions
             {
-                urls: [
-                    'stun:stun1.l.google.com:19302',
-                    'stun:stun2.l.google.com:19302',
-                ]
-            },
-            // More reliable TURN servers
-            {
-                urls: [
-                    'turn:relay.metered.ca:80',
-                    'turn:relay.metered.ca:443',
-                    'turn:relay.metered.ca:443?transport=tcp'
-                ],
-                username: 'e734a26b1512cce7fe01c6e5',
-                credential: 'OgVBgEG5BqDQyXeC'
+                urls: 'turns:global.turn.twilio.com:443',
+                username: '9e9794d921e1be3e773d84a9d810a4f51a2a80f2949e3b7b113abe27fb4d048e',
+                credential: 'S/17VCcuxpJSQV50YpH0NXai5qELoKNJJ2l2yF8HM+A='
             }
         ],
-        iceTransportPolicy: 'all',
-        iceCandidatePoolSize: 10,
-        sdpSemantics: 'unified-plan'
+        
+        // Standard WebRTC options
+        sdpSemantics: 'unified-plan',
+        bundlePolicy: 'max-bundle',
+        rtcpMuxPolicy: 'require'
     };
 
     const pc = new RTCPeerConnection(config);
@@ -344,24 +361,153 @@ let createPeerConnection = (remoteClientId) => {
                 });
             }
         };
-    };
-
-    // Handle ICE candidates
+    };    // Handle ICE candidates with extreme debugging capabilities
     pc.onicecandidate = async (event) => {
         if (event.candidate) {
+            const cand = event.candidate;
+            // Log detailed ICE candidate information for debugging - using console.warn for visibility
+            console.warn(`🔍 ICE CANDIDATE [${remoteClientId}]:`, {
+                type: cand.type,
+                protocol: cand.protocol,
+                address: cand.address,
+                port: cand.port,
+                candidate: cand.candidate,
+                relatedAddress: cand.relatedAddress,
+                relatedPort: cand.relatedPort,
+                foundation: cand.foundation,
+                priority: cand.priority,
+                component: cand.component
+            });
+            
+            // Critical: Only send relay candidates when crossing networks
+            if (cand.type === 'relay') {
+                console.warn(`✅ SENDING RELAY CANDIDATE for ${remoteClientId} - This should work across networks`);
+            } else {
+                console.warn(`⚠️ SENDING ${cand.type.toUpperCase()} CANDIDATE for ${remoteClientId} - May not work across networks`);
+            }
+            
+            // Force small delay to ensure proper candidate handling
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
             await waitForWebSocket();
             socket.send(JSON.stringify({
                 type: "CANDIDATE",
                 candidate: event.candidate,
                 target: remoteClientId
             }));
+        } else {
+            // ICE candidate gathering complete
+            console.warn(`🏁 ICE gathering COMPLETE for ${remoteClientId}`);
         }
-    };    // Connection state monitoring
-    pc.onconnectionstatechange = () => {
-        console.log(`Connection state with ${remoteClientId}:`, pc.connectionState);
+    };    // Monitor ICE gathering state with enhanced visibility and connection forcing
+    pc.onicegatheringstatechange = () => {
+        console.warn(`🧊 ICE GATHERING STATE for ${remoteClientId}: ${pc.iceGatheringState}`);
         
-        if (pc.connectionState === 'disconnected') {
-            console.log(`Connection with ${remoteClientId} is unstable, waiting to see if it recovers...`);
+        // When complete, log all candidates collected
+        if (pc.iceGatheringState === 'complete') {
+            console.warn(`⚠️ ICE GATHERING COMPLETE FOR ${remoteClientId} - DUMPING ALL INFO`);
+            
+            // Force display of all connection info to help debugging
+            setTimeout(() => {
+                console.warn(`📊 CONNECTION STATUS CHECK FOR ${remoteClientId}`);
+                console.warn(`- ICE Connection State: ${pc.iceConnectionState}`);
+                console.warn(`- Connection State: ${pc.connectionState}`);
+                console.warn(`- Signaling State: ${pc.signalingState}`);
+                
+                // Check if we have any active tracks
+                const receivers = pc.getReceivers();
+                console.warn(`- Active receivers: ${receivers.length}`);
+                receivers.forEach((receiver, i) => {
+                    const track = receiver.track;
+                    if (track) {
+                        console.warn(`  Receiver ${i}: ${track.kind} track (${track.readyState})`);
+                    }
+                });
+                
+                // Force connection establishment if still in 'new' state
+                if (pc.connectionState === 'new' && pc.iceConnectionState === 'new') {
+                    console.warn(`🔄 CONNECTION STILL NEW - FORCING CONNECTION ESTABLISHMENT FOR ${remoteClientId}`);
+                    
+                    // Force media display attempt
+                    const videoEl = document.getElementById(`video-${remoteClientId}`);
+                    if (videoEl && videoEl.srcObject) {
+                        // Force media connection with a play attempt
+                        videoEl.play().catch(e => {
+                            console.warn("Play attempt failed, showing play button:", e);
+                            
+                            // Create play button if it doesn't exist
+                            if (!document.getElementById(`play-button-${remoteClientId}`)) {
+                                const playButton = document.createElement('button');
+                                playButton.innerText = '▶️ Click to Start Video';
+                                playButton.id = `play-button-${remoteClientId}`;
+                                playButton.className = 'play-button';
+                                playButton.style.position = 'absolute';
+                                playButton.style.top = '50%';
+                                playButton.style.left = '50%';
+                                playButton.style.transform = 'translate(-50%, -50%)';
+                                playButton.style.padding = '10px 20px';
+                                playButton.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                                playButton.style.color = 'white';
+                                playButton.style.border = 'none';
+                                playButton.style.borderRadius = '5px';
+                                playButton.style.cursor = 'pointer';
+                                playButton.style.zIndex = '100';
+                                playButton.onclick = () => {
+                                    videoEl.play();
+                                    playButton.style.display = 'none';
+                                    
+                                    // Force ICE connection restart
+                                    console.warn(`🔥 FORCING ICE RESTART FOR ${remoteClientId}`);
+                                    pc.restartIce();
+                                    
+                                    // Send ICE restart signal to peer
+                                    socket.send(JSON.stringify({
+                                        type: "ICE_RESTART",
+                                        target: remoteClientId
+                                    }));
+                                };
+                                videoEl.parentNode.appendChild(playButton);
+                            }
+                        });
+                    }
+                    
+                    // Force ICE connection restart
+                    pc.restartIce();
+                    
+                    // Send restart signal to the other peer
+                    socket.send(JSON.stringify({
+                        type: "ICE_RESTART",
+                        target: remoteClientId
+                    }));
+                }
+            }, 2000);
+        }
+    };// Connection state monitoring with enhanced visibility
+    pc.onconnectionstatechange = () => {
+        console.warn(`🔌 CONNECTION STATE with ${remoteClientId}: ${pc.connectionState}`);
+        
+        if (pc.connectionState === 'connected') {
+            console.warn(`✅✅✅ SUCCESS! Connection with ${remoteClientId} is ESTABLISHED`);
+            // Show successful connection alert to help user understand status
+            const videoElement = document.getElementById(`video-${remoteClientId}`);
+            if (videoElement) {
+                const alertDiv = document.createElement('div');
+                alertDiv.textContent = 'Connected';
+                alertDiv.className = 'connection-alert success';
+                alertDiv.style.position = 'absolute';
+                alertDiv.style.top = '5px';
+                alertDiv.style.right = '5px';
+                alertDiv.style.backgroundColor = 'rgba(0, 255, 0, 0.7)';
+                alertDiv.style.color = 'white';
+                alertDiv.style.padding = '2px 8px';
+                alertDiv.style.borderRadius = '5px';
+                alertDiv.style.fontSize = '12px';
+                alertDiv.style.zIndex = '10';
+                videoElement.parentNode.appendChild(alertDiv);
+                setTimeout(() => alertDiv.remove(), 5000);
+            }
+        } else if (pc.connectionState === 'disconnected') {
+            console.warn(`⚠️ Connection with ${remoteClientId} is unstable, waiting to see if it recovers...`);
             
             // Create a recovery function that will try multiple times
             const attemptRecovery = (attempts = 0, maxAttempts = 3) => {
@@ -588,6 +734,9 @@ let removeRemoteStream = (clientId) => {
     if (container) {
         container.remove();
     }
+    
+    // Update layout based on number of participants
+    updateParticipantLayout();
 };
 
 let waitForWebSocket = async () => {
@@ -602,6 +751,22 @@ let waitForWebSocket = async () => {
             }, 100);
         });
     }
+};
+
+// Function to update layout based on number of participants
+let updateParticipantLayout = () => {
+    const videosContainer = document.getElementById('videos');
+    const participantCount = Object.keys(peerConnections).length + 1; // +1 for local user
+    
+    if (participantCount <= 1) {
+        // Single participant mode (just the local user)
+        videosContainer.classList.add('single-participant');
+    } else {
+        // Multiple participants mode
+        videosContainer.classList.remove('single-participant');
+    }
+    
+    console.log(`Layout updated for ${participantCount} participants`);
 };
 
 // Handle page unload

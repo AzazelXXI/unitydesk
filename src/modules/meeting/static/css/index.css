@@ -34,6 +34,22 @@ body {
     padding: 16px;
 }
 
+/* Single participant layout - maximized view */
+#videos.single-participant {
+    grid-template-columns: 1fr;
+    max-width: 90%;
+    height: 80vh;
+}
+
+#videos.single-participant .video-container {
+    padding-top: 0;
+    height: 100%;
+}
+
+#videos.single-participant .video-player {
+    object-fit: contain;
+}
+
 .video-container {
     position: relative;
     width: 100%;
@@ -235,12 +251,9 @@ body {
     right: -350px;
 }
 
-/* Add transition to main content when chat opens */
-body.chat-open #videos {
-    transition: all 0.4s ease;
-    width: calc(92% - 250px);
-    margin-right: 330px;
-    margin-left: auto;
+/* Chat will overlay on top of videos instead of pushing them */
+#chat-container {
+    z-index: 1001; /* Ensure chat appears above videos */
 }
 
 /* Chat header styling */
