@@ -75,6 +75,104 @@
 
 ```mermaid
 flowchart TD
+    subgraph k8s["K8S Cluster"]
+        AuthService[Auth-Service Pod]
+        MessengerService[Messenger-Service Pod]
+        CalendarService[Calendar-Service Pod]
+        DocsService[Docs-Service Pod]
+        DriveService[Drive-Service Pod]
+        EmailService[Email-Service Pod]
+        TasksService[Tasks-Service Pod]
+        ApprovalService[Approval-Service Pod]
+        VideoService[Video-Service Pod]
+        AdminService[Admin-Service Pod]
+        PlatformService[Platform-Service Pod]
+        WebsocketService[WebSocket-Service Pod]
+    end
+
+    subgraph databases["Databases"]
+        PostgreSQL[(PostgreSQL StatefulSet)]
+        Redis[(Redis StatefulSet)]
+        MinIO[(MinIO Object Storage)]
+    end
+
+    subgraph services["Services"]
+        PgBouncer[PgBouncer Pod]
+        CacheService[Cache Service]
+        MessageBroker[Message Broker\nRabbitMQ/Kafka]
+        Keycloak[Keycloak Container\nOAuth2/OIDC Provider]
+    end
+
+    subgraph monitoring["Monitoring & Logging"]
+        Prometheus[Prometheus]
+        Grafana[Grafana]
+        Fluentd[Fluentd]
+        Elasticsearch[Elasticsearch]
+        Kibana[Kibana]
+        AlertManager[Alert Manager]
+    end
+
+    subgraph k8s_components["Kubernetes Components"]
+        KubeScheduler[Kube Scheduler]
+        KubeController[Kube Controller]
+        KubeAPI[Kubernetes API]
+        StorageClass[Storage Classes]
+    end
+
+    subgraph ci_cd["CI/CD Pipeline"]
+        GitRepo[(Git Repository)]
+        CiCdPipeline[CI/CD Pipeline\nGitHub Actions/GitLab CI]
+        Registry[Container Registry]
+    end
+
+    subgraph external["External Access"]
+        Internet((Internet))
+        IngressController[NGINX Ingress Controller]
+        ApiGateway[API Gateway\nKong/Traefik]
+    end
+
+    subgraph backup["Backup System"]
+        BackupSystem[Backup System]
+    end
+
+    subgraph clients["Client Devices"]
+        WebClient[Web Browsers]
+        MobileClient[Mobile Apps]
+        DesktopClient[Desktop Apps]
+    end
+
+    subgraph storage["Persistent Storage"]
+        PostgreSQLPV[PostgreSQL PV]
+        RedisPV[Redis PV]
+        MiniOPV[MinIO PV]
+    end
+
+    subgraph servers["External Servers"]
+        SignalingServer[WebRTC Signaling Server]
+        StunTurnServer[STUN/TURN Server]
+        MediaServer[SFU Media Server]
+    end
+
+    %% Backup System
+    BackupSystem[Backup System]
+    BackupSystem -->|Backup| PostgreSQLPV & RedisPV & MiniOPV
+    BackupSystem -->|Backup| PostgreSQL & Redis & MinIO
+
+
+    %% Client Devices
+    WebClient -->|HTTPS| IngressController
+    MobileClient -->|HTTPS| IngressController
+    DesktopClient -->|HTTPS| IngressController  
+
+
+    %% Ingress Controller
+    IngressController -->|HTTPS| ApiGateway
+    IngressController -->|HTTPS| BackupSystem
+    IngressController -->|HTTPS| GitRepo
+    IngressController -->|HTTPS| Registry
+    IngressController -->|HTTPS| KubeAPI
+    IngressController -->|HTTPS| StorageClass
+
     %% External Access
     Internet((Internet)) -->|HTTPS| IngressController[NGINX Ingress Controller]
     
