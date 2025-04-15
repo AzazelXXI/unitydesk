@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from starlette.staticfiles import StaticFiles
@@ -50,6 +51,10 @@ async def log_exceptions(request: Request, call_next):
 @app.get("/")
 async def home(request: Request):
     return templates.TemplateResponse(request=request, name="home.html")
+
+@app.get("/favicon.ico")
+async def favicon(request: Request):
+    return FileResponse("src/assets/favicon.ico")
 
 @app.websocket("/ws/{room_name}/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, room_name: str, client_id: str):
