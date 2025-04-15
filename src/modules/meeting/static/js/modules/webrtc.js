@@ -7,6 +7,7 @@ import { state } from './state.js';
 import { getRTCConfig, offerOptions } from './config.js';
 import { createVideoElement, createPlayButton, updateParticipantLayout } from './ui.js';
 import { sendToServer } from './signaling.js';
+import { logger } from './logger.js';
 
 /**
  * Global debugging function for WebRTC events
@@ -15,7 +16,7 @@ import { sendToServer } from './signaling.js';
  * @param {Object} details - Additional details
  */
 export const logRTCEvent = (event, peer, details = {}) => {
-    console.log(`[WebRTC] ${event} - Peer: ${peer}`, details);
+    logger.debug(`[WebRTC] ${event} - Peer: ${peer}`, details);
 };
 
 /**
@@ -25,12 +26,12 @@ export const logRTCEvent = (event, peer, details = {}) => {
  */
 export const createPeerConnection = (remoteClientId) => {
     // WebRTC configuration with ICE servers for NAT traversal
-    console.log("Creating new RTCPeerConnection with ICE/TURN configuration");
-    console.warn("🔄 Configuring connection with adaptive traversal strategy");
+    logger.info(`Creating new peer connection for client: ${remoteClientId}`);
+    logger.debug("🔄 Configuring connection with adaptive traversal strategy");
     
     const config = getRTCConfig();
     const pc = new RTCPeerConnection(config);
-    console.log(pc);
+    logger.trace("RTCPeerConnection created:", pc);
 
     // Add local tracks to peer connection
     state.localStream.getTracks().forEach(track => {
