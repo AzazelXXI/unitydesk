@@ -6,17 +6,18 @@
 // WebRTC configuration with ICE servers for NAT traversal
 export const getRTCConfig = () => {
     return {
-        // Start with 'all' to try direct connections first, only use relay if necessary
-        // In severe network conditions, can be changed to 'relay' to force TURN usage
-        iceTransportPolicy: 'all',
+        // For cross-network connections, use 'relay' to force TURN usage and ensure connectivity
+        // This ensures connectivity even through complex NAT and firewalls
+        iceTransportPolicy: 'relay',
         
         // List potential STUN/TURN servers for the ICE agent to use if needed
         iceServers: [
-            // STUN servers for basic NAT traversal (tried first)
+            // STUN servers for basic NAT traversal
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun.stunprotocol.org:3478' },
             
-            // TURN server as fallback for symmetrical NATs or strict firewalls
+            // TURN server for relaying through NAT/firewalls
             // Uses TLS on port 443 to bypass firewall restrictions
             {
                 urls: 'turns:global.turn.twilio.com:443',
@@ -32,10 +33,10 @@ export const getRTCConfig = () => {
     };
 };
 
-// Use dynamic server address based on the current location
-export const serverUrl = window.location.protocol + '//' + window.location.host;
-export const address = window.location.hostname;
-export const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
+// Always use the DDNS domain for consistent connectivity across networks
+export const serverUrl = window.location.protocol + '//csavn.ddns.net:8000/';
+export const address = 'csavn.ddns.net';
+export const port = '8000';
 
 // Offer options for creating WebRTC offers
 export const offerOptions = {

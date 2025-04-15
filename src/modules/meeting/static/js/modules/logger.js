@@ -15,7 +15,8 @@ export const LOG_LEVELS = {
 // Current log level - change this to control verbosity
 // For production, set to LOG_LEVELS.ERROR or LOG_LEVELS.WARN
 // For development, you might want LOG_LEVELS.INFO or LOG_LEVELS.DEBUG
-let currentLogLevel = LOG_LEVELS.INFO;
+// For detailed troubleshooting, use LOG_LEVELS.TRACE
+let currentLogLevel = LOG_LEVELS.TRACE;
 
 /**
  * Set the current log level

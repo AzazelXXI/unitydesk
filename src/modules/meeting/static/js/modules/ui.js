@@ -114,21 +114,131 @@ export const createVideoElement = (remoteClientId) => {
 };
 
 /**
- * Creates a play button for videos that can't autoplay
- * @param {string} remoteClientId - The ID of the remote client
- * @param {HTMLElement} videoContainer - The container element for the video
+ * Display a notification message to the user
+ * @param {string} message - The message to display
+ * @param {string} type - The type of notification (success, warning, error)
+ */
+export const showNotification = (message, type = 'info') => {
+    // Create notification element if it doesn't exist
+    let notification = document.getElementById('notification');
+    if (!notification) {
+        notification = document.createElement('div');
+        notification.id = 'notification';
+        notification.style.position = 'fixed';
+        notification.style.bottom = '20px';
+        notification.style.left = '50%';
+        notification.style.transform = 'translateX(-50%)';
+        notification.style.padding = '10px 20px';
+        notification.style.borderRadius = '5px';
+        notification.style.color = 'white';
+        notification.style.fontWeight = 'bold';
+        notification.style.zIndex = '9999';
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.3s';
+        document.body.appendChild(notification);
+    }
+    
+    // Set style based on type
+    if (type === 'success') {
+        notification.style.backgroundColor = 'rgba(0, 128, 0, 0.9)';
+    } else if (type === 'warning') {
+        notification.style.backgroundColor = 'rgba(255, 165, 0, 0.9)';
+    } else if (type === 'error') {
+        notification.style.backgroundColor = 'rgba(255, 0, 0, 0.9)';
+    } else {
+        notification.style.backgroundColor = 'rgba(0, 0, 255, 0.9)';
+    }
+    
+    // Set message and show
+    notification.textContent = message;
+    notification.style.opacity = '1';
+    
+    // Hide after delay
+    setTimeout(() => {
+        notification.style.opacity = '0';
+    }, 3000);
+};
+
+/**
+ * Creates a play button for a video that requires user interaction to play
+ * @param {string} clientId - The client ID
+ * @param {HTMLElement} container - The container for the video
  * @param {HTMLVideoElement} videoElement - The video element
  */
-export const createPlayButton = (remoteClientId, videoContainer, videoElement) => {
+export const createPlayButton = (clientId, container, videoElement) => {
     const playButton = document.createElement('button');
-    playButton.innerText = 'Click to Unmute/Play';
-    playButton.id = `play-button-${remoteClientId}`;
+    playButton.innerText = '▶️ Click to Play Video';
+    playButton.id = `play-button-${clientId}`;
     playButton.className = 'play-button';
+    playButton.style.position = 'absolute';
+    playButton.style.top = '50%';
+    playButton.style.left = '50%';
+    playButton.style.transform = 'translate(-50%, -50%)';
+    playButton.style.padding = '10px 20px';
+    playButton.style.backgroundColor = 'rgba(0,0,0,0.7)';
+    playButton.style.color = 'white';
+    playButton.style.border = 'none';
+    playButton.style.borderRadius = '5px';
+    playButton.style.cursor = 'pointer';
+    playButton.style.zIndex = '100';
+    
+    // Add click handler to play the video
     playButton.onclick = () => {
-        videoElement.play();
-        playButton.style.display = 'none';
+        videoElement.play().then(() => {
+            playButton.style.display = 'none';
+            showNotification('Video playback started', 'success');
+        }).catch(error => {
+            console.error('Error playing video:', error);
+            showNotification('Failed to play video. Please try again.', 'error');
+        });
     };
-    videoContainer.appendChild(playButton);
+    
+    container.appendChild(playButton);
+    return playButton;
+};
+
+/**
+ * Creates a button to unmute audio for a video element
+ * @param {string} clientId - The client ID
+ * @param {HTMLElement} container - The video container
+ * @param {HTMLVideoElement} videoElement - The video element
+ */
+export const createUnmuteButton = (clientId, container, videoElement) => {
+    // Don't create if it already exists
+    if (document.getElementById(`unmute-button-${clientId}`)) {
+        return;
+    }
+    
+    const unmuteButton = document.createElement('button');
+    unmuteButton.id = `unmute-button-${clientId}`;
+    unmuteButton.className = 'unmute-button';
+    unmuteButton.innerHTML = '🔊 Click to Unmute';
+    unmuteButton.style.position = 'absolute';
+    unmuteButton.style.bottom = '10px';
+    unmuteButton.style.left = '50%';
+    unmuteButton.style.transform = 'translateX(-50%)';
+    unmuteButton.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    unmuteButton.style.color = 'white';
+    unmuteButton.style.border = 'none';
+    unmuteButton.style.borderRadius = '5px';
+    unmuteButton.style.padding = '8px 16px';
+    unmuteButton.style.cursor = 'pointer';
+    unmuteButton.style.zIndex = '100';
+    
+    unmuteButton.onclick = () => {
+        try {
+            // Unmute the video
+            videoElement.muted = false;
+            unmuteButton.style.display = 'none';
+            showNotification('Audio unmuted', 'success');
+        } catch (err) {
+            console.error('Failed to unmute audio:', err);
+            showNotification('Failed to unmute audio', 'error');
+        }
+    };
+    
+    container.appendChild(unmuteButton);
+    return unmuteButton;
 };
 
 /**
