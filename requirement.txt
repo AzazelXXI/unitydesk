@@ -2,3 +2,8 @@ fastapi
 uvicorn
 websockets
 jinja2
+sqlalchemy>=1.4.0
+psycopg2-binary
+pydantic>=1.8.0
+alembic
+python-dotenv

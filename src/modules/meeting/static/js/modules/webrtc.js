@@ -9,6 +9,7 @@ import { createVideoElement, createPlayButton, createUnmuteButton, updatePartici
 import { sendToServer } from './signaling.js';
 import { logger } from './logger.js';
 import { diagnoseMediaStream, fixMediaPlayback, showMediaStatus } from './media-fix.js';
+import { forceTurnUsage, monitorIceCandidates, rotateToNextTurnServer, optimizeSdp } from './webrtc-connection-helper.js';
 
 /**
  * Global debugging function for WebRTC events
@@ -49,15 +50,20 @@ export const createPeerConnection = (remoteClientId) => {
     // Handle ICE candidates
     pc.onicecandidate = (event) => handleICECandidate(event, remoteClientId, pc);
     
-    // Monitor ICE gathering state
+    // Handle ICE gathering state changes
     pc.onicegatheringstatechange = () => handleICEGatheringStateChange(pc, remoteClientId, videoElement);
     
-    // Monitor connection state
+    // Handle connection state changes
     pc.onconnectionstatechange = () => handleConnectionStateChange(pc, remoteClientId);
     
-    // Add specific ICE connection state monitoring
+    // Handle ICE connection state changes
     pc.oniceconnectionstatechange = () => handleICEConnectionStateChange(pc, remoteClientId);
-
+    
+    // Setup monitoring for ICE candidates
+    setTimeout(() => {
+        monitorIceCandidates(pc, remoteClientId);
+    }, 1000);
+    
     return pc;
 };
 
@@ -68,198 +74,114 @@ export const createPeerConnection = (remoteClientId) => {
  * @param {HTMLVideoElement} videoElement - The video element
  * @param {HTMLElement} videoContainer - The video container element
  */
-
 const handleRemoteTrack = (event, remoteClientId, videoElement, videoContainer) => {
-    logger.info(`Received ${event.track.kind} track from peer: ${remoteClientId}`);
-    
-    // Add CSS class to videoElement for proper styling
-    videoElement.classList.add('remote-video');
-      // Set up track ended handler with enhanced logging
-    event.track.onended = () => {
-        logger.warn(`Remote ${event.track.kind} track ended from ${remoteClientId}`);
-        showConnectionStatus(remoteClientId, 'Media stream interrupted', 'rgba(255, 165, 0, 0.7)');
-        videoElement.classList.remove('has-remote-media');
-        
-        // Attempt to recover the track if possible
-        setTimeout(() => {
-            if (state.peerConnections[remoteClientId] && 
-                state.peerConnections[remoteClientId].connectionState === 'connected') {
-                logger.info(`Attempting to recover ${event.track.kind} track for ${remoteClientId}`);
-                
-                // Signal the remote peer to restart their track
-                sendToServer({
-                    type: "TRACK_RECOVERY_REQUEST",
-                    trackType: event.track.kind,
-                    target: remoteClientId
-                });
-            }
-        }, 1000);
-    };
-    
-    // Set up track mute handler with visual indication and auto-recovery
-    event.track.onmute = () => {
-        logger.debug(`Remote ${event.track.kind} track muted from ${remoteClientId}`);
+    // Kiểm tra khi bắt đầu nhận track
+    event.track.onunmute = () => {
         if (event.track.kind === 'audio') {
-            showConnectionStatus(remoteClientId, 'Audio muted', 'rgba(255, 165, 0, 0.7)');
-            // Create unmute button in case this is browser-imposed
-            createUnmuteButton(remoteClientId, videoContainer, videoElement);
-            
-            // Try to force unmute the track
-            try {
-                event.track.enabled = true;
-            } catch (err) {
-                logger.debug(`Could not force enable audio track: ${err.message}`);
+            logger.debug(`Remote audio track unmuted from ${remoteClientId}`);
+            // Kiểm tra xem video element có bị tắt tiếng không
+            if (videoElement.muted) {
+                logger.info(`Audio track available but video element is muted for ${remoteClientId}`);
+                // Hiển thị nút bật âm thanh sau khi xác nhận có audio track
+                setTimeout(() => {
+                    createUnmuteButton(videoContainer, videoElement, remoteClientId);
+                }, 1000);
             }
         } else if (event.track.kind === 'video') {
-            videoElement.classList.add('video-muted');
-            
-            // Try to force unmute the video track
-            try {
-                event.track.enabled = true;
-                // Some browsers need a nudge to display video
-                videoElement.style.opacity = '0.99';
-                setTimeout(() => {
-                    videoElement.style.opacity = '1';
-                }, 100);
-            } catch (err) {
-                logger.debug(`Could not force enable video track: ${err.message}`);
-            }
+            logger.debug(`Remote video track unmuted from ${remoteClientId}`);
+            videoElement.classList.add('has-video');
         }
-        
-        // Additional recovery for persistent mute issues
-        setTimeout(async () => {
-            if (event.track.muted) {
-                logger.warn(`Track still muted after delay, applying additional fixes for ${remoteClientId}`);
-                await fixMediaPlayback(videoElement, remoteClientId);
-            }
-        }, 2000);
     };
     
-    // Set up track unmute handler with enhanced media flow verification
-    event.track.onunmute = () => {
-        logger.debug(`Remote ${event.track.kind} track unmuted from ${remoteClientId}`);
-        if (event.track.kind === 'video') {
-            videoElement.classList.remove('video-muted');
+    // Xử lý khi track bị mute
+    event.track.onmute = () => {
+        if (event.track.kind === 'audio') {
+            logger.debug(`Remote audio track muted from ${remoteClientId}`);
+        } else if (event.track.kind === 'video') {
+            logger.debug(`Remote video track muted from ${remoteClientId}`);
             
-            // Make sure video is actually displayed
-            videoElement.style.opacity = '0.99';
-            setTimeout(() => {
-                videoElement.style.opacity = '1';
-            }, 100);
+            // Thử khắc phục video bị mute
+            setTimeout(async () => {
+                logger.info(`Attempted to unmute video track for ${remoteClientId}`);
+                try {
+                    await fixMediaPlayback(videoElement, remoteClientId);
+                } catch (e) {
+                    logger.warn(`Track still muted after delay, applying additional fixes for ${remoteClientId}`);
+                }
+            }, 2000);
         }
-        
-        // Verify track is actually working
-        if (event.track.kind === 'audio' && videoElement.muted) {
-            logger.info(`Audio track available but video element is muted for ${remoteClientId}`);
-            showConnectionStatus(remoteClientId, 'Audio available - click unmute', 'rgba(0, 255, 0, 0.7)');
-            createUnmuteButton(remoteClientId, videoContainer, videoElement);
+    };
+    
+    // Xử lý khi track kết thúc
+    event.track.onended = () => {
+        if (event.track.kind === 'audio') {
+            logger.warn(`Remote audio track ended from ${remoteClientId}`);
+        } else if (event.track.kind === 'video') {
+            logger.warn(`Remote video track ended from ${remoteClientId}`);
         }
-    };    // CRITICAL FIX: Check if video element still exists in the DOM before updating
+    };
+    
+    // Nếu video element không còn trong DOM, không làm gì cả
     if (!document.body.contains(videoElement)) {
-        logger.warn(`Video element for ${remoteClientId} is no longer in the DOM, creating new element`);
-        // Instead of failing, re-create the video element in the container if it exists
-        if (document.body.contains(videoContainer)) {
-            videoElement = document.createElement('video');
-            videoElement.id = `remote-video-${remoteClientId}`;
-            videoElement.className = 'remote-video';
-            videoElement.autoplay = true;
-            videoElement.playsInline = true;
-            videoElement.muted = true; // Start muted for autoplay
-            videoContainer.appendChild(videoElement);
-            
-            // Store the new video element reference
-            state.remoteVideos[remoteClientId] = videoElement;
-        } else {
-            logger.error(`Cannot handle track: both video element and container for ${remoteClientId} are gone`);
-            return; // Exit early, we can't do anything without the container
-        }
+        return;
     }
     
-    // Always set the srcObject to ensure we have the latest tracks
-    // Use try/catch to handle any errors when updating srcObject
+    // Luôn cập nhật srcObject để đảm bảo có đủ các tracks mới nhất
     try {
-        // If we already have a stream, add this track to it instead of replacing
-        if (videoElement.srcObject && videoElement.srcObject !== event.streams[0]) {
-            const existingStream = videoElement.srcObject;
-            const newTrack = event.track;
-            
-            // Check if we need to replace an existing track of the same kind
-            const existingTrackOfSameKind = existingStream.getTracks().find(t => t.kind === newTrack.kind);
-            if (existingTrackOfSameKind) {
-                logger.info(`Replacing existing ${newTrack.kind} track for ${remoteClientId}`);
-                existingStream.removeTrack(existingTrackOfSameKind);
-            }
-            
-            existingStream.addTrack(newTrack);
-        } else {
-            // Otherwise just set srcObject directly
+        if (event.track.kind === 'audio') {
+            logger.info(`Received audio track from peer: ${remoteClientId}`);
+        } else if (event.track.kind === 'video') {
+            logger.info(`Received video track from peer: ${remoteClientId}`);
+        }
+        
+        // Đảm bảo không thay đổi srcObject nếu đã được thiết lập
+        if (!videoElement.srcObject || videoElement.srcObject.id !== event.streams[0].id) {
             videoElement.srcObject = event.streams[0];
         }
     } catch (err) {
         logger.error(`Error setting srcObject: ${err.message}`);
-        // Try a recovery approach
-        setTimeout(() => {
-            try {
-                videoElement.srcObject = event.streams[0];
-            } catch (err2) {
-                logger.error(`Recovery attempt failed: ${err2.message}`);
-            }
-        }, 500);
     }
     
-    // Add stream ended/track removal handler with better error handling
+    // Thêm xử lý khi track bị xóa với xử lý lỗi tốt hơn
     event.streams[0].onremovetrack = () => {
-        logger.warn(`Track removed from stream for ${remoteClientId}`);
+        logger.debug(`Track removed from stream for ${remoteClientId}`);
         
-        try {
-            // Check if we still have valid tracks and the video element is still in the DOM
-            if (videoElement && document.body.contains(videoElement) && videoElement.srcObject) {
-                const diagnosis = diagnoseMediaStream(videoElement.srcObject, remoteClientId);
-                if (diagnosis.hasIssues) {
-                    logger.warn(`Media issues detected for ${remoteClientId}:`, diagnosis.issues);
-                    showMediaStatus(remoteClientId, 'Media stream issues detected', 'warning');
-                }
-            }
-        } catch (err) {
-            logger.error(`Error handling track removal: ${err.message}`);
+        // Kiểm tra xem còn track nào không
+        if (event.streams[0].getTracks().length === 0) {
+            logger.warn(`No tracks left for ${remoteClientId}, possibly disconnected`);
         }
     };
     
-    // Mark media as connected for UI purposes
+    // Đánh dấu media đã kết nối cho giao diện người dùng
     showConnectionStatus(remoteClientId, 'Media connected', 'rgba(0, 255, 0, 0.7)');
-      // Diagnose the incoming media stream
+    
+    // Chẩn đoán stream media đầu vào
     const diagnosis = diagnoseMediaStream(event.streams[0], remoteClientId);
     if (diagnosis.hasIssues) {
         logger.warn(`Media issues detected for ${remoteClientId}:`, diagnosis.issues);
         showMediaStatus(remoteClientId, 'Media issues - click unmute button below', 'warning');
         
-        // Attempt automatic fix for muted tracks
+        // Thử khắc phục tự động cho các track bị mute
         setTimeout(async () => {
             try {
-                // Try to enable all tracks that might be disabled
-                event.streams[0].getTracks().forEach(track => {
-                    if (!track.enabled) {
-                        track.enabled = true;
-                        logger.info(`Enabled ${track.kind} track for ${remoteClientId}`);
-                    }
-                });
-                
-                // Apply the fix media playback function
                 await fixMediaPlayback(videoElement, remoteClientId);
-            } catch (err) {
-                logger.error(`Auto-fix attempt failed: ${err.message}`);
+                logger.info(`Applied automatic fix for ${remoteClientId}`);
+            } catch (e) {
+                logger.error(`Auto fix failed: ${e.message}`);
+                // Tạo nút unmute thủ công nếu tự động thất bại
+                createUnmuteButton(videoContainer, videoElement, remoteClientId);
             }
         }, 1000);
     }
     
-    // CRITICAL FIX: Set proper audio settings
+    // CRITICAL FIX: Thiết lập âm lượng phù hợp
     videoElement.volume = 1.0;
     
-    // CRITICAL FIX: Many browsers mute by default to comply with autoplay policies
-    // Initially mute to ensure autoplay works, then we'll offer unmute button
+    // CRITICAL FIX: Nhiều trình duyệt mặc định tắt tiếng để tuân thủ chính sách autoplay
+    // Ban đầu tắt tiếng để đảm bảo autoplay hoạt động, sau đó hiện nút bật tiếng
     videoElement.muted = true;
     
-    // Log track details for debugging
+    // Ghi nhật ký chi tiết track để gỡ lỗi
     const audioTracks = event.streams[0].getAudioTracks();
     const videoTracks = event.streams[0].getVideoTracks();
     
@@ -268,108 +190,80 @@ const handleRemoteTrack = (event, remoteClientId, videoElement, videoContainer) 
         - Video tracks: ${videoTracks.length}
         - Stream active: ${event.streams[0].active}`);
     
-    // Add visual indication that media is flowing
+    // Thêm chỉ báo trực quan rằng media đang truyền tải
     if (audioTracks.length > 0 || videoTracks.length > 0) {
         videoElement.classList.add('has-remote-media');
     }
     
-    // CRITICAL FIX: Add special CSS styles for video visibility
-    videoElement.style.backgroundColor = 'rgba(0, 0, 0, 0.2)'; // Make it visible even when empty
-      // Add event listener for loadedmetadata with enhanced playback strategy
+    // CRITICAL FIX: Thêm CSS style đặc biệt cho khả năng hiển thị video
+    videoElement.style.backgroundColor = 'rgba(0, 0, 0, 0.2)'; // Hiển thị ngay cả khi rỗng
+    
+    // Thêm event listener cho loadedmetadata với chiến lược phát nâng cao
     videoElement.onloadedmetadata = async () => {
         logger.info(`Video metadata loaded for ${remoteClientId}, attempting playback`);
         
-        // Enhanced autoplay strategy with multiple fallback mechanisms
+        // Chiến lược autoplay nâng cao với nhiều cơ chế dự phòng
         const attemptPlayback = async (retryCount = 0) => {
             try {
-                // First try playing with video muted (which most browsers allow automatically)
-                videoElement.muted = true;
                 await videoElement.play();
-                logger.info(`Media playing for ${remoteClientId} (initially muted)`);
+                logger.info(`Video now playing for ${remoteClientId}`);
                 
-                // Add unmute button now that we know autoplay succeeded
-                createUnmuteButton(remoteClientId, videoContainer, videoElement);
+                // Thêm lớp CSS để chỉ ra rằng video đang phát
+                videoElement.classList.add('is-playing');
                 
-                // Verify media is actually flowing after a short delay
-                setTimeout(async () => {
-                    if (!videoElement.paused) {
-                        logger.info(`Media is playing for ${remoteClientId}, attempting to unmute`);
-                        showMediaStatus(remoteClientId, 'Click unmute button to hear audio', 'success');
-                        
-                        // Force track enablement
-                        if (videoElement.srcObject) {
-                            videoElement.srcObject.getTracks().forEach(track => {
-                                if (!track.enabled) {
-                                    track.enabled = true;
-                                    logger.info(`Enabled ${track.kind} track for ${remoteClientId}`);
-                                }
-                            });
+                // Hiện thông báo chỉ khi video đang phát thực sự
+                if (!videoElement.paused) {
+                    logger.info(`Media playing for ${remoteClientId} (initially muted)`);
+                    showMediaStatus(remoteClientId, 'Video playing', 'success');
+                    
+                    // Tạo nút phát và nút bật tiếng sau khi video đang phát
+                    createPlayButton(videoContainer, videoElement, remoteClientId);
+                    createUnmuteButton(videoContainer, videoElement, remoteClientId);
+                    
+                    // Thử bật tiếng sau một chút thời gian nếu có audio track
+                    setTimeout(() => {
+                        if (audioTracks.length > 0) {
+                            logger.info(`Media is playing for ${remoteClientId}, attempting to unmute`);
+                            
+                            // Kiểm tra chính sách autoplay
+                            const autoplayAllowed = document.createElement('video').play() !== undefined;
+                            if (autoplayAllowed) {
+                                videoElement.muted = false;
+                            }
                         }
-                    } else {
-                        logger.warn(`Media still paused for ${remoteClientId}, attempting fix`);
-                        await fixMediaPlayback(videoElement, remoteClientId);
-                    }
-                }, 1000);
-                
+                    }, 2000);
+                }
             } catch (e) {
-                logger.warn(`Autoplay failed for ${remoteClientId} (attempt ${retryCount + 1}):`, e);
+                // Xử lý lỗi phát phương tiện
+                logger.warn(`Media playback error for ${remoteClientId}: ${e.message}, retry: ${retryCount}`);
                 
-                // Try a different approach if we haven't exhausted retries
-                if (retryCount < 2) {
-                    logger.info(`Trying alternative playback method (attempt ${retryCount + 1})`);
-                    
-                    // Add a slight delay before retry
-                    setTimeout(() => attemptPlayback(retryCount + 1), 500);
-                    
-                    // Try with different autoplay settings
-                    videoElement.muted = true;
-                    videoElement.playsInline = true;
-                    videoElement.autoplay = true;
-                    
-                    // Try to trigger playback using user interaction simulation
-                    if (document.documentElement.requestFullscreen && retryCount === 1) {
-                        try {
-                            // Brief fullscreen toggle can help bypass autoplay restrictions
-                            await videoElement.requestFullscreen();
-                            setTimeout(() => document.exitFullscreen(), 100);
-                        } catch (fullscreenErr) {
-                            logger.debug(`Fullscreen attempt failed: ${fullscreenErr.message}`);
-                        }
-                    }
+                if (retryCount < 3) {  // Thử lại tối đa 3 lần
+                    setTimeout(() => attemptPlayback(retryCount + 1), 1000);
                 } else {
-                    // We've exhausted retries, fall back to manual interaction
-                    logger.warn(`Autoplay failed after multiple attempts, requiring user interaction`);
-                    
-                    // Create both controls for user interaction
-                    if (!document.getElementById(`play-button-${remoteClientId}`)) {
-                        createPlayButton(remoteClientId, videoContainer, videoElement);
-                    }
-                    
-                    createUnmuteButton(remoteClientId, videoContainer, videoElement);
-                    
-                    // Show status directing user to click
-                    showConnectionStatus(remoteClientId, 'Click to start media', 'rgba(255, 165, 0, 0.7)', false);
+                    // Tạo nút phát thủ công nếu không phát được tự động
+                    logger.warn(`Autoplay failed for ${remoteClientId}, showing manual play button`);
+                    createPlayButton(videoContainer, videoElement, remoteClientId);
                 }
             }
         };
         
-        // Start the playback attempt
+        // Bắt đầu nỗ lực phát
         await attemptPlayback();
     };
     
-    // Add handlers for media events
+    // Thêm xử lý cho các sự kiện media
     videoElement.oncanplay = () => {
         logger.info(`Video can play for ${remoteClientId}`);
         videoElement.classList.add('can-play');
     };
     
-    // Handle stalled media
+    // Xử lý media bị tạm dừng
     videoElement.onstalled = async () => {
         logger.warn(`Media playback stalled for ${remoteClientId}, attempting recovery`);
         await fixMediaPlayback(videoElement, remoteClientId);
     };
     
-    // Add special event to handle when video actually starts displaying frames
+    // Thêm sự kiện đặc biệt để xử lý khi video bắt đầu hiển thị các khung hình
     videoElement.addEventListener('playing', () => {
         logger.info(`Video now playing for ${remoteClientId}`);
         videoElement.classList.add('is-playing');
@@ -387,66 +281,85 @@ const handleICECandidate = async (event, remoteClientId, pc) => {
     if (event.candidate) {
         const cand = event.candidate;
         
-        // Log ICE candidate information with proper logging
+        // Log ICE candidate information
         logger.debug(`ICE CANDIDATE [${remoteClientId}]:`, {
             type: cand.type,
             protocol: cand.protocol,
             address: cand.address,
             port: cand.port,
-            candidate: cand.candidate,
-            relatedAddress: cand.relatedAddress,
-            relatedPort: cand.relatedPort
+            candidate: cand.candidate
         });
         
-        // For cross-network operation, prioritize relay candidates
-        // This ensures connections work across different networks
-        if (cand.type === 'relay') {
-            logger.info(`✅ RELAY CANDIDATE for ${remoteClientId} - sending (best for cross-network)`);
-            
-            // Send relay candidates immediately with high priority
-            await waitForWebSocket();
-            sendToServer({
-                type: "CANDIDATE",
-                candidate: event.candidate,
-                target: remoteClientId,
-                priority: "high"
-            });
-        } else {
-            // For non-relay candidates, send them but with lower priority
-            logger.debug(`Sending ${cand.type.toUpperCase()} candidate for ${remoteClientId}`);
-            
-            // Small delay for non-relay candidates to prioritize relay ones
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
-            await waitForWebSocket();
-            sendToServer({
-                type: "CANDIDATE",
-                candidate: event.candidate,
-                target: remoteClientId,
-                priority: "normal"
-            });
+        try {
+            // Đánh dấu nếu tìm thấy RELAY candidate
+            if (cand.type === 'relay') {
+                state.hasSentRelayCandidate = true;
+                logger.info(`✅ RELAY CANDIDATE for ${remoteClientId} - sending (best for cross-network)`);
+                
+                // Gửi relay candidates ngay lập tức với độ ưu tiên cao
+                await waitForWebSocket();
+                sendToServer({
+                    type: "CANDIDATE",
+                    candidate: event.candidate,
+                    target: remoteClientId,
+                    priority: "high"
+                });
+            } else {
+                // Đối với các non-relay candidates, gửi với độ ưu tiên thấp hơn
+                logger.debug(`Sending ${cand.type.toUpperCase()} candidate for ${remoteClientId}`);
+                
+                // Độ trễ nhỏ cho các non-relay candidates để ưu tiên relay ones
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                await waitForWebSocket();
+                sendToServer({
+                    type: "CANDIDATE",
+                    candidate: event.candidate,
+                    target: remoteClientId,
+                    priority: "normal"
+                });
+            }
+        } catch (error) {
+            logger.error(`Error sending ICE candidate: ${error.message}`);
         }
     } else {
-        // ICE candidate gathering complete
+        // ICE candidate gathering hoàn thành
         logger.info(`ICE gathering complete for ${remoteClientId}`);
     }
 };
 
 /**
  * Ensures WebSocket is open before sending
+ * @returns {Promise<boolean>} Kết nối có sẵn hay không
  */
 const waitForWebSocket = async () => {
-    if (state.socket.readyState !== WebSocket.OPEN) {
-        console.warn("WebSocket is not open. Waiting...");
-        await new Promise((resolve) => {
-            const interval = setInterval(() => {
-                if (state.socket.readyState === WebSocket.OPEN) {
-                    clearInterval(interval);
-                    resolve();
-                }
-            }, 100);
-        });
+    if (state.socket.readyState === WebSocket.OPEN) {
+        return true; // WebSocket đã sẵn sàng
     }
+    
+    logger.warn("WebSocket is not open. Waiting for connection...");
+    
+    // Thêm timeout để tránh chờ đợi vô hạn
+    return new Promise((resolve) => {
+        const maxWaitTime = 5000; // 5 giây
+        const checkInterval = 100; // kiểm tra mỗi 100ms
+        let elapsedTime = 0;
+        
+        const interval = setInterval(() => {
+            if (state.socket.readyState === WebSocket.OPEN) {
+                clearInterval(interval);
+                resolve(true);
+                return;
+            }
+            
+            elapsedTime += checkInterval;
+            if (elapsedTime >= maxWaitTime) {
+                clearInterval(interval);
+                logger.error("WebSocket connection timeout");
+                resolve(false);
+            }
+        }, checkInterval);
+    });
 };
 
 /**
@@ -468,85 +381,16 @@ const handleICEGatheringStateChange = (pc, remoteClientId, videoEl) => {
             console.warn(`- ICE Connection State: ${pc.iceConnectionState}`);
             console.warn(`- Connection State: ${pc.connectionState}`);
             console.warn(`- Signaling State: ${pc.signalingState}`);
-            
-            // Check if we have any active tracks
-            const receivers = pc.getReceivers();
-            console.warn(`- Active receivers: ${receivers.length}`);
-            receivers.forEach((receiver, i) => {
-                const track = receiver.track;
-                if (track) {
-                    console.warn(`  Receiver ${i}: ${track.kind} track (${track.readyState})`);
-                }
-            });
-            
-            // Force connection establishment if still in 'new' state
+
+            // Kiểm tra nếu kết nối vẫn 'new' sau một khoảng thời gian, 
+            // đây có thể là dấu hiệu của vấn đề nghiêm trọng
             if (pc.connectionState === 'new' && pc.iceConnectionState === 'new') {
-                console.warn(`🔄 CONNECTION STILL NEW - FORCING CONNECTION ESTABLISHMENT FOR ${remoteClientId}`);
-                
-                // Force media display attempt
-                if (videoEl && videoEl.srcObject) {
-                    // Force media connection with a play attempt
-                    videoEl.play().catch(e => {
-                        console.warn("Play attempt failed, showing play button:", e);
-                        
-                        // Create play button if it doesn't exist
-                        if (!document.getElementById(`play-button-${remoteClientId}`)) {
-                            const playButton = document.createElement('button');
-                            playButton.innerText = '▶️ Click to Start Video';
-                            playButton.id = `play-button-${remoteClientId}`;
-                            playButton.className = 'play-button';
-                            playButton.style.position = 'absolute';
-                            playButton.style.top = '50%';
-                            playButton.style.left = '50%';
-                            playButton.style.transform = 'translate(-50%, -50%)';
-                            playButton.style.padding = '10px 20px';
-                            playButton.style.backgroundColor = 'rgba(0,0,0,0.7)';
-                            playButton.style.color = 'white';
-                            playButton.style.border = 'none';
-                            playButton.style.borderRadius = '5px';
-                            playButton.style.cursor = 'pointer';
-                            playButton.style.zIndex = '100';
-                            playButton.onclick = () => {
-                                videoEl.play();
-                                playButton.style.display = 'none';
-                                
-                                // Force ICE connection restart
-                                console.warn(`🔥 FORCING ICE RESTART FOR ${remoteClientId}`);
-                                pc.restartIce();
-                                
-                                // Send ICE restart signal to peer
-                                sendToServer({
-                                    type: "ICE_RESTART",
-                                    target: remoteClientId
-                                });
-                            };
-                            videoEl.parentNode.appendChild(playButton);
-                        }
-                    });
-                }
-                
-                // Force ICE connection restart
-                pc.restartIce();
-                
-                // Send restart signal to the other peer
-                sendToServer({
-                    type: "ICE_RESTART",
-                    target: remoteClientId
-                });
+                logger.warn(`Connection still in 'new' state for ${remoteClientId} after gathering - potential issue`);
+                forceTurnUsage(pc, remoteClientId);
             }
         }, 2000);
     }
 };
-
-/**
- * Handles connection state changes
- * @param {RTCPeerConnection} pc - The peer connection
- * @param {string} remoteClientId - The ID of the remote client
- */
-// Track reconnection attempts per peer
-const reconnectionAttempts = new Map();
-const MAX_RECONNECTION_ATTEMPTS = 5;
-const BASE_RECONNECT_DELAY = 1000; // 1 second base delay
 
 /**
  * Shows a connection status message to the user
@@ -599,6 +443,16 @@ const showConnectionStatus = (remoteClientId, status, color, isTemporary = true)
     return statusDiv;
 };
 
+/**
+ * Handles connection state changes
+ * @param {RTCPeerConnection} pc - The peer connection
+ * @param {string} remoteClientId - The ID of the remote client
+ */
+// Track reconnection attempts per peer
+const reconnectionAttempts = new Map();
+const MAX_RECONNECTION_ATTEMPTS = 5;
+const BASE_RECONNECT_DELAY = 1000; // 1 second base delay
+
 const handleConnectionStateChange = (pc, remoteClientId) => {
     logger.info(`Connection state with ${remoteClientId}: ${pc.connectionState}`);
     
@@ -630,52 +484,57 @@ const handleConnectionStateChange = (pc, remoteClientId) => {
         
         // Create recovery function with exponential backoff
         const attemptRecovery = () => {
-            // Get updated attempts count
-            const currentAttempts = reconnectionAttempts.get(remoteClientId);
+            // Increment attempt counter
+            reconnectionAttempts.set(remoteClientId, attempts + 1);
             
-            // Check if we've reached max attempts
-            if (currentAttempts >= MAX_RECONNECTION_ATTEMPTS) {
-                logger.warn(`Failed to recover connection with ${remoteClientId} after ${MAX_RECONNECTION_ATTEMPTS} attempts`);
-                if (statusDiv) {
-                    statusDiv.textContent = 'Connection failed';
-                    statusDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
-                }
-                return;
-            }
+            // Calculate exponential backoff delay
+            const delay = BASE_RECONNECT_DELAY * Math.pow(2, attempts);
             
-            // Check if already reconnected
-            if (pc.connectionState === 'connected') {
-                logger.info(`Connection with ${remoteClientId} recovered successfully`);
-                if (statusDiv) {
-                    statusDiv.textContent = 'Connected';
-                    statusDiv.style.backgroundColor = 'rgba(0, 255, 0, 0.7)';
-                    setTimeout(() => {
-                        if (statusDiv.parentNode) statusDiv.remove();
-                    }, 3000);
-                }
-                return;
-            }
+            logger.info(`Connection recovery attempt ${attempts + 1}/${MAX_RECONNECTION_ATTEMPTS} for ${remoteClientId} in ${delay}ms`);
             
-            logger.info(`Recovery attempt ${currentAttempts + 1}/${MAX_RECONNECTION_ATTEMPTS} for ${remoteClientId}`);
+            // Update status
             if (statusDiv) {
-                statusDiv.textContent = `Reconnecting (${currentAttempts + 1}/${MAX_RECONNECTION_ATTEMPTS})`;
+                statusDiv.textContent = `Reconnecting (${attempts + 1}/${MAX_RECONNECTION_ATTEMPTS})...`;
             }
             
-            // Try ICE restart
-            sendToServer({
-                type: "ICE_RESTART",
-                target: remoteClientId,
-                attempt: currentAttempts + 1
-            });
-            
-            // Increment attempts counter
-            reconnectionAttempts.set(remoteClientId, currentAttempts + 1);
-            
-            // Calculate exponential backoff delay: base * 2^attempt (capped at 30 seconds)
-            const delay = Math.min(BASE_RECONNECT_DELAY * Math.pow(2, currentAttempts), 30000);
-            
-            // Schedule next attempt with exponential backoff
-            setTimeout(attemptRecovery, delay);
+            // After delay, attempt to restart ICE
+            setTimeout(() => {
+                // Check if we've reached max attempts
+                if (reconnectionAttempts.get(remoteClientId) >= MAX_RECONNECTION_ATTEMPTS) {
+                    logger.error(`Maximum reconnection attempts (${MAX_RECONNECTION_ATTEMPTS}) reached for ${remoteClientId}`);
+                    
+                    if (statusDiv) {
+                        statusDiv.textContent = 'Connection failed';
+                        statusDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
+                    }
+                    
+                    // Give up and let the user manually refresh
+                    return;
+                }
+                
+                // If connection state is still problematic, try to restart ICE
+                if (pc.connectionState !== 'connected') {
+                    logger.info(`Attempting ICE restart for ${remoteClientId}`);
+                    
+                    try {
+                        // Try to force TURN after a certain number of attempts
+                        if (attempts > 1) {
+                            rotateToNextTurnServer(pc, remoteClientId);
+                        } else {
+                            pc.restartIce();
+                        }
+                        
+                        // Send ICE restart request to remote peer
+                        sendToServer({
+                            type: "ICE_RESTART",
+                            target: remoteClientId,
+                            forceRelay: (attempts > 1) // Force relay mode after repeat attempts
+                        });
+                    } catch (err) {
+                        logger.error(`Error during ICE restart: ${err.message}`);
+                    }
+                }
+            }, delay);
         };
         
         // Start recovery attempts after a short delay (if this is the first attempt)
@@ -684,120 +543,48 @@ const handleConnectionStateChange = (pc, remoteClientId) => {
         }
         
     } else if (pc.connectionState === 'failed') {
-        logger.warn(`Connection with ${remoteClientId} has failed, attempting aggressive recovery...`);
+        logger.error(`Connection with ${remoteClientId} has FAILED`);
         
-        // Show failed status with option to retry
-        const statusDiv = showConnectionStatus(remoteClientId, 'Connection failed', 'rgba(255, 0, 0, 0.7)', false);
-        
-        // Add retry button
-        const retryButton = document.createElement('button');
-        retryButton.textContent = 'Retry';
-        retryButton.style.marginLeft = '5px';
-        retryButton.style.padding = '2px 5px';
-        retryButton.style.border = 'none';
-        retryButton.style.borderRadius = '3px';
-        retryButton.style.cursor = 'pointer';
-        retryButton.onclick = () => performAggressiveRecovery();
+        // Show failure status
+        const statusDiv = showConnectionStatus(remoteClientId, 'Connection failed - trying recovery', 'rgba(255, 0, 0, 0.7)', false);
         
         if (statusDiv) {
-            statusDiv.appendChild(retryButton);
+            statusDiv.style.fontWeight = 'bold';
         }
-          const performAggressiveRecovery = async () => {
-            if (statusDiv) {
-                statusDiv.textContent = 'Attempting reconnection...';
-                statusDiv.style.backgroundColor = 'rgba(255, 165, 0, 0.7)';
-            }
+        
+        // Define an aggressive recovery function
+        const performAggressiveRecovery = async () => {
+            logger.warn(`Starting aggressive recovery for connection with ${remoteClientId}`);
             
             try {
-                // First, properly close the existing connection
-                if (state.peerConnections[remoteClientId]) {
-                    logger.info(`Properly closing existing connection with ${remoteClientId} before recovery`);
-                    try {
-                        // Only close - don't remove from state yet
-                        state.peerConnections[remoteClientId].close();
-                    } catch (err) {
-                        logger.warn(`Error while closing old connection: ${err.message}`);
-                    }
-                }
+                // Try changing to a completely different TURN server
+                const success = await rotateToNextTurnServer(pc, remoteClientId);
                 
-                // Short delay to ensure proper cleanup
-                await new Promise(resolve => setTimeout(resolve, 300));
-                
-                // Try creating a new peer connection as a last resort
-                logger.info(`Creating new peer connection for aggressive recovery with ${remoteClientId}`);
-                const newPC = createPeerConnection(remoteClientId);
-                state.peerConnections[remoteClientId] = newPC;
-                
-                // Create a new offer with ice restart - use proper state checking
-                setTimeout(async () => {
-                    try {
-                        // Check if we're in a valid state to create an offer
-                        if (newPC.signalingState === 'stable') {
-                            logger.info(`Creating aggressive recovery offer in signaling state: ${newPC.signalingState}`);
-                            
-                            const offer = await newPC.createOffer({
-                                ...offerOptions,
-                                iceRestart: true
-                            });
-                            
-                            await newPC.setLocalDescription(offer);
-                            
-                            // Send the offer
-                            sendToServer({
-                                type: "OFFER",
-                                offer: newPC.localDescription,
-                                target: remoteClientId,
-                                isReconnect: true,
-                                isAggressiveRecovery: true
-                            });
-                            logger.info(`Aggressive reconnect offer sent to ${remoteClientId}`);
-                        } else {
-                            logger.warn(`Cannot create offer in current signaling state: ${newPC.signalingState}`);
-                            if (statusDiv) {
-                                statusDiv.textContent = `Recovery failed - invalid state: ${newPC.signalingState}`;
-                                statusDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
-                            }
-                        }
-                    } catch (err) {
-                        logger.error("Error in aggressive recovery:", err);
-                        // Don't remove the stream immediately, give it a chance
-                        if (statusDiv) {
-                            statusDiv.textContent = 'Recovery failed - retrying in 5s';
-                            
-                            // Add a retry button
-                            const retryButton = document.createElement('button');
-                            retryButton.textContent = 'Retry Now';
-                            retryButton.style.marginLeft = '5px';
-                            retryButton.style.padding = '2px 5px';
-                            retryButton.style.border = 'none';
-                            retryButton.style.borderRadius = '3px';
-                            retryButton.style.cursor = 'pointer';
-                            retryButton.onclick = () => performAggressiveRecovery();
-                            statusDiv.appendChild(retryButton);
-                            
-                            // Schedule another retry
-                            setTimeout(() => performAggressiveRecovery(), 5000);
-                        }
-                    }
-                }, 500);
-            } catch (err) {
-                logger.error("Failed aggressive recovery attempt:", err);
-                // Don't remove immediately, show error and retry button
-                if (statusDiv) {
-                    statusDiv.textContent = 'Recovery failed';
-                    statusDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
+                if (success) {
+                    // Send restart signal to remote peer
+                    sendToServer({
+                        type: "ICE_RESTART",
+                        target: remoteClientId,
+                        forceRelay: true,
+                        aggressive: true
+                    });
                     
-                    // Add retry button
-                    const retryButton = document.createElement('button');
-                    retryButton.textContent = 'Retry';
-                    retryButton.style.marginLeft = '5px';
-                    retryButton.style.padding = '2px 5px';
-                    retryButton.style.border = 'none';
-                    retryButton.style.borderRadius = '3px';
-                    retryButton.style.cursor = 'pointer';
-                    retryButton.onclick = () => performAggressiveRecovery();
-                    statusDiv.appendChild(retryButton);
+                    logger.info(`Aggressive recovery measures initiated for ${remoteClientId}`);
+                    
+                    if (statusDiv) {
+                        statusDiv.textContent = 'Attempting emergency recovery...';
+                        statusDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.9)';
+                    }
+                } else {
+                    logger.error(`Failed to apply aggressive recovery for ${remoteClientId}`);
+                    
+                    if (statusDiv) {
+                        statusDiv.textContent = 'Connection recovery failed';
+                        statusDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
+                    }
                 }
+            } catch (err) {
+                logger.error(`Error during ICE restart: ${err.message}`);
             }
         };
         
@@ -851,9 +638,6 @@ const handleICEConnectionStateChange = (pc, remoteClientId) => {
         
         // Try immediate ICE restart
         try {
-            pc.restartIce();
-            
-            // Also signal to the other peer
             sendToServer({
                 type: "ICE_RESTART",
                 target: remoteClientId,
