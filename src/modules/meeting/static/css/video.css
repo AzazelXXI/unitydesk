@@ -51,6 +51,49 @@
     border-color: #4CAF50;
 }
 
+/* Styles for leave call button */
+.leave-call-btn {
+    background-color: #FF3B30 !important; /* Màu đỏ */
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.leave-call-btn:hover {
+    background-color: #D73229 !important; /* Đỏ đậm hơn khi hover */
+    transform: scale(1.1);
+}
+
+/* Icon cho nút thoát cuộc gọi */
+.leave-call-icon {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+}
+
+.leave-call-icon:before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid white;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.leave-call-icon:after {
+    content: '';
+    position: absolute;
+    width: 8px; 
+    height: 2px;
+    background-color: white;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+}
+
 /* Media status indicator styles */
 .media-status {
     position: absolute;
@@ -97,8 +140,6 @@
 .unmute-button:hover {
     background-color: rgba(0, 0, 0, 0.9);
     color: #4CAF50;
-    border-color: #4CAF50;
-}
     border-color: #4CAF50;
 }
 

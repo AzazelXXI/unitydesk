@@ -29,20 +29,36 @@ const createControlsContainer = () => {
     audioToggleBtn.title = 'Mute';
     audioToggleBtn.className = 'control-button audio-btn';
     controlsContainer.appendChild(audioToggleBtn);
-    
-    // Add video toggle button
+      // Add video toggle button
     const videoToggleBtn = document.createElement('button');
     videoToggleBtn.innerHTML = '<i class="camera-icon"></i>';
     videoToggleBtn.title = 'Turn Off Camera';
     videoToggleBtn.className = 'control-button video-btn';
     controlsContainer.appendChild(videoToggleBtn);
     
+    // Add screen share button
+    const screenShareBtn = document.createElement('button');
+    screenShareBtn.innerHTML = '<i class="fa-solid fa-desktop"></i>';
+    screenShareBtn.title = 'Share Screen';
+    screenShareBtn.className = 'control-button screen-share-btn';
+    controlsContainer.appendChild(screenShareBtn);
+    
     // Add chat button
     const chatToggleBtn = document.createElement('button');
     chatToggleBtn.innerHTML = '<i class="chat-icon"></i>';
     chatToggleBtn.title = 'Chat';
     chatToggleBtn.className = 'control-button chat-btn';
-    controlsContainer.appendChild(chatToggleBtn);
+    controlsContainer.appendChild(chatToggleBtn);// Add leave call button
+    const leaveCallBtn = document.createElement('button');
+    leaveCallBtn.innerHTML = '<i class="fa-solid fa-phone"></i>';
+    leaveCallBtn.title = 'Disconnect';
+    leaveCallBtn.className = 'control-button leave-call-btn';
+    leaveCallBtn.style.backgroundColor = '#FF3B30';
+    leaveCallBtn.style.display = 'flex';
+    leaveCallBtn.style.alignItems = 'center';
+    leaveCallBtn.style.justifyContent = 'center';
+    leaveCallBtn.style.padding = '12px'; // Thêm padding phù hợp cho nút
+    controlsContainer.appendChild(leaveCallBtn); // Add disconnect button
 };
 
 /**
@@ -88,6 +104,16 @@ const createChatInterface = () => {
 const setupEventListeners = () => {
     // These will be connected to the actual handlers in main.js
     // By separating them here, we keep UI concerns separate from business logic
+
+    // Add screen share button event listener
+    const screenShareBtn = document.querySelector('.screen-share-btn');
+    if (screenShareBtn) {
+        screenShareBtn.addEventListener('click', () => {
+            // We'll import this function in main.js and connect it
+            const event = new CustomEvent('toggleScreenShare');
+            document.dispatchEvent(event);
+        });
+    }
 };
 
 /**
