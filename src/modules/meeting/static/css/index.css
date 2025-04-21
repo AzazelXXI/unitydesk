@@ -13,54 +13,116 @@
     --primary-dark: #4f46e5;
     --accent-color: #ec4899;
     --border-radius: 12px;
-    --shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    --shadow-hover: 0 10px 30px rgba(99, 102, 241, 0.2);
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --shadow-hover: 0 10px 30px rgba(99, 102, 241, 0.4);
     --transition: all 0.3s ease;
+    --bg-color: #1a1a1a; /* Màu nền tối */
+    --secondary-bg: #2a2a2a; /* Màu nền thứ cấp */
+    --text-color: #f5f5f5; /* Màu chữ sáng */
+    --border-color: #444; /* Màu viền */
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
 }
 
 body {
     font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    background: linear-gradient(135deg, var(--bg-color) 0%, #121212 100%);
     min-height: 100vh;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
 }
 
 #videos {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 16px;
-    width: 92%;
-    max-width: 1400px;
-    margin: 20px auto;
-    padding: 16px;
+    width: 95%;
+    max-width: 1500px;
+    margin: -80px auto 0; /* Điều chỉnh từ -60px lên -80px để đẩy cao hơn nữa */
+    padding: 12px;
+    background-color: transparent;
+    overflow: hidden;
+    flex: 1;
+    align-content: center;
 }
 
 /* Single participant layout - maximized view */
 #videos.single-participant {
-    grid-template-columns: 1fr;
-    max-width: 90%;
-    height: 80vh;
+    /* Đảm bảo giống với #videos mới */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+    width: 95%;
+    max-width: 1500px;
+    margin: -80px auto 0; /* Điều chỉnh lên cao hơn từ -60px thành -80px */
+    padding: 12px;
+    overflow: hidden;
+    align-content: center;
+}
+
+#videos.participants-1 {
+    /* Đảm bảo layout giống với #videos mới */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+    width: 95%;
+    max-width: 1500px;
+    margin: -80px auto 0; /* Điều chỉnh lên cao hơn từ -60px thành -80px */
+    padding: 12px;
+    position: relative;
+    top: auto;
+    left: auto;
+    z-index: 5;
+    background-color: transparent;
+    overflow: hidden;
+    align-content: center;
 }
 
 #videos.single-participant .video-container {
-    padding-top: 0;
-    height: 100%;
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* Tỷ lệ 16:9 */
+    height: 0;
+    margin: 0;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: var(--secondary-bg);
 }
 
 #videos.single-participant .video-player {
-    object-fit: contain;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Đảm bảo giống với video-player mặc định */
+    border-radius: var(--border-radius);
+    background-color: var(--secondary-bg);
 }
 
 .video-container {
     position: relative;
     width: 100%;
-    padding-top: 56.25%; /* 16:9 Aspect Ratio */
+    padding-top: 56.25%; /* Giữ tỷ lệ 16:9 */
     transition: var(--transition);
     border-radius: var(--border-radius);
     overflow: hidden;
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Thêm shadow mạnh hơn để nổi bật */
 }
 
 .video-container:hover {
-    transform: translateY(-5px);
+    transform: translateY(-8px); /* Tăng hiệu ứng hover */
     box-shadow: var(--shadow-hover);
 }
 
@@ -70,10 +132,12 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover; /* Giữ cover để lấp đầy container và tránh viền đen */
     border-radius: var(--border-radius);
     background-color: #111827;
     box-shadow: var(--shadow);
+    max-height: 100%;
+    max-width: 100%;
 }
 
 .smallFrame {
@@ -114,12 +178,12 @@ body {
 /* Control buttons container */
 #controls-container {
     position: fixed;
-    bottom: 30px;
+    bottom: 20px; /* Giảm từ 30px xuống 20px để hạ xuống thấp hơn */
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     gap: 16px;
-    padding: 12px 20px;
+    padding: 10px 18px; /* Giảm padding một chút */
     background: rgba(20, 20, 35, 0.7);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -171,7 +235,7 @@ body {
 
 /* Muted mic icon */
 .disabled .mic-icon::before {
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z'/%3E%3C/svg%3E") no-repeat center center;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03 .65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z'/%3E%3C/svg%3E") no-repeat center center;
 }
 
 /* Video button camera icon */
@@ -204,7 +268,7 @@ body {
     display: block;
     width: 20px;
     height: 20px;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M12 1C5.925 1 1 5.925 1 12c0 2.11.594 4.08 1.622 5.77L1.28 22.217c-.16.293-.047.65.16.856.207.207.563.32.856.16l4.447-1.342C8.42 22.953 10.39 23 12 23c6.075 0 11-4.925 11-11S18.075 1 12 1zm-5 12.5c-.828 0-1.5-.672-1.5-1.5s.672-1.5 1.5-1.5 1.5.672 1.5 1.5-.672 1.5-1.5 1.5zm5 0c-.828 0-1.5-.672-1.5-1.5s.672-1.5 1.5-1.5 1.5.672 1.5 1.5-.672 1.5-1.5 1.5zm5 0c-.828 0-1.5-.672-1.5-1.5s.672-1.5 1.5-1.5 1.5.672 1.5 1.5-.672 1.5-1.5 1.5z'/%3E%3C/svg%3E") no-repeat center center;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M12 1C5.925 1 1 5.925 1 12c0 2.11.594 4.08 1.622 5.77L1.28 22.217c-.16.293-.047.65.16.856.207.207.563.32.856.16l4.447-1.342C8.42 22.953 10.39 23 12 23c6.075 0 11-4.925 11-11S18.075 1 12 1zm-5 12.5c-.828 0-1.5-.672-1.5-1.5s.672-1.5 1.5-1.5 1.5.672 1.5 1.5-.672 1.5-1.5 1.5zm5 0c-.828 0-1.5-.672-1.5-1.5s.672-1.5 1.5-1.5 1.5.672 1.5 1.5-.672 1.5-1.5 1.5z'/%3E%3C/svg%3E") no-repeat center center;
 }
 
 /* Send button icon */
@@ -400,35 +464,5 @@ body {
     .control-container img {
         height: 20px;
         width: 20px;
-    }
-}
-
-/* Add responsive breakpoints */
-@media screen and (max-width: 768px) {
-    #videos {
-        width: 98%;
-        gap: 5px;
-        margin: 5px auto;
-    }
-
-    .video-container {
-        padding-top: 75%;
-        /* 4:3 Aspect ratio for mobile */
-    }
-}
-
-/* Optimize grid for different participant counts */
-@media screen and (min-width: 769px) {
-    #videos:has(.video-container:only-child) {
-        max-width: 800px;
-    }
-
-    #videos:has(.video-container:nth-child(2)) {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    #videos:has(.video-container:nth-child(3)),
-    #videos:has(.video-container:nth-child(4)) {
-        grid-template-columns: repeat(2, 1fr);
     }
 }

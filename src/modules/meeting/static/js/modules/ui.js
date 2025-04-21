@@ -274,12 +274,31 @@ export const updateParticipantLayout = () => {
     const videosContainer = document.getElementById('videos');
     const participantCount = Object.keys(state.peerConnections).length + 1; // +1 for local user
     
+    // Xóa tất cả các class liên quan đến số người tham gia trước đó
+    videosContainer.classList.remove('single-participant', 'participants-1', 'participants-2', 
+        'participants-3-4', 'participants-5-9', 'participants-10-16', 
+        'participants-17-25', 'participants-26-30', 'compact-mode');
+    
     if (participantCount <= 1) {
         // Single participant mode (just the local user)
+        // Thêm cả hai class để đảm bảo CSS được áp dụng đúng
         videosContainer.classList.add('single-participant');
+        videosContainer.classList.add('participants-1');
+    } else if (participantCount === 2) {
+        videosContainer.classList.add('participants-2');
+    } else if (participantCount <= 4) {
+        videosContainer.classList.add('participants-3-4');
+    } else if (participantCount <= 9) {
+        videosContainer.classList.add('participants-5-9');
+    } else if (participantCount <= 16) {
+        videosContainer.classList.add('participants-10-16');
+    } else if (participantCount <= 25) {
+        videosContainer.classList.add('participants-17-25');
+    } else if (participantCount <= 30) {
+        videosContainer.classList.add('participants-26-30');
     } else {
-        // Multiple participants mode
-        videosContainer.classList.remove('single-participant');
+        // Trên 30 người thì chuyển sang chế độ compact
+        videosContainer.classList.add('compact-mode');
     }
     
     console.log(`Layout updated for ${participantCount} participants`);
