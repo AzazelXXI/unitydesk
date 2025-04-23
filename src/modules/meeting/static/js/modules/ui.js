@@ -133,6 +133,20 @@ export const createVideoElement = (remoteClientId) => {
     videoElement.playsinline = true;
     videoElement.muted = false; // Make sure remote videos are NOT muted
 
+    // Thêm biểu tượng mic tắt
+    const micIndicator = document.createElement('div');
+    micIndicator.className = 'media-indicator mic-indicator';
+    micIndicator.id = `mic-indicator-${remoteClientId}`;
+    micIndicator.innerHTML = '<i class="mic-icon"></i>';
+    videoContainer.appendChild(micIndicator);
+
+    // Thêm biểu tượng camera tắt
+    const cameraIndicator = document.createElement('div');
+    cameraIndicator.className = 'media-indicator camera-indicator';
+    cameraIndicator.id = `camera-indicator-${remoteClientId}`;
+    cameraIndicator.innerHTML = '<i class="camera-icon"></i>';
+    videoContainer.appendChild(cameraIndicator);
+
     videoContainer.appendChild(videoElement);
     document.getElementById('videos').appendChild(videoContainer);
     
@@ -316,4 +330,36 @@ export const removeRemoteVideoElement = (clientId) => {
     
     // Update layout based on number of participants
     updateParticipantLayout();
+};
+
+/**
+ * Update media status indicators for a participant
+ * @param {string} clientId - The client ID
+ * @param {string} mediaType - The type of media ('audio' or 'video')
+ * @param {boolean} enabled - Whether the media is enabled
+ */
+export const updateMediaStatus = (clientId, mediaType, enabled) => {
+    // Determine which indicator to update
+    const indicatorType = mediaType === 'audio' ? 'mic' : 'camera';
+    const indicator = document.getElementById(`${indicatorType}-indicator-${clientId}`);
+    
+    if (indicator) {
+        if (!enabled) {
+            // Media is disabled, show the indicator
+            indicator.classList.add('active');
+            // Thêm class disabled cho icon bên trong (giống với button controls)
+            const iconElement = indicator.querySelector(`.${indicatorType}-icon`);
+            if (iconElement) {
+                iconElement.parentNode.classList.add('disabled');
+            }
+        } else {
+            // Media is enabled, hide the indicator
+            indicator.classList.remove('active');
+            // Xóa class disabled cho icon bên trong
+            const iconElement = indicator.querySelector(`.${indicatorType}-icon`);
+            if (iconElement) {
+                iconElement.parentNode.classList.remove('disabled');
+            }
+        }
+    }
 };
