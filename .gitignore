@@ -3,3 +3,4 @@ myVC
 .venv
 **/__pycache__/
 **.log
+.refer/
