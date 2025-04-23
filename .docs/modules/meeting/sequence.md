@@ -1,6 +1,8 @@
-# Meeting Module Sequence Diagram
+# Meeting Module Sequence Diagrams
 
-This diagram illustrates the WebRTC connection establishment flow between two clients in the meeting module.
+![WebRTC Banner](https://via.placeholder.com/800x200?text=WebRTC+Communication+Flow)
+
+This documentation illustrates the real-time communication flows implemented in the Meeting Module, focusing on WebRTC connection establishment and signaling processes between clients.
 
 ```mermaid
 sequenceDiagram
@@ -20,8 +22,7 @@ sequenceDiagram
     Client2->>Server: JOIN message (clientId)
     
     Server->>Client1: Notify about Client2 (JOIN)
-    
-    Note over Client1,Client2: WebRTC Connection Establishment
+      Note over Client1,Client2: WebRTC Connection Establishment
     
     Client1->>Client1: Create RTCPeerConnection with ICE config
     Client1->>Client1: Get user media (audio/video)
@@ -29,6 +30,8 @@ sequenceDiagram
     Client1->>Client1: Create offer (SDP)
     Client1->>Client1: Set local description
     Client1->>Server: Send OFFER to Client2 (with audioEnabled state)
+    Server->>RoomManager: Validate permissions
+    RoomManager-->>Server: Permission granted
     Server->>Client2: Forward OFFER (with Client1's audioEnabled)
     
     Client2->>Client2: Create RTCPeerConnection with ICE config
@@ -37,7 +40,10 @@ sequenceDiagram
     Client2->>Client2: Create answer (SDP)
     Client2->>Client2: Set local description
     Client2->>Server: Send ANSWER to Client1 (with audioEnabled state)
+    Server->>RoomManager: Log connection event
     Server->>Client1: Forward ANSWER (with Client2's audioEnabled)
+    
+    Client1->>Analytics: Report connection establishment
     
     Client1->>Client1: Set remote description (Client2's answer)
     
@@ -46,9 +52,13 @@ sequenceDiagram
     par ICE Candidate gathering and monitoring
         Client1->>STUNTURNServer: Get public IP (STUN request)
         STUNTURNServer-->>Client1: STUN response
+        Client1->>Analytics: Log STUN server response time
         
         Client1->>Client1: Monitor ICE gathering state
         Client1->>Client1: Log detailed candidate information
+        
+        Client1->>RoomManager: Register connection state
+        RoomManager->>RoomManager: Update room connection graph
         
         loop For each candidate (host, srflx, relay)
             Client1->>Server: Send CANDIDATE with type info
