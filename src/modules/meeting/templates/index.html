@@ -5,8 +5,14 @@
 {% endblock %}
 {% block content %}
 <div id="videos">
-    <div class="video-container">
+    <div class="video-container" id="container-local">
         <video class="video-player" id="localVideo" autoplay playsinline muted></video>
+        <div class="media-indicator mic-indicator" id="mic-indicator-local">
+            <div class="mic-icon"></div>
+        </div>
+        <div class="media-indicator camera-indicator" id="camera-indicator-local">
+            <div class="camera-icon"></div>
+        </div>
     </div>
 </div>
 {% endblock %}

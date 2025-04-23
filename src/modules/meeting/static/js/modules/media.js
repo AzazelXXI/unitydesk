@@ -25,6 +25,18 @@ export const initializeMedia = async () => {
         document.getElementById("localVideo").srcObject = stream;
         document.getElementById("localVideo").muted = true; // Mute local playback to prevent feedback
         
+        // Initialize media status indicators based on initial track states
+        const audioTrack = stream.getAudioTracks()[0];
+        const videoTrack = stream.getVideoTracks()[0];
+        
+        // Sử dụng setTimeout để đảm bảo UI đã được tạo
+        setTimeout(() => {
+            import('./ui.js').then(({ updateMediaStatus }) => {
+                if (audioTrack) updateMediaStatus('local', 'audio', audioTrack.enabled);
+                if (videoTrack) updateMediaStatus('local', 'video', videoTrack.enabled);
+            });
+        }, 500);
+        
         return stream;
     } catch (error) {
         console.error("Error accessing media devices:", error);
@@ -52,6 +64,12 @@ export const toggleAudio = () => {
             audioToggleBtn.classList.add('disabled');
         }
         
+        // Update local user's mic status indicator
+        import('./ui.js').then(({ updateMediaStatus }) => {
+            // Sử dụng 'local' làm ID cho người dùng hiện tại
+            updateMediaStatus('local', 'audio', audioTrack.enabled);
+        });
+        
         // Send audio state to all peers
         sendToServer({
             type: "AUDIO_TOGGLE",
@@ -59,7 +77,7 @@ export const toggleAudio = () => {
         });
         
         console.log(`Microphone ${audioTrack.enabled ? 'enabled' : 'disabled'}`);
-    } else {
+    }else {
         console.warn("No audio track found");
     }
 };
@@ -82,6 +100,12 @@ export const toggleVideo = () => {
         } else {
             videoToggleBtn.classList.add('disabled');
         }
+        
+        // Update local user's camera status indicator
+        import('./ui.js').then(({ updateMediaStatus }) => {
+            // Sử dụng 'local' làm ID cho người dùng hiện tại
+            updateMediaStatus('local', 'video', videoTrack.enabled);
+        });
         
         // Send video state to all peers
         sendToServer({
