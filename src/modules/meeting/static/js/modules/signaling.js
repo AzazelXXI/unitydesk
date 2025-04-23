@@ -181,7 +181,19 @@ const handleMessage = async ({ data }) => {    try {
                   case "AUDIO_TOGGLE":
                 // Handle remote user's audio state change
                 logger.info(`Remote user ${data.source} ${data.enabled ? 'unmuted' : 'muted'} their microphone`);
-                // You could update UI to show mute status if desired
+                // Update UI to show mute status
+                import('./ui.js').then(({ updateMediaStatus }) => {
+                    updateMediaStatus(data.source, 'audio', data.enabled);
+                });
+                break;
+                
+            case "VIDEO_TOGGLE":
+                // Handle remote user's video state change
+                logger.info(`Remote user ${data.source} ${data.enabled ? 'turned on' : 'turned off'} their camera`);
+                // Update UI to show camera status
+                import('./ui.js').then(({ updateMediaStatus }) => {
+                    updateMediaStatus(data.source, 'video', data.enabled);
+                });
                 break;
                 
             case "CHAT_MESSAGE":

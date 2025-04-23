@@ -53,6 +53,7 @@ body {
     overflow: hidden;
     flex: 1;
     align-content: center;
+    transition: var(--transition); /* Thêm transition cho mượt mà */
 }
 
 /* Single participant layout - maximized view */
@@ -138,6 +139,15 @@ body {
     box-shadow: var(--shadow);
     max-height: 100%;
     max-width: 100%;
+}
+
+/* Tạo hiệu ứng gương cho camera của người dùng */
+#localVideo {
+    transform: scaleX(-1); /* Đảo ngược hình ảnh để tạo hiệu ứng gương */
+    -webkit-transform: scaleX(-1); /* Safari và Chrome */
+    -moz-transform: scaleX(-1); /* Firefox */
+    -ms-transform: scaleX(-1); /* IE */
+    -o-transform: scaleX(-1); /* Opera */
 }
 
 .smallFrame {
@@ -288,19 +298,41 @@ body {
     }
 }
 
+/* Main wrapper styles for videos and chat */
+body {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: var(--transition);
+}
+
+body.chat-open {
+    padding-right: 320px; /* Khoảng trống cho chat khi hiển thị */
+}
+
+/* Điều chỉnh vị trí và kích thước của videos khi chat mở */
+body.chat-open #videos {
+    max-width: calc(95% - 160px); /* Giảm kích thước tối đa để phù hợp khi chat mở */
+    margin-right: auto;
+    margin-left: auto;
+}
+
 /* Chat container styling */
 #chat-container {
     position: fixed;
-    right: -350px;
+    right: -320px; /* Ẩn chat ở bên ngoài màn hình */
     top: 0;
     width: 320px;
     height: 100%;
-    background: white;
-    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+    background: #ffffff; /* Đổi màu nền sang trắng */
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.15);
+    border-left: 1px solid #e5e7eb;
     display: flex;
     flex-direction: column;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    z-index: 1000;
+    transition: var(--transition);
+    overflow: hidden;
+    z-index: 900;
+    border-radius: 16px 0 0 16px; /* Bo tròn góc bên trái của khung chat */
 }
 
 #chat-container.chat-visible {
@@ -308,12 +340,7 @@ body {
 }
 
 #chat-container.chat-hidden {
-    right: -350px;
-}
-
-/* Chat will overlay on top of videos instead of pushing them */
-#chat-container {
-    z-index: 1001; /* Ensure chat appears above videos */
+    right: -320px;
 }
 
 /* Chat header styling */
@@ -324,6 +351,8 @@ body {
     padding: 15px;
     background-color: var(--primary-color);
     color: white;
+    width: 100%;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 #chat-header h3 {
@@ -341,6 +370,11 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: transform 0.2s;
+}
+
+.close-chat:hover {
+    transform: scale(1.1);
 }
 
 /* Chat messages area */
@@ -351,7 +385,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    background-color: #f9f9f9;
+    background-color: #f9fafb; /* Màu nền nhẹ cho khu vực tin nhắn */
 }
 
 /* Chat message styling */
@@ -371,7 +405,7 @@ body {
 
 .chat-message.remote {
     align-self: flex-start;
-    background-color: #e5e7eb;
+    background-color: #e2e8f0;
     color: #111827;
     border-bottom-left-radius: 4px;
 }
@@ -387,14 +421,17 @@ body {
 #chat-input-area {
     display: flex;
     padding: 15px;
-    border-top: 1px solid #e5e7eb;
-    background-color: white;
+    border-top: 1px solid #e5e7eb; /* Viền màu nhẹ nhàng */
+    background-color: #ffffff; /* Màu nền trắng cho khu vực nhập liệu */
+    width: 100%;
 }
 
 #chat-input {
     flex: 1;
     padding: 10px 15px;
-    border: 1px solid #d1d5db;
+    border: 1px solid #e2e8f0;
+    background-color: #f1f5f9;
+    color: #333333;
     border-radius: 100px;
     outline: none;
     font-family: inherit;
@@ -451,6 +488,68 @@ body {
     background-color: #e11d48;
 }
 
+/* Indicator icons for muted audio and disabled video */
+.media-indicator {
+    position: absolute;
+    bottom: 10px;
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.video-container:hover .media-indicator {
+    opacity: 0.8;
+}
+
+.mic-indicator {
+    left: 10px;
+}
+
+.camera-indicator {
+    left: 55px;
+}
+
+.media-indicator.active {
+    opacity: 1 !important; /* Đảm bảo luôn hiển thị khi active */
+    background-color: #f43f5e; /* Màu đỏ giống nút disabled */
+    box-shadow: 0 0 10px rgba(244, 63, 94, 0.5); /* Thêm glow effect */
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.media-indicator i {
+    color: white;
+    font-size: 18px;
+}
+
+/* Hiển thị biểu tượng mic và camera tắt giống như biểu tượng trong nút điều khiển */
+.media-indicator.active .mic-icon::before {
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03 .65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z'/%3E%3C/svg%3E") no-repeat center center;
+}
+
+.media-indicator.active .camera-icon::before {
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.54-.18L19.73 21 21 19.73 3.27 2z'/%3E%3C/svg%3E") no-repeat center center;
+}
+
+/* Participant name display */
+.participant-name {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    z-index: 4;
+}
+
 @media screen and (max-width:600px) {
     .smallFrame {
         height: 80px;
@@ -460,5 +559,18 @@ body {
     .control-container img {
         height: 20px;
         width: 20px;
+    }
+    
+    .media-indicator {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .mic-indicator {
+        left: 5px;
+    }
+    
+    .camera-indicator {
+        left: 35px;
     }
 }
