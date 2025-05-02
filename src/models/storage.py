@@ -4,7 +4,7 @@ import enum
 from datetime import datetime
 
 from src.database import Base
-from src.models.base import BaseModel
+from src.models.base import RootModel
 
 
 class StoragePermissionLevel(str, enum.Enum):
@@ -15,7 +15,7 @@ class StoragePermissionLevel(str, enum.Enum):
     FULL = "full"          # Full control including delete
 
 
-class File(Base, BaseModel):
+class File(Base, RootModel):
     """File model for cloud storage"""
     __tablename__ = "files"
     
@@ -43,7 +43,7 @@ class File(Base, BaseModel):
     permissions = relationship("FilePermission", back_populates="file", cascade="all, delete-orphan")
 
 
-class Folder(Base, BaseModel):
+class Folder(Base, RootModel):
     """Folder model for organizing files"""
     __tablename__ = "folders"
     
@@ -63,7 +63,7 @@ class Folder(Base, BaseModel):
     documents = relationship("Document", back_populates="parent_folder")
 
 
-class FilePermission(Base, BaseModel):
+class FilePermission(Base, RootModel):
     """Permissions for file access"""
     __tablename__ = "file_permissions"
     
@@ -79,4 +79,4 @@ class FilePermission(Base, BaseModel):
     
     # Relationships
     file = relationship("File", back_populates="permissions")
-    user = relationship("User", nullable=True)
+    user = relationship("User")

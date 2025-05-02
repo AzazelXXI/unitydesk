@@ -1,9 +1,9 @@
-from sqlalchemy import Column, String, Boolean, ForeignKey, Text, Enum, Integer
+from sqlalchemy import Column, String, Boolean, ForeignKey, Text, Enum, Integer, DateTime
 from sqlalchemy.orm import relationship
 import enum
 
 from src.database import Base
-from src.models.base import BaseModel
+from src.models.base import RootModel
 
 
 class DocumentType(str, enum.Enum):
@@ -23,7 +23,7 @@ class DocumentPermissionLevel(str, enum.Enum):
     OWNER = "owner"      # Full control
 
 
-class Document(Base, BaseModel):
+class Document(Base, RootModel):
     """Document model for collaborative document editing"""
     __tablename__ = "documents"
     
@@ -47,7 +47,7 @@ class Document(Base, BaseModel):
     permissions = relationship("DocumentPermission", back_populates="document", cascade="all, delete-orphan")
 
 
-class DocumentVersion(Base, BaseModel):
+class DocumentVersion(Base, RootModel):
     """Version history for documents"""
     __tablename__ = "document_versions"
     
@@ -64,7 +64,7 @@ class DocumentVersion(Base, BaseModel):
     created_by = relationship("User")
 
 
-class DocumentPermission(Base, BaseModel):
+class DocumentPermission(Base, RootModel):
     """Permissions for document access"""
     __tablename__ = "document_permissions"
     
@@ -80,4 +80,4 @@ class DocumentPermission(Base, BaseModel):
     
     # Relationships
     document = relationship("Document", back_populates="permissions")
-    user = relationship("User", nullable=True)
+    user = relationship("User")

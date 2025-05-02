@@ -75,8 +75,9 @@ class UserBasic(BaseModel):
     username: str
     email: str
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class PositionResponse(BaseModel):
@@ -92,8 +93,9 @@ class PositionResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class DepartmentResponse(BaseModel):
@@ -110,16 +112,18 @@ class DepartmentResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class DepartmentDetailResponse(DepartmentResponse):
     head: Optional[UserBasic]
     subdepartments: List['DepartmentResponse'] = []
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 # For organizational chart
@@ -138,8 +142,9 @@ class DepartmentTreeNode(BaseModel):
 class OrganizationalChartResponse(BaseModel):
     departments: List[DepartmentTreeNode]
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class DepartmentMembershipResponse(BaseModel):
@@ -154,8 +159,9 @@ class DepartmentMembershipResponse(BaseModel):
     user: UserBasic
     department: DepartmentResponse
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 # For batch operations

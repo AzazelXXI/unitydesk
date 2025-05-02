@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Project Details - CSA Platform</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        .project-container {
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .project-title {
+            margin: 0;
+            color: var(--secondary-color);
+        }
+        
+        .project-status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-active {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status-completed {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+        
+        .status-hold {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .project-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .project-info {
+            margin-bottom: 30px;
+        }
+        
+        .info-row {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        .info-label {
+            width: 180px;
+            font-weight: bold;
+        }
+        
+        .info-value {
+            flex: 1;
+        }
+        
+        .progress-container {
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        
+        .tab.active {
+            border-bottom: 2px solid var(--primary-color);
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .task-list {
+            margin-top: 20px;
+        }
+        
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .task-checkbox {
+            margin-right: 15px;
+        }
+        
+        .task-content {
+            flex: 1;
+        }
+        
+        .task-title {
+            margin: 0 0 5px;
+        }
+        
+        .task-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .team-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .team-member {
+            display: flex;
+            align-items: center;
+            background-color: #f9f9f9;
+            padding: 10px 15px;
+            border-radius: 5px;
+        }
+        
+        .team-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            margin-right: 12px;
+        }
+        
+        .team-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .team-name {
+            font-weight: 500;
+        }
+        
+        .team-role {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .button {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .button.primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .button.secondary {
+            background-color: white;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+        
+        .button.danger {
+            background-color: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Project Details</h1>
+    </header>
+    
+    <main>
+        <nav>
+            <ul>
+                <li><a href="/projects">All Projects</a></li>
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/tasks">Tasks</a></li>
+                <li><a href="/calendar">Calendar</a></li>
+                <li><a href="/">Home</a></li>
+            </ul>
+        </nav>
+        
+        <div class="project-container">
+            <div class="project-header">
+                <h2 class="project-title">{{ project.name }}</h2>
+                <div class="project-actions">
+                    <a href="/projects/{{ project.id }}/edit" class="button secondary">Edit Project</a>
+                    <button class="button danger">Delete Project</button>
+                </div>
+            </div>
+            
+            <div class="project-info">
+                <div class="info-row">
+                    <div class="info-label">Status:</div>
+                    <div class="info-value">
+                        <span class="project-status status-active">{{ project.status }}</span>
+                    </div>
+                </div>
+                
+                <div class="info-row">
+                    <div class="info-label">Start Date:</div>
+                    <div class="info-value">February 15, 2025</div>
+                </div>
+                
+                <div class="info-row">
+                    <div class="info-label">Due Date:</div>
+                    <div class="info-value">May 30, 2025</div>
+                </div>
+                
+                <div class="info-row">
+                    <div class="info-label">Project Manager:</div>
+                    <div class="info-value">Sarah Chen</div>
+                </div>
+                
+                <div class="info-row">
+                    <div class="info-label">Description:</div>
+                    <div class="info-value">
+                        <p>A comprehensive project to redesign and rebuild the company website using modern technologies and best practices. The goal is to improve user experience, increase conversion rates, and optimize performance.</p>
+                    </div>
+                </div>
+                
+                <div class="progress-container">
+                    <div class="info-row">
+                        <div class="info-label">Progress:</div>
+                        <div class="info-value">65%</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 65%;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="tasks">Tasks</div>
+                <div class="tab" data-tab="team">Team</div>
+                <div class="tab" data-tab="files">Files</div>
+                <div class="tab" data-tab="discussion">Discussion</div>
+            </div>
+            
+            <div class="tab-content active" id="tasks-content">
+                <h3>Project Tasks</h3>
+                <div class="task-list">
+                    <div class="task-item">
+                        <input type="checkbox" class="task-checkbox" checked>
+                        <div class="task-content">
+                            <h4 class="task-title">Initial requirements gathering</h4>
+                            <div class="task-meta">Completed on: Feb 20, 2025 | Assigned to: Alex Johnson</div>
+                        </div>
+                    </div>
+                    
+                    <div class="task-item">
+                        <input type="checkbox" class="task-checkbox" checked>
+                        <div class="task-content">
+                            <h4 class="task-title">Create wireframes</h4>
+                            <div class="task-meta">Completed on: Mar 5, 2025 | Assigned to: Emily Wong</div>
+                        </div>
+                    </div>
+                    
+                    <div class="task-item">
+                        <input type="checkbox" class="task-checkbox">
+                        <div class="task-content">
+                            <h4 class="task-title">Develop homepage</h4>
+                            <div class="task-meta">Due: Apr 30, 2025 | Assigned to: Michael Rodriguez</div>
+                        </div>
+                    </div>
+                    
+                    <div class="task-item">
+                        <input type="checkbox" class="task-checkbox">
+                        <div class="task-content">
+                            <h4 class="task-title">Content migration</h4>
+                            <div class="task-meta">Due: May 15, 2025 | Assigned to: Jessica Lee</div>
+                        </div>
+                    </div>
+                    
+                    <div class="task-item">
+                        <input type="checkbox" class="task-checkbox">
+                        <div class="task-content">
+                            <h4 class="task-title">User testing</h4>
+                            <div class="task-meta">Due: May 25, 2025 | Assigned to: David Smith</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 15px;">
+                    <a href="/tasks/new?project={{ project.id }}" class="button primary">Add Task</a>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="team-content">
+                <h3>Project Team</h3>
+                <div class="team-list">
+                    <div class="team-member">
+                        <div class="team-avatar">SC</div>
+                        <div class="team-info">
+                            <div class="team-name">Sarah Chen</div>
+                            <div class="team-role">Project Manager</div>
+                        </div>
+                    </div>
+                    
+                    <div class="team-member">
+                        <div class="team-avatar">AJ</div>
+                        <div class="team-info">
+                            <div class="team-name">Alex Johnson</div>
+                            <div class="team-role">Business Analyst</div>
+                        </div>
+                    </div>
+                    
+                    <div class="team-member">
+                        <div class="team-avatar">EW</div>
+                        <div class="team-info">
+                            <div class="team-name">Emily Wong</div>
+                            <div class="team-role">UI/UX Designer</div>
+                        </div>
+                    </div>
+                    
+                    <div class="team-member">
+                        <div class="team-avatar">MR</div>
+                        <div class="team-info">
+                            <div class="team-name">Michael Rodriguez</div>
+                            <div class="team-role">Frontend Developer</div>
+                        </div>
+                    </div>
+                    
+                    <div class="team-member">
+                        <div class="team-avatar">JL</div>
+                        <div class="team-info">
+                            <div class="team-name">Jessica Lee</div>
+                            <div class="team-role">Content Manager</div>
+                        </div>
+                    </div>
+                    
+                    <div class="team-member">
+                        <div class="team-avatar">DS</div>
+                        <div class="team-info">
+                            <div class="team-name">David Smith</div>
+                            <div class="team-role">QA Specialist</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 15px;">
+                    <button class="button primary">Add Team Member</button>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="files-content">
+                <h3>Project Files</h3>
+                <ul>
+                    <li><a href="#">Project_Brief.pdf</a> - Uploaded Feb 15, 2025</li>
+                    <li><a href="#">Website_Wireframes.fig</a> - Uploaded Mar 3, 2025</li>
+                    <li><a href="#">Content_Inventory.xlsx</a> - Uploaded Mar 20, 2025</li>
+                    <li><a href="#">Design_Assets.zip</a> - Uploaded Apr 10, 2025</li>
+                </ul>
+                <div style="margin-top: 15px;">
+                    <button class="button primary">Upload File</button>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="discussion-content">
+                <h3>Project Discussion</h3>
+                <p>Discussion forum will be implemented in the next phase.</p>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 CSA Platform</p>
+    </footer>
+    
+    <script>
+        // Simple tab functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs
+                    tabs.forEach(t => t.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    tab.classList.add('active');
+                    
+                    // Hide all tab content
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // Show the content for the clicked tab
+                    const tabName = tab.getAttribute('data-tab');
+                    document.getElementById(tabName + '-content').classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

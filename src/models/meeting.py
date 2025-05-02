@@ -4,7 +4,7 @@ import enum
 from datetime import datetime
 
 from src.database import Base
-from src.models.base import BaseModel
+from src.models.base import RootModel
 
 
 class MeetingStatus(str, enum.Enum):
@@ -24,6 +24,7 @@ class Meeting(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     status = Column(Enum(MeetingStatus), default=MeetingStatus.SCHEDULED)
     description = Column(Text, nullable=True)
+    # Adding missing fields from the duplicate class below
     host_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     is_recurring = Column(Boolean, default=False)
     scheduled_start_time = Column(DateTime, nullable=True)
@@ -37,8 +38,9 @@ class Meeting(Base):
 
 
 class Participant(Base):
-    """Participants in a meeting"""
-    __tablename__ = "participants"
+    """Participant model for meeting attendance tracking"""
+    __tablename__ = 'participants'
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(String, index=True)

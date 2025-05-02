@@ -4,7 +4,7 @@ import enum
 from datetime import datetime
 
 from src.database import Base
-from src.models.base import BaseModel
+from src.models.base import RootModel
 
 
 class ChatType(str, enum.Enum):
@@ -25,7 +25,7 @@ class MessageType(str, enum.Enum):
     CALL = "call"             # Call invitation or summary
 
 
-class Chat(Base, BaseModel):
+class Chat(Base, RootModel):
     """Chat model representing direct messages, group chats, or channels"""
     __tablename__ = "chats"
     
@@ -55,7 +55,7 @@ class Chat(Base, BaseModel):
         return None
 
 
-class ChatMember(Base, BaseModel):
+class ChatMember(Base, RootModel):
     """Association between users and chats"""
     __tablename__ = "chat_members"
     
@@ -70,7 +70,7 @@ class ChatMember(Base, BaseModel):
     user = relationship("User", back_populates="chat_memberships")
 
 
-class Message(Base, BaseModel):
+class Message(Base, RootModel):
     """Messages sent in chats"""
     __tablename__ = "messages"
     

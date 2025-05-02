@@ -1,35 +1,58 @@
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
+# filepath: d:\projects\CSA\csa-hello\src\main.py
+"""
+CSA Platform - Main Application File
+
+This file initializes the FastAPI application and includes all routers.
+Application logic is moved to appropriate controller files.
+Web routes for Jinja templates are in the src/web/ directory.
+API routes are centralized through the api_router module with versioning.
+"""
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.templating import Jinja2Templates
 from starlette.staticfiles import StaticFiles
-from src.modules.meeting.manager import MeetingManager
 import ssl
-import logging
-from logging.handlers import RotatingFileHandler
 import asyncio
+import logging
 
-# Configure logging
-log_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-log_file = "app.log"
-log_handler = RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=2)
-log_handler.setFormatter(log_formatter)
-log_handler.setLevel(logging.INFO)
+# Import all web routers through the centralized import
+from src.web import web_routers
 
-app_logger = logging.getLogger("fastapi")
-app_logger.setLevel(logging.INFO)
-app_logger.addHandler(log_handler)
+# Import centralized API router (includes all API controllers)
+from src.api_router import api_router, ws_router as notification_ws_router
 
+# Import middleware and logging
+from src.middleware import log_exceptions_middleware, request_logging_middleware
+from src.logging_config import setup_logging
+
+# Set up logging
+app_logger = setup_logging()
+
+# Configure SSL for secure connections
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-ssl_context.load_cert_chain('cert.pem', keyfile='key.pem')
+ssl_context.load_cert_chain(".cert/cert.pem", keyfile=".cert/key.pem")
 
-templates = Jinja2Templates(directory="src/modules/meeting/templates") 
+# Initialize FastAPI application
+app = FastAPI(
+    title="CSA Platform",
+    description="Customer Service Automation Platform",
+    version="1.0.0",
+    docs_url="/api/v1/docs",
+)
 
-meeting_manager = MeetingManager()
+# Mount static files for each web module
+app.mount("/static", StaticFiles(directory="src/web/core/static"), name="static")
+app.mount(
+    "/meeting/static",
+    StaticFiles(directory="src/web/meeting/static"),
+    name="meeting_static",
+)
+app.mount(
+    "/user/static",
+    StaticFiles(directory="src/web/user/static"),
+    name="user_static",
+)
 
-app = FastAPI()
-app.mount("/static", StaticFiles(directory="src/modules/meeting/static"), name="static")
-
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allows all origins
@@ -38,51 +61,22 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-# Log uncaught exceptions
-@app.middleware("http")
-async def log_exceptions(request: Request, call_next):
-    try:
-        response = await call_next(request)
-        return response
-    except Exception as e:
-        app_logger.exception("Unhandled exception occurred")
-        raise e
+# Add custom middleware
+app.middleware("http")(log_exceptions_middleware)
+app.middleware("http")(request_logging_middleware)
 
-@app.get("/")
-async def home(request: Request):
-    return templates.TemplateResponse(request=request, name="home.html")
+# Include all web routers (Jinja templates)
+for router in web_routers:
+    app.include_router(router)
 
-@app.get("/favicon.ico")
-async def favicon(request: Request):
-    return FileResponse("src/assets/favicon.ico")
+# Include the centralized API router (which includes all API routes with versioning)
+app.include_router(api_router)
 
-@app.websocket("/ws/{room_name}/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, room_name: str, client_id: str):
-    try:
-        app_logger.info(f"Client {client_id} joining room {room_name}")
-        await meeting_manager.join(room_name, client_id, websocket)
-        
-        while True:
-            try:
-                data = await websocket.receive_json()
-                app_logger.info(f"Received message type: {data.get('type')} from client {client_id}")
-                await meeting_manager.broadcast(room_name, data, client_id)
-            except WebSocketDisconnect:
-                app_logger.info(f"Client {client_id} disconnected from room {room_name}")
-                await meeting_manager.leave(room_name, client_id)
-                break
-            except Exception as e:
-                app_logger.error(f"Error processing message from {client_id}: {str(e)}")
-                continue
-    except Exception as e:
-        app_logger.error(f"Error in websocket connection: {str(e)}")
-        raise
+# Include WebSocket router separately
+app.include_router(notification_ws_router)
 
-@app.get("/room/{roomID}")
-async def get_video(request: Request, roomID:str):
-    return templates.TemplateResponse(request=request, name="index.html")
 
-# Gracefully handle asyncio.CancelledError
+# Gracefully handle asyncio.CancelledError on shutdown
 @app.on_event("shutdown")
 async def shutdown_event():
     try:

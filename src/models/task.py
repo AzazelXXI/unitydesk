@@ -4,7 +4,7 @@ import enum
 from datetime import datetime
 
 from src.database import Base
-from src.models.base import BaseModel
+from src.models.base import RootModel
 
 
 class TaskStatus(str, enum.Enum):
@@ -24,7 +24,7 @@ class TaskPriority(str, enum.Enum):
     URGENT = "urgent"
 
 
-class Project(Base, BaseModel):
+class Project(Base, RootModel):
     """Project model for organizing related tasks"""
     __tablename__ = "projects"
     
@@ -42,7 +42,7 @@ class Project(Base, BaseModel):
     tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
 
 
-class Task(Base, BaseModel):
+class Task(Base, RootModel):
     """Task model for managing work items"""
     __tablename__ = "tasks"
     
@@ -66,7 +66,7 @@ class Task(Base, BaseModel):
     parent_task = relationship("Task", remote_side=[id], backref="subtasks")
 
 
-class TaskAssignee(Base, BaseModel):
+class TaskAssignee(Base, RootModel):
     """Association between tasks and users (assignees)"""
     __tablename__ = "task_assignees"
     
@@ -80,7 +80,7 @@ class TaskAssignee(Base, BaseModel):
     user = relationship("User", back_populates="task_assignments")
 
 
-class TaskComment(Base, BaseModel):
+class TaskComment(Base, RootModel):
     """Comments on tasks"""
     __tablename__ = "task_comments"
     

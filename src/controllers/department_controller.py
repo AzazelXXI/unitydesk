@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc, and_, or_
+from datetime import datetime, timedelta
 
 from src.database import get_db
 from src.models.user import Department, Position, DepartmentMembership, User, UserProfile
@@ -11,7 +12,7 @@ from src.schemas.department import (
     DepartmentMembershipCreate, DepartmentMembershipUpdate, DepartmentMembershipResponse,
     DepartmentReorderRequest, OrganizationalChartResponse, DepartmentTreeNode
 )
-from src.schemas.user import UserResponse
+from src.schemas.user import UserBase
 
 router = APIRouter(
     prefix="/api/departments",

@@ -1,10 +1,10 @@
-from sqlalchemy import Column, String, Boolean, ForeignKey, Text, Enum, Integer, DateTime, Float, Table
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, String, Boolean, ForeignKey, Text, Enum, Integer, DateTime, Float, Table, Index
+from sqlalchemy.orm import relationship, backref
 import enum
 from datetime import datetime
 
 from src.database import Base
-from src.models.base import BaseModel
+from src.models.base import RootModel
 
 
 class ProjectStatus(str, enum.Enum):
@@ -66,23 +66,28 @@ project_team_association = Table(
 )
 
 
-class MarketingProject(Base, BaseModel):
+class MarketingProject(Base, RootModel):
     """Marketing project model for agency work"""
     __tablename__ = "marketing_projects"
+    __table_args__ = (
+        # Composite index for status-based filtering with dates (common query pattern)
+        # This will speed up queries that filter projects by status and date range
+        {'mysql_engine': 'InnoDB', 'mysql_charset': 'utf8mb4'}
+    )
     
-    name = Column(String(255), nullable=False)
+    name = Column(String(255), nullable=False, index=True)  # Added index for name searches
     description = Column(Text, nullable=True)
-    project_type = Column(Enum(ProjectType), nullable=False)
-    status = Column(Enum(ProjectStatus), default=ProjectStatus.DRAFT)
-    current_stage = Column(Enum(WorkflowStage), default=WorkflowStage.INITIATION)
+    project_type = Column(Enum(ProjectType), nullable=False, index=True)  # Added index for filtering by type
+    status = Column(Enum(ProjectStatus), default=ProjectStatus.DRAFT, index=True)  # Added index for status filtering
+    current_stage = Column(Enum(WorkflowStage), default=WorkflowStage.INITIATION, index=True)  # Added index for stage filtering
     
     # Client information
-    client_id = Column(Integer, ForeignKey("clients.id"), nullable=True)
+    client_id = Column(Integer, ForeignKey("clients.id", ondelete="SET NULL"), nullable=True, index=True)  # Added ondelete and index
     client_brief = Column(Text, nullable=True)  # Original client requirements
     
     # Dates and timeline
-    start_date = Column(DateTime, nullable=True)
-    target_end_date = Column(DateTime, nullable=True)
+    start_date = Column(DateTime, nullable=True, index=True)  # Added index for date filtering
+    target_end_date = Column(DateTime, nullable=True, index=True)  # Added index for deadline queries
     actual_end_date = Column(DateTime, nullable=True)
     
     # Budget information
@@ -90,39 +95,82 @@ class MarketingProject(Base, BaseModel):
     actual_cost = Column(Float, nullable=True)
     
     # Project owner
-    owner_id = Column(Integer, ForeignKey("users.id"))
+    owner_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=False, index=True)  # Added ondelete and index
     
-    # Relationships
-    owner = relationship("User", foreign_keys=[owner_id])
-    client = relationship("Client", back_populates="projects")
-    team_members = relationship("User", secondary=project_team_association, backref="assigned_projects")
-    tasks = relationship("MarketingTask", back_populates="project", cascade="all, delete-orphan")
-    assets = relationship("MarketingAsset", back_populates="project", cascade="all, delete-orphan")
-    workflow_steps = relationship("WorkflowStep", back_populates="project", cascade="all, delete-orphan")
-    reports = relationship("AnalyticsReport", back_populates="project", cascade="all, delete-orphan")
+    # Relationships with optimized loading strategies
+    owner = relationship("User", foreign_keys=[owner_id], lazy="joined")  # Eager load owner with project
+    client = relationship("Client", back_populates="projects", lazy="joined")  # Eager load client with project
+    team_members = relationship(
+        "User", 
+        secondary=project_team_association, 
+        backref=backref("assigned_projects", lazy="selectin"),  # Optimized backref loading
+        lazy="selectin"  # Efficient loading for collections
+    )
+    tasks = relationship(
+        "MarketingTask", 
+        back_populates="project", 
+        cascade="all, delete-orphan", 
+        lazy="selectin",  # Efficient loading for collections
+        order_by="MarketingTask.due_date"  # Default ordering by due date
+    )
+    assets = relationship(
+        "MarketingAsset", 
+        back_populates="project", 
+        cascade="all, delete-orphan",
+        lazy="selectin"  # Efficient loading for collections
+    )
+    workflow_steps = relationship(
+        "WorkflowStep", 
+        back_populates="project", 
+        cascade="all, delete-orphan",
+        lazy="selectin",  # Efficient loading for collections
+        order_by="WorkflowStep.step_number"  # Default ordering by step number
+    )
+    reports = relationship(
+        "AnalyticsReport", 
+        back_populates="project", 
+        cascade="all, delete-orphan",
+        lazy="selectin"  # Efficient loading for collections
+    )
 
 
-class Client(Base, BaseModel):
+class Client(Base, RootModel):
     """Client model for marketing agency"""
     __tablename__ = "clients"
+    __table_args__ = (
+        # Index for client search by company name (frequent operation)
+        Index('idx_client_company_name', 'company_name'),
+        # Index for industry filtering
+        Index('idx_client_industry', 'industry'),
+    )
     
-    company_name = Column(String(255), nullable=False)
-    industry = Column(String(100), nullable=True)
+    company_name = Column(String(255), nullable=False, index=True)
+    industry = Column(String(100), nullable=True, index=True)
     website = Column(String(255), nullable=True)
     logo_url = Column(String(255), nullable=True)
     notes = Column(Text, nullable=True)
     
     # Primary contact information
     contact_name = Column(String(255), nullable=True)
-    contact_email = Column(String(255), nullable=True)
+    contact_email = Column(String(255), nullable=True, index=True)  # Index for email searches
     contact_phone = Column(String(50), nullable=True)
     
-    # Relationships
-    projects = relationship("MarketingProject", back_populates="client")
-    contacts = relationship("ClientContact", back_populates="client", cascade="all, delete-orphan")
+    # Relationships with optimized loading
+    projects = relationship(
+        "MarketingProject", 
+        back_populates="client",
+        lazy="selectin",  # Efficient loading for collections
+        order_by="desc(MarketingProject.created_at)"  # Order by newest first
+    )
+    contacts = relationship(
+        "ClientContact", 
+        back_populates="client", 
+        cascade="all, delete-orphan",
+        lazy="selectin"  # Efficient loading for collections
+    )
 
 
-class ClientContact(Base, BaseModel):
+class ClientContact(Base, RootModel):
     """Additional contacts for clients"""
     __tablename__ = "client_contacts"
     
@@ -138,28 +186,41 @@ class ClientContact(Base, BaseModel):
     client = relationship("Client", back_populates="contacts")
 
 
-class WorkflowStep(Base, BaseModel):
+class WorkflowStep(Base, RootModel):
     """Steps in the marketing project workflow"""
     __tablename__ = "workflow_steps"
+    __table_args__ = (
+        # Composite index for finding steps by project and stage
+        Index('idx_workflow_project_stage', 'project_id', 'stage'),
+        # Composite index for step ordering within a project
+        Index('idx_workflow_project_step_number', 'project_id', 'step_number'),
+        # Index for status filtering
+        Index('idx_workflow_status', 'status')
+    )
     
-    project_id = Column(Integer, ForeignKey("marketing_projects.id", ondelete="CASCADE"))
+    project_id = Column(Integer, ForeignKey("marketing_projects.id", ondelete="CASCADE"), index=True)
     step_number = Column(Integer, nullable=False)  # 1-14 based on workflow
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
-    stage = Column(Enum(WorkflowStage), nullable=False)
-    status = Column(String(50), default="pending")  # pending, in_progress, completed, skipped
-    start_date = Column(DateTime, nullable=True)
+    stage = Column(Enum(WorkflowStage), nullable=False, index=True)
+    status = Column(String(50), default="pending", index=True)  # pending, in_progress, completed, skipped
+    start_date = Column(DateTime, nullable=True, index=True)  # Index for date filtering
     end_date = Column(DateTime, nullable=True)
-    assigned_to_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    assigned_to_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     notes = Column(Text, nullable=True)
     
-    # Relationships
-    project = relationship("MarketingProject", back_populates="workflow_steps")
-    assigned_to = relationship("User", foreign_keys=[assigned_to_id])
-    tasks = relationship("MarketingTask", back_populates="workflow_step")
+    # Relationships with optimized loading
+    project = relationship("MarketingProject", back_populates="workflow_steps", lazy="joined")  # Always load the parent project
+    assigned_to = relationship("User", foreign_keys=[assigned_to_id], lazy="joined")  # Always load the assigned user
+    tasks = relationship(
+        "MarketingTask", 
+        back_populates="workflow_step",
+        lazy="selectin",  # Efficient loading for collections
+        order_by="MarketingTask.priority.desc()"  # Order by priority (highest first)
+    )
 
 
-class MarketingTask(Base, BaseModel):
+class MarketingTask(Base, RootModel):
     """Tasks within marketing projects"""
     __tablename__ = "marketing_tasks"
     
@@ -200,9 +261,10 @@ class MarketingTask(Base, BaseModel):
     assets = relationship("MarketingAsset", back_populates="related_task")
 
 
-class TaskComment(Base, BaseModel):
+class TaskComment(Base, RootModel):
     """Comments on marketing tasks"""
     __tablename__ = "task_comments"
+    __table_args__ = {'extend_existing': True}
     
     task_id = Column(Integer, ForeignKey("marketing_tasks.id", ondelete="CASCADE"))
     user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
@@ -229,7 +291,7 @@ class AssetType(str, enum.Enum):
     OTHER = "other"                # Other asset types
 
 
-class MarketingAsset(Base, BaseModel):
+class MarketingAsset(Base, RootModel):
     """Digital assets for marketing projects"""
     __tablename__ = "marketing_assets"
     
@@ -278,7 +340,7 @@ class ReportType(str, enum.Enum):
     FINAL = "final"                       # Final project report
 
 
-class AnalyticsReport(Base, BaseModel):
+class AnalyticsReport(Base, RootModel):
     """Analytics and reporting for marketing projects"""
     __tablename__ = "analytics_reports"
     

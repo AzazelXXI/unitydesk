@@ -31,7 +31,7 @@ class CustomerServiceController:
     """Controller for handling customer service operations"""
     
     @staticmethod
-    async def generate_ticket_code() -> str:
+    async def generate_ticket_code(db: AsyncSession) -> str:
         """
         Generate a unique ticket code in the format YYMM-XXXX
         where XX is year, MM is month, and XXXX is a sequential number
@@ -40,26 +40,109 @@ class CustomerServiceController:
         year_month = now.strftime("%y%m")  # Format: YYMM
         
         # Get the highest ticket number for the current year-month
-        async def get_highest_ticket_number(db):
-            pattern = f"{year_month}-%"
-            query = select(ServiceTicket.ticket_code).filter(
-                ServiceTicket.ticket_code.like(pattern)
-            ).order_by(desc(ServiceTicket.ticket_code))
-            
-            result = await db.execute(query)
-            latest_code = result.scalar_one_or_none()
-            
-            if not latest_code:
-                return 0
-                
+        pattern = f"{year_month}-%"
+        query = select(ServiceTicket.ticket_code).filter(
+            ServiceTicket.ticket_code.like(pattern)
+        ).order_by(desc(ServiceTicket.ticket_code))
+        
+        result = await db.execute(query)
+        latest_code = result.scalar_one_or_none()
+        
+        if not latest_code:
+            sequence_number = 1
+        else:
             # Extract the sequential number
             match = re.search(r'-(\d+)$', latest_code)
             if match:
-                return int(match.group(1))
-            return 0
+                sequence_number = int(match.group(1)) + 1
+            else:
+                sequence_number = 1
         
         # Format: YYMM-XXXX
         return f"{year_month}-{sequence_number:04d}"
+    
+    @staticmethod
+    async def get_service_tickets(
+        db: AsyncSession,
+        client_id: Optional[int] = None,
+        status: Optional[TicketStatus] = None,
+        sales_rep_id: Optional[int] = None,
+        search: Optional[str] = None,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[ServiceTicket]:
+        """
+        Get service tickets with optional filtering
+        """
+        try:
+            query = select(ServiceTicket).options(
+                joinedload(ServiceTicket.client),
+                joinedload(ServiceTicket.sales_rep)
+            )
+            
+            # Apply filters
+            if client_id:
+                query = query.filter(ServiceTicket.client_id == client_id)
+            if status:
+                query = query.filter(ServiceTicket.status == status)
+            if sales_rep_id:
+                query = query.filter(ServiceTicket.sales_rep_id == sales_rep_id)
+            if search:
+                query = query.filter(
+                    (ServiceTicket.title.ilike(f"%{search}%")) |
+                    (ServiceTicket.ticket_code.ilike(f"%{search}%"))
+                )
+            
+            # Apply pagination
+            query = query.offset(skip).limit(limit)
+            query = query.order_by(desc(ServiceTicket.created_at))
+            
+            result = await db.execute(query)
+            tickets = result.scalars().unique().all()
+            
+            return tickets
+        except Exception as e:
+            logger.error(f"Error fetching service tickets: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to fetch service tickets: {str(e)}"
+            )
+    
+    @staticmethod
+    async def get_service_ticket(ticket_id: int, db: AsyncSession) -> ServiceTicket:
+        """
+        Get a specific service ticket with all related data
+        """
+        try:
+            query = select(ServiceTicket).filter(
+                ServiceTicket.id == ticket_id
+            ).options(
+                joinedload(ServiceTicket.client),
+                joinedload(ServiceTicket.sales_rep),
+                joinedload(ServiceTicket.ticket_steps).joinedload(TicketStep.step),
+                joinedload(ServiceTicket.ticket_steps).joinedload(TicketStep.assigned_staff),
+                joinedload(ServiceTicket.quotes).joinedload(QuoteDocument.created_by)
+            )
+            
+            result = await db.execute(query)
+            ticket = result.scalar_one_or_none()
+            
+            if not ticket:
+                logger.warning(f"Service ticket with ID {ticket_id} not found")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Service ticket with ID {ticket_id} not found"
+                )
+            
+            return ticket
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error fetching service ticket {ticket_id}: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to fetch service ticket: {str(e)}"
+            )
     
     @staticmethod
     async def create_service_ticket(
@@ -139,89 +222,6 @@ class CustomerServiceController:
             logger.error(f"Error initializing first step for ticket {ticket_id}: {str(e)}")
             await db.rollback()
             raise
-    
-    @staticmethod
-    async def get_service_tickets(
-        client_id: Optional[int] = None,
-        status: Optional[TicketStatus] = None,
-        sales_rep_id: Optional[int] = None,
-        search: Optional[str] = None,
-        skip: int = 0,
-        limit: int = 100,
-        db: AsyncSession = None
-    ) -> List[ServiceTicket]:
-        """
-        Get service tickets with optional filtering
-        """
-        try:
-            query = select(ServiceTicket).options(
-                joinedload(ServiceTicket.client),
-                joinedload(ServiceTicket.sales_rep)
-            )
-            
-            # Apply filters
-            if client_id:
-                query = query.filter(ServiceTicket.client_id == client_id)
-            if status:
-                query = query.filter(ServiceTicket.status == status)
-            if sales_rep_id:
-                query = query.filter(ServiceTicket.sales_rep_id == sales_rep_id)
-            if search:
-                query = query.filter(
-                    (ServiceTicket.title.ilike(f"%{search}%")) |
-                    (ServiceTicket.ticket_code.ilike(f"%{search}%"))
-                )
-            
-            # Apply pagination
-            query = query.offset(skip).limit(limit)
-            query = query.order_by(desc(ServiceTicket.created_at))
-            
-            result = await db.execute(query)
-            tickets = result.scalars().unique().all()
-            
-            return tickets
-        except Exception as e:
-            logger.error(f"Error fetching service tickets: {str(e)}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to fetch service tickets: {str(e)}"
-            )
-    
-    @staticmethod
-    async def get_service_ticket(ticket_id: int, db: AsyncSession) -> ServiceTicket:
-        """
-        Get a specific service ticket with all related data
-        """
-        try:
-            query = select(ServiceTicket).filter(
-                ServiceTicket.id == ticket_id
-            ).options(
-                joinedload(ServiceTicket.client),
-                joinedload(ServiceTicket.sales_rep),
-                joinedload(ServiceTicket.ticket_steps).joinedload(TicketStep.step),
-                joinedload(ServiceTicket.ticket_steps).joinedload(TicketStep.assigned_staff),
-                joinedload(ServiceTicket.quotes).joinedload(QuoteDocument.created_by)
-            )
-            
-            result = await db.execute(query)
-            ticket = result.scalar_one_or_none()
-            
-            if not ticket:
-                logger.warning(f"Service ticket with ID {ticket_id} not found")
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Service ticket with ID {ticket_id} not found"
-                )
-            
-            return ticket
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Error fetching service ticket {ticket_id}: {str(e)}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to fetch service ticket: {str(e)}"
-            )
     
     @staticmethod
     async def update_service_ticket(
@@ -353,8 +353,8 @@ class CustomerServiceController:
     
     @staticmethod
     async def get_service_steps(
-        is_active: Optional[bool] = None,
-        db: AsyncSession = None
+        db: AsyncSession,
+        is_active: Optional[bool] = None
     ) -> List[ServiceStep]:
         """
         Get all service steps with optional filtering
@@ -748,7 +748,7 @@ class CustomerServiceController:
         created_by_id: int,
         include_logo: bool = True,
         include_details: bool = True,
-        db: AsyncSession
+        db: AsyncSession = None
     ) -> QuoteDocument:
         """
         Generate a quote document (PDF or Excel) for a ticket

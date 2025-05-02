@@ -5,7 +5,6 @@ from enum import Enum
 
 from src.models.user import UserRole
 
-
 # Base user schemas
 class BaseSchema(BaseModel):
     """Base schema with common fields"""
@@ -13,8 +12,9 @@ class BaseSchema(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class UserProfileBase(BaseModel):
@@ -77,12 +77,12 @@ class UserUpdate(BaseModel):
     profile: Optional[UserProfileUpdate] = None
 
 
-class UserRead(UserBase, BaseSchema):
+class UserResponse(UserBase, BaseSchema):
     """Schema for reading user information"""
     profile: Optional[UserProfileRead] = None
 
 
-class UserWithPassword(UserRead):
+class UserWithPassword(UserResponse):
     """Schema for user with hashed password (for internal use only)"""
     hashed_password: str
 

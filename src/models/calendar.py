@@ -1,10 +1,10 @@
-from sqlalchemy import Column, String, Boolean, ForeignKey, Text, Enum, DateTime
+from sqlalchemy import Column, String, Boolean, ForeignKey, Text, Enum, DateTime, Integer
 from sqlalchemy.orm import relationship
 import enum
 from datetime import datetime
 
 from src.database import Base
-from src.models.base import BaseModel
+from src.models.base import RootModel
 
 
 class EventStatus(str, enum.Enum):
@@ -33,7 +33,7 @@ class ResponseStatus(str, enum.Enum):
     NEEDS_ACTION = "needs_action"
     
 
-class Calendar(Base, BaseModel):
+class Calendar(Base, RootModel):
     """Calendar model for organizing events"""
     __tablename__ = "calendars"
     
@@ -49,7 +49,7 @@ class Calendar(Base, BaseModel):
     events = relationship("Event", back_populates="calendar", cascade="all, delete-orphan")
 
 
-class Event(Base, BaseModel):
+class Event(Base, RootModel):
     """Event model for calendar entries"""
     __tablename__ = "events"
     
@@ -79,7 +79,7 @@ class Event(Base, BaseModel):
         return datetime.utcnow() > self.end_time
 
 
-class EventParticipant(Base, BaseModel):
+class EventParticipant(Base, RootModel):
     """Association between users and events"""
     __tablename__ = "event_participants"
     

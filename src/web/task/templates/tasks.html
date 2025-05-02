@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tasks - CSA Platform</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        .task-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 20px;
+            background-color: #f5f5f5;
+            cursor: pointer;
+        }
+        
+        .filter-button.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .task-list {
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .task-item:last-child {
+            border-bottom: none;
+        }
+        
+        .task-checkbox {
+            margin-right: 15px;
+        }
+        
+        .task-content {
+            flex: 1;
+        }
+        
+        .task-title {
+            margin: 0 0 5px;
+            font-size: 1rem;
+        }
+        
+        .task-meta {
+            display: flex;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .task-meta > div {
+            margin-right: 15px;
+        }
+        
+        .task-priority {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .priority-high {
+            background-color: #f44336;
+        }
+        
+        .priority-medium {
+            background-color: #ff9800;
+        }
+        
+        .priority-low {
+            background-color: #4caf50;
+        }
+        
+        .actions {
+            margin: 20px 0;
+        }
+        
+        .button {
+            padding: 8px 16px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Tasks</h1>
+    </header>
+    
+    <main>
+        <nav>
+            <ul>
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/projects">Projects</a></li>
+                <li><a href="/calendar">Calendar</a></li>
+                <li><a href="/">Home</a></li>
+            </ul>
+        </nav>
+        
+        <div class="actions">
+            <a href="/tasks/new" class="button">Create New Task</a>
+        </div>
+        
+        <div class="task-filters">
+            <button class="filter-button active">All</button>
+            <button class="filter-button">My Tasks</button>
+            <button class="filter-button">Due Today</button>
+            <button class="filter-button">Completed</button>
+        </div>
+        
+        <div class="task-list">
+            <div class="task-item">
+                <input type="checkbox" class="task-checkbox">
+                <div class="task-content">
+                    <h3 class="task-title">Complete project proposal</h3>
+                    <div class="task-meta">
+                        <div><span class="task-priority priority-high"></span>High</div>
+                        <div>Due: Apr 26, 2025</div>
+                        <div>Project: Website Redesign</div>
+                    </div>
+                </div>
+                <a href="/tasks/1" style="margin-left: auto;">Details</a>
+            </div>
+            
+            <div class="task-item">
+                <input type="checkbox" class="task-checkbox">
+                <div class="task-content">
+                    <h3 class="task-title">Schedule team meeting</h3>
+                    <div class="task-meta">
+                        <div><span class="task-priority priority-medium"></span>Medium</div>
+                        <div>Due: Apr 25, 2025</div>
+                        <div>Project: Mobile App Development</div>
+                    </div>
+                </div>
+                <a href="/tasks/2" style="margin-left: auto;">Details</a>
+            </div>
+            
+            <div class="task-item">
+                <input type="checkbox" class="task-checkbox" checked>
+                <div class="task-content">
+                    <h3 class="task-title" style="text-decoration: line-through;">Review design mockups</h3>
+                    <div class="task-meta">
+                        <div><span class="task-priority priority-low"></span>Low</div>
+                        <div>Completed: Apr 23, 2025</div>
+                        <div>Project: Website Redesign</div>
+                    </div>
+                </div>
+                <a href="/tasks/3" style="margin-left: auto;">Details</a>
+            </div>
+            
+            <div class="task-item">
+                <input type="checkbox" class="task-checkbox">
+                <div class="task-content">
+                    <h3 class="task-title">Prepare client presentation</h3>
+                    <div class="task-meta">
+                        <div><span class="task-priority priority-high"></span>High</div>
+                        <div>Due: Apr 28, 2025</div>
+                        <div>Project: Customer Research</div>
+                    </div>
+                </div>
+                <a href="/tasks/4" style="margin-left: auto;">Details</a>
+            </div>
+            
+            <div class="task-item">
+                <input type="checkbox" class="task-checkbox">
+                <div class="task-content">
+                    <h3 class="task-title">Update content management system</h3>
+                    <div class="task-meta">
+                        <div><span class="task-priority priority-medium"></span>Medium</div>
+                        <div>Due: May 2, 2025</div>
+                        <div>Project: Website Redesign</div>
+                    </div>
+                </div>
+                <a href="/tasks/5" style="margin-left: auto;">Details</a>
+            </div>
+            
+            <div class="task-item">
+                <input type="checkbox" class="task-checkbox">
+                <div class="task-content">
+                    <h3 class="task-title">Finalize marketing materials</h3>
+                    <div class="task-meta">
+                        <div><span class="task-priority priority-medium"></span>Medium</div>
+                        <div>Due: May 5, 2025</div>
+                        <div>Project: Marketing Campaign</div>
+                    </div>
+                </div>
+                <a href="/tasks/6" style="margin-left: auto;">Details</a>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 CSA Platform</p>
+    </footer>
+    
+    <script>
+        // Simple filter button functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterButtons = document.querySelectorAll('.filter-button');
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    filterButtons.forEach(b => b.classList.remove('active'));
+                    button.classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

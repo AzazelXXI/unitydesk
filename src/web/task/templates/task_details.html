@@ -1,0 +1,172 @@
+{% extends "core/templates/base.html" %}
+
+{% block title %}Task Details - CSA Platform{% endblock %}
+
+{% block header %}Task Details{% endblock %}
+
+{% block header_actions %}
+<div class="btn-toolbar mb-2 mb-md-0">
+    <div class="btn-group me-2">
+        <a href="/tasks/{{ task.id }}/edit" class="btn btn-sm btn-outline-secondary">Edit Task</a>
+    </div>
+    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteTaskModal">
+        <i class="bi bi-trash"></i> Delete Task
+    </button>
+</div>
+{% endblock %}
+
+{% block head_extra %}
+<style>
+    .priority-indicator {
+        display: inline-block;
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+    }
+    
+    .priority-high {
+        background-color: var(--bs-danger);
+    }
+    
+    .priority-medium {
+        background-color: var(--bs-warning);
+    }
+    
+    .priority-low {
+        background-color: var(--bs-success);
+    }
+    
+    .task-status-badge {
+        font-size: 0.75rem;
+    }
+    
+    .comment-author-avatar {
+        width: 32px;
+        height: 32px;
+        background-color: var(--bs-primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title h3 mb-4">{{ task.title }}</h5>
+        
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <dl class="row">
+                    <dt class="col-sm-4">Priority:</dt>
+                    <dd class="col-sm-8">
+                        <span class="priority-indicator priority-high"></span>High
+                    </dd>
+                    
+                    <dt class="col-sm-4">Status:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge bg-primary task-status-badge">In Progress</span>
+                    </dd>
+                    
+                    <dt class="col-sm-4">Due Date:</dt>
+                    <dd class="col-sm-8">April 26, 2025</dd>
+                </dl>
+            </div>
+            
+            <div class="col-md-6">
+                <dl class="row">
+                    <dt class="col-sm-4">Assigned To:</dt>
+                    <dd class="col-sm-8">Michael Rodriguez</dd>
+                    
+                    <dt class="col-sm-4">Project:</dt>
+                    <dd class="col-sm-8">
+                        <a href="/projects/1">Website Redesign</a>
+                    </dd>
+                    
+                    <dt class="col-sm-4">Created:</dt>
+                    <dd class="col-sm-8">April 20, 2025</dd>
+                </dl>
+            </div>
+        </div>
+            
+            <div class="task-description">
+                <h3 class="section-title">Description</h3>
+                <p>Complete the project proposal document for the website redesign project. This includes outlining the scope, timeline, budget, and resources required for the project. The proposal should also include detailed information about the technologies to be used and the expected deliverables.</p>
+            </div>
+            
+            <div class="checklist-section">
+                <h3 class="section-title">Checklist</h3>
+                <div class="checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" class="checklist-checkbox" checked>
+                        <div class="checklist-text">Outline project scope</div>
+                    </div>
+                    
+                    <div class="checklist-item">
+                        <input type="checkbox" class="checklist-checkbox" checked>
+                        <div class="checklist-text">Create timeline with milestones</div>
+                    </div>
+                    
+                    <div class="checklist-item">
+                        <input type="checkbox" class="checklist-checkbox">
+                        <div class="checklist-text">Estimate budget and resource requirements</div>
+                    </div>
+                    
+                    <div class="checklist-item">
+                        <input type="checkbox" class="checklist-checkbox">
+                        <div class="checklist-text">List technologies and tools</div>
+                    </div>
+                    
+                    <div class="checklist-item">
+                        <input type="checkbox" class="checklist-checkbox">
+                        <div class="checklist-text">Define deliverables and success metrics</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="comments-section">
+                <h3 class="section-title">Comments</h3>
+                
+                <div class="comment">
+                    <div class="comment-header">
+                        <span class="comment-author">Sarah Chen</span>
+                        <span class="comment-date">April 22, 2025 at 10:32 AM</span>
+                    </div>
+                    <p class="comment-text">Please make sure to include the new branding guidelines in the proposal. We need to ensure the design aligns with our updated brand identity.</p>
+                </div>
+                
+                <div class="comment">
+                    <div class="comment-header">
+                        <span class="comment-author">Michael Rodriguez</span>
+                        <span class="comment-date">April 22, 2025 at 11:45 AM</span>
+                    </div>
+                    <p class="comment-text">I'll make sure to incorporate the new branding guidelines. I've already started working on the timeline and resource planning sections.</p>
+                </div>
+                
+                <div class="comment">
+                    <div class="comment-header">
+                        <span class="comment-author">Emily Wong</span>
+                        <span class="comment-date">April 23, 2025 at 9:15 AM</span>
+                    </div>
+                    <p class="comment-text">I've shared the design assets folder with you, Michael. Let me know if you need any additional visuals for the proposal.</p>
+                </div>
+                
+                <form class="comment-form">
+                    <textarea class="comment-input" rows="3" placeholder="Write a comment..."></textarea>
+                    <button type="submit" class="button primary">Post Comment</button>
+                </form>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 CSA Platform</p>
+    </footer>
+</body>
+</html>
