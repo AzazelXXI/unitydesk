@@ -1,0 +1,1279 @@
+{% extends "base.html" %} {% block title %}{{ project.name }} | Project
+Details{% endblock %} {% block head_extra %}
+<style>
+    .project-header {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .status-badge {
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+
+    .progress-tracker {
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        padding: 0;
+        margin: 2rem 0 4rem;
+    }
+
+    .progress-step {
+        position: relative;
+        width: 100%;
+        font-size: 0.75rem;
+        text-align: center;
+    }
+
+    .progress-marker {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 30px;
+        height: 30px;
+        background-color: #e9ecef;
+        border-radius: 50%;
+        margin: 0 auto 8px;
+        z-index: 5;
+    }
+
+    .progress-step.is-active .progress-marker {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .progress-step.is-complete .progress-marker {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .progress-text {
+        font-weight: 500;
+        max-width: 100px;
+        margin: 0 auto;
+        overflow-wrap: break-word;
+    }
+
+    .progress-track {
+        position: absolute;
+        top: 15px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background-color: #e9ecef;
+        z-index: 0;
+    }
+
+    .progress-track-fill {
+        position: absolute;
+        top: 15px;
+        left: 0;
+        height: 2px;
+        background-color: #28a745;
+        z-index: 1;
+    }
+
+    .task-card {
+        margin-bottom: 15px;
+        border-left: 4px solid #6c757d;
+    }
+
+    .task-card.priority-high {
+        border-left-color: #dc3545;
+    }
+
+    .task-card.priority-medium {
+        border-left-color: #fd7e14;
+    }
+
+    .task-card.priority-low {
+        border-left-color: #17a2b8;
+    }
+
+    .task-card.priority-urgent {
+        border-left-color: #dc3545;
+        background-color: rgba(220, 53, 69, 0.05);
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+        font-weight: 500;
+        padding: 10px 15px;
+        border-bottom: 3px solid transparent;
+    }
+
+    .nav-tabs .nav-link.active {
+        border: none;
+        color: #007bff;
+        border-bottom: 3px solid #007bff;
+    }
+
+    .team-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        overflow: hidden;
+        background-color: #6c757d;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+        font-size: 14px;
+    }
+</style>
+{% endblock %} {% block content %}
+<div class="container mt-4">
+    <!-- Project Header -->
+    <div class="project-header">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center mb-2">
+                    <h1 class="mb-0">{{ project.name }}</h1>
+                    <span
+                        class="badge bg-{{ project.status }} status-badge ms-3"
+                        >{{ project.status|replace('_', ' ')|title }}</span
+                    >
+                </div>
+                <p class="lead">{{ project.description }}</p>
+                <div class="d-flex flex-wrap">
+                    <div class="me-4 mb-2">
+                        <small class="text-muted d-block">Project Type</small>
+                        <span class="badge bg-light text-dark border">
+                            {{ project.project_type|replace('_', ' ')|title }}
+                        </span>
+                    </div>
+                    <div class="me-4 mb-2">
+                        <small class="text-muted d-block">Client</small>
+                        <strong
+                            >{{ project.client.company_name if project.client
+                            else 'N/A' }}</strong
+                        >
+                    </div>
+                    <div class="me-4 mb-2">
+                        <small class="text-muted d-block">Start Date</small>
+                        <strong
+                            >{{ project.start_date.strftime('%b %d, %Y') if
+                            project.start_date else 'Not set' }}</strong
+                        >
+                    </div>
+                    <div class="me-4 mb-2">
+                        <small class="text-muted d-block"
+                            >Target End Date</small
+                        >
+                        <strong
+                            >{{ project.target_end_date.strftime('%b %d, %Y') if
+                            project.target_end_date else 'Not set' }}</strong
+                        >
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex justify-content-end">
+                    <button class="btn btn-outline-primary me-2">
+                        <i class="bi bi-gear"></i> Settings
+                    </button>
+                    <div class="dropdown">
+                        <button
+                            class="btn btn-primary dropdown-toggle"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                        >
+                            Actions
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="#"
+                                    ><i class="bi bi-pencil-square"></i> Edit
+                                    Project</a
+                                >
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#"
+                                    ><i class="bi bi-plus-circle"></i> Add
+                                    Task</a
+                                >
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#"
+                                    ><i class="bi bi-file-earmark-text"></i>
+                                    Generate Report</a
+                                >
+                            </li>
+                            <li><hr class="dropdown-divider" /></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="#"
+                                    ><i class="bi bi-trash"></i> Delete
+                                    Project</a
+                                >
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Tracker -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Project Progress</h5>
+        </div>
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">
+                    Current Stage: {{ project.current_stage|replace('_', '
+                    ')|title }}
+                </h6>
+                <div class="text-end">
+                    <strong
+                        >{{ project.workflow_progress|default(0)|int }}%
+                        Complete</strong
+                    >
+                    <div class="progress" style="height: 6px; width: 200px">
+                        <div
+                            class="progress-bar"
+                            role="progressbar"
+                            style="width: {{ project.workflow_progress|default(0) }}%"
+                            aria-valuenow="{{ project.workflow_progress|default(0)|int }}"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                        ></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progress-tracker">
+                <div class="progress-track"></div>
+                <div
+                    class="progress-track-fill"
+                    style="width: {{ project.workflow_progress|default(0) }}%;"
+                ></div>
+
+                {% set stages = ['initiation', 'research', 'planning',
+                'execution', 'monitoring', 'evaluation'] %} {% for stage in
+                stages %} {% if stage == project.current_stage %} {% set
+                step_class = 'is-active' %} {% elif stages.index(stage) <
+                stages.index(project.current_stage) %} {% set step_class =
+                'is-complete' %} {% else %} {% set step_class = '' %} {% endif
+                %}
+
+                <div class="progress-step {{ step_class }}">
+                    <div class="progress-marker">
+                        {% if step_class == 'is-complete' %}
+                        <i class="bi bi-check"></i>
+                        {% else %} {{ loop.index }} {% endif %}
+                    </div>
+                    <div class="progress-text">{{ stage|title }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Content Tabs -->
+    <ul class="nav nav-tabs mb-4" id="projectTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button
+                class="nav-link active"
+                id="overview-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#overview"
+                type="button"
+                role="tab"
+                aria-controls="overview"
+                aria-selected="true"
+            >
+                <i class="bi bi-house"></i> Overview
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button
+                class="nav-link"
+                id="tasks-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#tasks"
+                type="button"
+                role="tab"
+                aria-controls="tasks"
+                aria-selected="false"
+            >
+                <i class="bi bi-list-check"></i> Tasks
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button
+                class="nav-link"
+                id="team-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#team"
+                type="button"
+                role="tab"
+                aria-controls="team"
+                aria-selected="false"
+            >
+                <i class="bi bi-people"></i> Team
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button
+                class="nav-link"
+                id="files-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#files"
+                type="button"
+                role="tab"
+                aria-controls="files"
+                aria-selected="false"
+            >
+                <i class="bi bi-folder"></i> Files
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button
+                class="nav-link"
+                id="activity-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#activity"
+                type="button"
+                role="tab"
+                aria-controls="activity"
+                aria-selected="false"
+            >
+                <i class="bi bi-activity"></i> Activity
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Overview Tab -->
+        <div
+            class="tab-pane fade show active"
+            id="overview"
+            role="tabpanel"
+            aria-labelledby="overview-tab"
+        >
+            <div class="row">
+                <!-- Project Summary -->
+                <div class="col-lg-8">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Project Summary</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ project.description }}</p>
+
+                            <h6 class="mt-4 mb-3">Project Brief</h6>
+                            <div class="mb-3">
+                                {{ project.client_brief|default('No project
+                                brief available')|safe }}
+                            </div>
+
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">Key Information</h6>
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <th
+                                                    scope="row"
+                                                    style="width: 40%"
+                                                >
+                                                    Budget
+                                                </th>
+                                                <td>
+                                                    {{
+                                                    "$%.2f"|format(project.estimated_budget)
+                                                    if project.estimated_budget
+                                                    else 'Not set' }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Actual Cost</th>
+                                                <td>
+                                                    {{
+                                                    "$%.2f"|format(project.actual_cost)
+                                                    if project.actual_cost else
+                                                    'Not available yet' }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">Start Date</th>
+                                                <td>
+                                                    {{
+                                                    project.start_date.strftime('%b
+                                                    %d, %Y') if
+                                                    project.start_date else 'Not
+                                                    set' }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">
+                                                    Target End Date
+                                                </th>
+                                                <td>
+                                                    {{
+                                                    project.target_end_date.strftime('%b
+                                                    %d, %Y') if
+                                                    project.target_end_date else
+                                                    'Not set' }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">
+                                                    Actual End Date
+                                                </th>
+                                                <td>
+                                                    {{
+                                                    project.actual_end_date.strftime('%b
+                                                    %d, %Y') if
+                                                    project.actual_end_date else
+                                                    'Not completed yet' }}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">Task Summary</h6>
+                                    <div class="mb-3">
+                                        <canvas
+                                            id="taskChart"
+                                            height="200"
+                                        ></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project Sidebar -->
+                <div class="col-lg-4">
+                    <!-- Project Team Summary -->
+                    <div class="card mb-4">
+                        <div
+                            class="card-header d-flex justify-content-between align-items-center"
+                        >
+                            <h5 class="card-title mb-0">Team</h5>
+                            <a href="#" class="btn btn-sm btn-outline-primary"
+                                >View All</a
+                            >
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex flex-column">
+                                {% if project.team_members %} {% for member in
+                                project.team_members[:5] %}
+                                <div class="d-flex align-items-center mb-3">
+                                    <div
+                                        class="team-avatar me-2"
+                                        style="background-color: {{ ['#6f42c1', '#fd7e14', '#20c997', '#0d6efd', '#dc3545']|random }}"
+                                    >
+                                        {{ member.user_id|default('U') }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-medium">
+                                            {{ member.name|default('Team
+                                            Member') }}
+                                        </div>
+                                        <small class="text-muted"
+                                            >{{ member.role }}</small
+                                        >
+                                    </div>
+                                </div>
+                                {% endfor %} {% if project.team_members|length >
+                                5 %}
+                                <a href="#" class="text-primary"
+                                    >+{{ project.team_members|length - 5 }} more
+                                    team members</a
+                                >
+                                {% endif %} {% else %}
+                                <p class="text-muted">
+                                    No team members assigned yet.
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Important Dates -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Timeline</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li
+                                    class="list-group-item d-flex justify-content-between align-items-center px-0"
+                                >
+                                    <div>
+                                        <i
+                                            class="bi bi-calendar-check text-success me-2"
+                                        ></i>
+                                        Project Start
+                                    </div>
+                                    <span
+                                        >{{ project.start_date.strftime('%b %d,
+                                        %Y') if project.start_date else 'Not
+                                        set' }}</span
+                                    >
+                                </li>
+                                <li
+                                    class="list-group-item d-flex justify-content-between align-items-center px-0"
+                                >
+                                    <div>
+                                        <i
+                                            class="bi bi-calendar-x text-warning me-2"
+                                        ></i>
+                                        Target End
+                                    </div>
+                                    <span
+                                        >{{ project.target_end_date.strftime('%b
+                                        %d, %Y') if project.target_end_date else
+                                        'Not set' }}</span
+                                    >
+                                </li>
+                                <li
+                                    class="list-group-item d-flex justify-content-between align-items-center px-0"
+                                >
+                                    <div>
+                                        <i
+                                            class="bi bi-calendar-event text-info me-2"
+                                        ></i>
+                                        Next Milestone
+                                    </div>
+                                    <span>May 15, 2025</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Activity Feed -->
+                    <div class="card">
+                        <div
+                            class="card-header d-flex justify-content-between align-items-center"
+                        >
+                            <h5 class="card-title mb-0">Recent Activity</h5>
+                            <a
+                                href="#activity"
+                                class="btn btn-sm btn-link"
+                                data-bs-toggle="tab"
+                                data-bs-target="#activity"
+                                >View All</a
+                            >
+                        </div>
+                        <div class="card-body p-0">
+                            <div
+                                class="list-group list-group-flush border-bottom"
+                            >
+                                <div class="list-group-item p-3">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div
+                                                class="team-avatar"
+                                                style="
+                                                    background-color: #6f42c1;
+                                                "
+                                            >
+                                                JD
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <div>
+                                                <span class="fw-medium"
+                                                    >John Doe</span
+                                                >
+                                                <span>
+                                                    created a new task:
+                                                </span>
+                                                <span class="fw-medium"
+                                                    >"Design Project Logo"</span
+                                                >
+                                            </div>
+                                            <small class="text-muted"
+                                                >2 hours ago</small
+                                            >
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="list-group-item p-3">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div
+                                                class="team-avatar"
+                                                style="
+                                                    background-color: #20c997;
+                                                "
+                                            >
+                                                JS
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <div>
+                                                <span class="fw-medium"
+                                                    >Jane Smith</span
+                                                >
+                                                <span>
+                                                    uploaded a new file</span
+                                                >
+                                            </div>
+                                            <small class="text-muted"
+                                                >Yesterday at 4:30 PM</small
+                                            >
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="list-group-item p-3">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div
+                                                class="team-avatar"
+                                                style="
+                                                    background-color: #0d6efd;
+                                                "
+                                            >
+                                                MM
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <div>
+                                                <span class="fw-medium"
+                                                    >Mark Miller</span
+                                                >
+                                                <span>
+                                                    changed project status to
+                                                </span>
+                                                <span class="badge bg-warning"
+                                                    >In Progress</span
+                                                >
+                                            </div>
+                                            <small class="text-muted"
+                                                >Apr 28, 2025</small
+                                            >
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks Tab -->
+        <div
+            class="tab-pane fade"
+            id="tasks"
+            role="tabpanel"
+            aria-labelledby="tasks-tab"
+        >
+            <div class="card">
+                <div
+                    class="card-header d-flex justify-content-between align-items-center"
+                >
+                    <h5 class="card-title mb-0">Project Tasks</h5>
+                    <button class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-lg"></i> New Task
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- Task filtering options -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <select
+                                class="form-select form-select-sm"
+                                aria-label="Filter by status"
+                            >
+                                <option selected>All Statuses</option>
+                                <option value="todo">To Do</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="review">In Review</option>
+                                <option value="done">Done</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select
+                                class="form-select form-select-sm"
+                                aria-label="Filter by priority"
+                            >
+                                <option selected>All Priorities</option>
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <input
+                                type="text"
+                                class="form-control form-control-sm"
+                                placeholder="Search tasks..."
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Task Cards -->
+                    <div id="tasksContainer">
+                        <div class="task-card card priority-high">
+                            <div class="card-body">
+                                <div
+                                    class="d-flex justify-content-between align-items-center"
+                                >
+                                    <h6 class="mb-1">
+                                        Create marketing strategy document
+                                    </h6>
+                                    <span class="badge bg-danger">High</span>
+                                </div>
+                                <p class="text-muted mb-2 small">
+                                    Develop comprehensive marketing strategy for
+                                    project launch
+                                </p>
+                                <div
+                                    class="d-flex justify-content-between align-items-center"
+                                >
+                                    <div>
+                                        <span class="badge bg-primary"
+                                            >In Progress</span
+                                        >
+                                    </div>
+                                    <div class="text-muted small">
+                                        <span>Due: May 10, 2025</span>
+                                        <span class="ms-2"
+                                            >Assigned to: John Doe</span
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="task-card card priority-medium">
+                            <div class="card-body">
+                                <div
+                                    class="d-flex justify-content-between align-items-center"
+                                >
+                                    <h6 class="mb-1">Design project logo</h6>
+                                    <span class="badge bg-warning text-dark"
+                                        >Medium</span
+                                    >
+                                </div>
+                                <p class="text-muted mb-2 small">
+                                    Create logo variants for client review
+                                </p>
+                                <div
+                                    class="d-flex justify-content-between align-items-center"
+                                >
+                                    <div>
+                                        <span class="badge bg-secondary"
+                                            >To Do</span
+                                        >
+                                    </div>
+                                    <div class="text-muted small">
+                                        <span>Due: May 15, 2025</span>
+                                        <span class="ms-2"
+                                            >Assigned to: Sarah Johnson</span
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="task-card card priority-low">
+                            <div class="card-body">
+                                <div
+                                    class="d-flex justify-content-between align-items-center"
+                                >
+                                    <h6 class="mb-1">
+                                        Collect competitor research
+                                    </h6>
+                                    <span class="badge bg-info">Low</span>
+                                </div>
+                                <p class="text-muted mb-2 small">
+                                    Gather marketing materials from top 3
+                                    competitors
+                                </p>
+                                <div
+                                    class="d-flex justify-content-between align-items-center"
+                                >
+                                    <div>
+                                        <span class="badge bg-success"
+                                            >Done</span
+                                        >
+                                    </div>
+                                    <div class="text-muted small">
+                                        <span>Due: Apr 30, 2025</span>
+                                        <span class="ms-2"
+                                            >Assigned to: Mike Brown</span
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="task-card card priority-urgent">
+                            <div class="card-body">
+                                <div
+                                    class="d-flex justify-content-between align-items-center"
+                                >
+                                    <h6 class="mb-1">
+                                        Prepare client presentation
+                                    </h6>
+                                    <span class="badge bg-danger">Urgent</span>
+                                </div>
+                                <p class="text-muted mb-2 small">
+                                    Create slide deck for first client review
+                                    meeting
+                                </p>
+                                <div
+                                    class="d-flex justify-content-between align-items-center"
+                                >
+                                    <div>
+                                        <span class="badge bg-warning text-dark"
+                                            >Review</span
+                                        >
+                                    </div>
+                                    <div class="text-muted small">
+                                        <span>Due: May 3, 2025</span>
+                                        <span class="ms-2"
+                                            >Assigned to: Jennifer Lee</span
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Tab -->
+        <div
+            class="tab-pane fade"
+            id="team"
+            role="tabpanel"
+            aria-labelledby="team-tab"
+        >
+            <div class="card">
+                <div
+                    class="card-header d-flex justify-content-between align-items-center"
+                >
+                    <h5 class="card-title mb-0">Team Members</h5>
+                    <button class="btn btn-primary btn-sm">
+                        <i class="bi bi-person-plus"></i> Add Member
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                    <th>Joined</th>
+                                    <th>Tasks</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div
+                                                class="team-avatar me-2"
+                                                style="
+                                                    background-color: #6f42c1;
+                                                "
+                                            >
+                                                JD
+                                            </div>
+                                            <div>John Doe</div>
+                                        </div>
+                                    </td>
+                                    <td>Project Manager</td>
+                                    <td>Apr 20, 2025</td>
+                                    <td>4/8 completed</td>
+                                    <td class="text-end">
+                                        <button
+                                            class="btn btn-sm btn-outline-primary me-1"
+                                        >
+                                            <i class="bi bi-envelope"></i>
+                                        </button>
+                                        <button
+                                            class="btn btn-sm btn-outline-danger"
+                                        >
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div
+                                                class="team-avatar me-2"
+                                                style="
+                                                    background-color: #20c997;
+                                                "
+                                            >
+                                                JS
+                                            </div>
+                                            <div>Jane Smith</div>
+                                        </div>
+                                    </td>
+                                    <td>Designer</td>
+                                    <td>Apr 22, 2025</td>
+                                    <td>2/5 completed</td>
+                                    <td class="text-end">
+                                        <button
+                                            class="btn btn-sm btn-outline-primary me-1"
+                                        >
+                                            <i class="bi bi-envelope"></i>
+                                        </button>
+                                        <button
+                                            class="btn btn-sm btn-outline-danger"
+                                        >
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div
+                                                class="team-avatar me-2"
+                                                style="
+                                                    background-color: #0d6efd;
+                                                "
+                                            >
+                                                MM
+                                            </div>
+                                            <div>Mark Miller</div>
+                                        </div>
+                                    </td>
+                                    <td>Content Writer</td>
+                                    <td>Apr 25, 2025</td>
+                                    <td>3/3 completed</td>
+                                    <td class="text-end">
+                                        <button
+                                            class="btn btn-sm btn-outline-primary me-1"
+                                        >
+                                            <i class="bi bi-envelope"></i>
+                                        </button>
+                                        <button
+                                            class="btn btn-sm btn-outline-danger"
+                                        >
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Files Tab -->
+        <div
+            class="tab-pane fade"
+            id="files"
+            role="tabpanel"
+            aria-labelledby="files-tab"
+        >
+            <div class="card">
+                <div
+                    class="card-header d-flex justify-content-between align-items-center"
+                >
+                    <h5 class="card-title mb-0">Project Files</h5>
+                    <button class="btn btn-primary btn-sm">
+                        <i class="bi bi-upload"></i> Upload File
+                    </button>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Size</th>
+                                <th>Uploaded by</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i
+                                            class="bi bi-file-earmark-word text-primary me-2"
+                                            style="font-size: 1.5rem"
+                                        ></i>
+                                        <span>Project_Brief.docx</span>
+                                    </div>
+                                </td>
+                                <td>Document</td>
+                                <td>423 KB</td>
+                                <td>John Doe</td>
+                                <td>Apr 25, 2025</td>
+                                <td>
+                                    <button
+                                        class="btn btn-sm btn-outline-primary me-1"
+                                    >
+                                        <i class="bi bi-download"></i>
+                                    </button>
+                                    <button
+                                        class="btn btn-sm btn-outline-danger"
+                                    >
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i
+                                            class="bi bi-file-earmark-pdf text-danger me-2"
+                                            style="font-size: 1.5rem"
+                                        ></i>
+                                        <span>Marketing_Research.pdf</span>
+                                    </div>
+                                </td>
+                                <td>PDF</td>
+                                <td>1.2 MB</td>
+                                <td>Jane Smith</td>
+                                <td>Apr 27, 2025</td>
+                                <td>
+                                    <button
+                                        class="btn btn-sm btn-outline-primary me-1"
+                                    >
+                                        <i class="bi bi-download"></i>
+                                    </button>
+                                    <button
+                                        class="btn btn-sm btn-outline-danger"
+                                    >
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i
+                                            class="bi bi-file-earmark-image text-success me-2"
+                                            style="font-size: 1.5rem"
+                                        ></i>
+                                        <span>Logo_Draft_v1.png</span>
+                                    </div>
+                                </td>
+                                <td>Image</td>
+                                <td>842 KB</td>
+                                <td>Mark Miller</td>
+                                <td>Apr 29, 2025</td>
+                                <td>
+                                    <button
+                                        class="btn btn-sm btn-outline-primary me-1"
+                                    >
+                                        <i class="bi bi-download"></i>
+                                    </button>
+                                    <button
+                                        class="btn btn-sm btn-outline-danger"
+                                    >
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Tab -->
+        <div
+            class="tab-pane fade"
+            id="activity"
+            role="tabpanel"
+            aria-labelledby="activity-tab"
+        >
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Activity Log</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush border-bottom">
+                        <div class="list-group-item p-3">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <div
+                                        class="team-avatar"
+                                        style="background-color: #6f42c1"
+                                    >
+                                        JD
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div>
+                                        <span class="fw-medium">John Doe</span>
+                                        <span> created a new task: </span>
+                                        <span class="fw-medium"
+                                            >"Design Project Logo"</span
+                                        >
+                                    </div>
+                                    <small class="text-muted"
+                                        >2 hours ago</small
+                                    >
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="list-group-item p-3">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <div
+                                        class="team-avatar"
+                                        style="background-color: #20c997"
+                                    >
+                                        JS
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div>
+                                        <span class="fw-medium"
+                                            >Jane Smith</span
+                                        >
+                                        <span> uploaded a new file: </span>
+                                        <span class="fw-medium"
+                                            >"Marketing_Research.pdf"</span
+                                        >
+                                    </div>
+                                    <small class="text-muted"
+                                        >Yesterday at 4:30 PM</small
+                                    >
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="list-group-item p-3">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <div
+                                        class="team-avatar"
+                                        style="background-color: #0d6efd"
+                                    >
+                                        MM
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div>
+                                        <span class="fw-medium"
+                                            >Mark Miller</span
+                                        >
+                                        <span> changed project status to </span>
+                                        <span class="badge bg-warning"
+                                            >In Progress</span
+                                        >
+                                    </div>
+                                    <small class="text-muted"
+                                        >Apr 28, 2025</small
+                                    >
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="list-group-item p-3">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <div
+                                        class="team-avatar"
+                                        style="background-color: #dc3545"
+                                    >
+                                        AL
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div>
+                                        <span class="fw-medium">Amy Lee</span>
+                                        <span> completed task: </span>
+                                        <span class="fw-medium"
+                                            >"Collect competitor research"</span
+                                        >
+                                    </div>
+                                    <small class="text-muted"
+                                        >Apr 27, 2025</small
+                                    >
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="list-group-item p-3">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <div
+                                        class="team-avatar"
+                                        style="background-color: #6f42c1"
+                                    >
+                                        JD
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div>
+                                        <span class="fw-medium">John Doe</span>
+                                        <span> created the project </span>
+                                    </div>
+                                    <small class="text-muted"
+                                        >Apr 20, 2025</small
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js for charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Task status chart
+        const taskCtx = document.getElementById("taskChart").getContext("2d");
+        const taskData = {
+            labels: ["To Do", "In Progress", "Review", "Done"],
+            datasets: [
+                {
+                    data: [4, 3, 2, 5],
+                    backgroundColor: [
+                        "#6c757d",
+                        "#0d6efd",
+                        "#ffc107",
+                        "#20c997",
+                    ],
+                    borderWidth: 0,
+                },
+            ],
+        };
+
+        new Chart(taskCtx, {
+            type: "doughnut",
+            data: taskData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "right",
+                    },
+                },
+                cutout: "70%",
+            },
+        });
+    });
+</script>
+{% endblock %}

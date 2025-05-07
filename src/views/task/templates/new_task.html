@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create New Task - CSA Platform</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        .form-container {
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-top: 20px;
+        }
+        
+        .form-title {
+            margin-top: 0;
+            margin-bottom: 25px;
+            color: var(--secondary-color);
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        textarea.form-control {
+            min-height: 120px;
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: white;
+        }
+        
+        .form-actions {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .button {
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            cursor: pointer;
+            border: none;
+            font-size: 16px;
+        }
+        
+        .button.primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .button.secondary {
+            background-color: white;
+            color: var(--secondary-color);
+            border: 1px solid var(--secondary-color);
+        }
+        
+        .checklist-container {
+            margin-top: 20px;
+        }
+        
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .checklist-input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        
+        .remove-item {
+            background: #f5f5f5;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .add-item {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 0;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Create New Task</h1>
+    </header>
+    
+    <main>
+        <nav>
+            <ul>
+                <li><a href="/tasks">All Tasks</a></li>
+                <li><a href="/projects">Projects</a></li>
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/">Home</a></li>
+            </ul>
+        </nav>
+        
+        <div class="form-container">
+            <h2 class="form-title">Task Information</h2>
+            
+            <form action="/tasks" method="post">
+                <div class="form-group">
+                    <label for="task-title" class="form-label">Task Title *</label>
+                    <input type="text" id="task-title" name="title" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="task-description" class="form-label">Description</label>
+                    <textarea id="task-description" name="description" class="form-control"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="task-project" class="form-label">Project</label>
+                    <select id="task-project" name="project_id" class="form-select">
+                        <option value="">-- Select Project --</option>
+                        <option value="1">Website Redesign</option>
+                        <option value="2">Mobile App Development</option>
+                        <option value="3">Marketing Campaign</option>
+                        <option value="4">Customer Research</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="task-assignee" class="form-label">Assign To</label>
+                    <select id="task-assignee" name="assignee_id" class="form-select">
+                        <option value="">-- Select Assignee --</option>
+                        <option value="1">Sarah Chen</option>
+                        <option value="2">Michael Rodriguez</option>
+                        <option value="3">Emily Wong</option>
+                        <option value="4">David Smith</option>
+                        <option value="5">Jessica Lee</option>
+                    </select>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group" style="width: 48%; display: inline-block; margin-right: 2%;">
+                        <label for="due-date" class="form-label">Due Date</label>
+                        <input type="date" id="due-date" name="due_date" class="form-control">
+                    </div>
+                    
+                    <div class="form-group" style="width: 48%; display: inline-block;">
+                        <label for="task-priority" class="form-label">Priority</label>
+                        <select id="task-priority" name="priority" class="form-select">
+                            <option value="high">High</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="task-status" class="form-label">Status</label>
+                    <select id="task-status" name="status" class="form-select">
+                        <option value="not_started">Not Started</option>
+                        <option value="in_progress" selected>In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="blocked">Blocked</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Checklist</label>
+                    <div class="checklist-container" id="checklist-container">
+                        <div class="checklist-item">
+                            <input type="text" name="checklist[]" class="checklist-input" placeholder="Checklist item">
+                            <button type="button" class="remove-item">×</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-item" id="add-checklist-item">+ Add Item</button>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="button primary">Create Task</button>
+                    <a href="/tasks" class="button secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 CSA Platform</p>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('checklist-container');
+            const addButton = document.getElementById('add-checklist-item');
+            
+            // Add new checklist item
+            addButton.addEventListener('click', function() {
+                const item = document.createElement('div');
+                item.className = 'checklist-item';
+                item.innerHTML = `
+                    <input type="text" name="checklist[]" class="checklist-input" placeholder="Checklist item">
+                    <button type="button" class="remove-item">×</button>
+                `;
+                container.appendChild(item);
+                
+                // Add event listener to the new remove button
+                item.querySelector('.remove-item').addEventListener('click', function() {
+                    container.removeChild(item);
+                });
+            });
+            
+            // Add event listeners to existing remove buttons
+            document.querySelectorAll('.remove-item').forEach(button => {
+                button.addEventListener('click', function() {
+                    const item = this.parentNode;
+                    container.removeChild(item);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

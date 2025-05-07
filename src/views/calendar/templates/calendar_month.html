@@ -1,0 +1,966 @@
+{% extends "base.html" %} {% block title %}Calendar - CSA Hello System{%
+endblock %} {% block extra_css %}
+<link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css"
+/>
+<style>
+    /* Calendar Styling */
+    .fc-theme-standard .fc-scrollgrid {
+        border-radius: 6px;
+        overflow: hidden;
+        border: none;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+
+    .fc .fc-toolbar-title {
+        font-size: 1.5rem;
+        color: #4e73df;
+        font-weight: 600;
+    }
+
+    .fc .fc-button-primary {
+        background-color: #4e73df;
+        border-color: #4e73df;
+        font-weight: 500;
+    }
+
+    .fc .fc-button-primary:hover {
+        background-color: #3a50bb;
+        border-color: #3a50bb;
+    }
+
+    .fc .fc-button-primary:disabled {
+        background-color: #7ea0ff;
+        border-color: #7ea0ff;
+    }
+
+    .fc .fc-daygrid-day.fc-day-today {
+        background-color: rgba(78, 115, 223, 0.1);
+    }
+
+    .fc .fc-event {
+        border-radius: 4px;
+        font-size: 0.8rem;
+        border: none;
+    }
+
+    .fc .fc-event-main {
+        padding: 2px 4px;
+        cursor: pointer;
+    }
+
+    .calendar-view-selector .nav-link {
+        padding: 0.5rem 1rem;
+        color: #6c757d;
+    }
+
+    .calendar-view-selector .nav-link.active {
+        color: #4e73df;
+        font-weight: 600;
+        border-bottom: 2px solid #4e73df;
+    }
+
+    .fc-h-event.project-event {
+        background-color: #4e73df;
+        border-color: #4e73df;
+    }
+
+    .fc-h-event.task-event {
+        background-color: #1cc88a;
+        border-color: #1cc88a;
+    }
+
+    .fc-h-event.meeting-event {
+        background-color: #f6c23e;
+        border-color: #f6c23e;
+    }
+
+    .fc-h-event.deadline-event {
+        background-color: #e74a3b;
+        border-color: #e74a3b;
+    }
+
+    .fc-h-event.personal-event {
+        background-color: #36b9cc;
+        border-color: #36b9cc;
+    }
+
+    .calendar-card {
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        margin-bottom: 1.5rem;
+    }
+
+    .calendar-sidebar {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+
+    .event-preview {
+        background-color: white;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+
+    .event-type-checkbox {
+        margin-bottom: 0.5rem;
+    }
+
+    .event-type-checkbox .form-check-input:checked[type="checkbox"] {
+        background-color: currentColor;
+        border-color: currentColor;
+    }
+
+    .mini-calendar {
+        margin-bottom: 1.5rem;
+    }
+
+    .day-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 6px;
+    }
+
+    .upcoming-event {
+        border-left: 4px solid;
+        padding: 0.5rem 0.75rem;
+        margin-bottom: 0.75rem;
+        background-color: #f8f9fc;
+        border-radius: 0.25rem;
+        transition: transform 0.2s;
+    }
+
+    .upcoming-event:hover {
+        transform: translateX(5px);
+    }
+
+    /* Create Event Modal */
+    #eventModal .modal-header {
+        background-color: #4e73df;
+        color: white;
+    }
+
+    #eventModal .modal-body {
+        padding: 1.5rem;
+    }
+
+    .form-group-calendar {
+        margin-bottom: 1rem;
+    }
+
+    .form-group-calendar label {
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .event-color-selector .color-option {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: inline-block;
+        margin-right: 6px;
+        border: 2px solid transparent;
+    }
+
+    .event-color-selector .color-option.active {
+        border-color: #4e73df;
+        transform: scale(1.2);
+    }
+</style>
+{% endblock %} {% block content %}
+<div class="container-fluid px-4">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="far fa-calendar-alt me-2"></i>Calendar
+        </h1>
+        <button
+            class="btn btn-primary shadow-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#eventModal"
+        >
+            <i class="fas fa-plus fa-sm me-1"></i> Add Event
+        </button>
+    </div>
+
+    <!-- View Selector -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body py-2">
+            <ul class="nav nav-pills calendar-view-selector">
+                <li class="nav-item">
+                    <a class="nav-link active" href="/calendar/month">Month</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/calendar/week">Week</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/calendar/day">Day</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/calendar/agenda">Agenda</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Calendar Sidebar -->
+        <div class="col-lg-3 mb-4">
+            <div class="calendar-sidebar">
+                <!-- Mini Calendar -->
+                <div class="mini-calendar" id="miniCalendar"></div>
+
+                <!-- Event Types -->
+                <div class="mb-4">
+                    <h6 class="text-uppercase fw-bold mb-3">Event Types</h6>
+
+                    <div class="event-type-checkbox">
+                        <div class="form-check">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                id="projectEvents"
+                                checked
+                                style="border-color: #4e73df; color: #4e73df"
+                            />
+                            <label class="form-check-label" for="projectEvents">
+                                <span
+                                    class="day-dot"
+                                    style="background-color: #4e73df"
+                                ></span>
+                                Projects
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="event-type-checkbox">
+                        <div class="form-check">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                id="taskEvents"
+                                checked
+                                style="border-color: #1cc88a; color: #1cc88a"
+                            />
+                            <label class="form-check-label" for="taskEvents">
+                                <span
+                                    class="day-dot"
+                                    style="background-color: #1cc88a"
+                                ></span>
+                                Tasks
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="event-type-checkbox">
+                        <div class="form-check">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                id="meetingEvents"
+                                checked
+                                style="border-color: #f6c23e; color: #f6c23e"
+                            />
+                            <label class="form-check-label" for="meetingEvents">
+                                <span
+                                    class="day-dot"
+                                    style="background-color: #f6c23e"
+                                ></span>
+                                Meetings
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="event-type-checkbox">
+                        <div class="form-check">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                id="deadlineEvents"
+                                checked
+                                style="border-color: #e74a3b; color: #e74a3b"
+                            />
+                            <label
+                                class="form-check-label"
+                                for="deadlineEvents"
+                            >
+                                <span
+                                    class="day-dot"
+                                    style="background-color: #e74a3b"
+                                ></span>
+                                Deadlines
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="event-type-checkbox">
+                        <div class="form-check">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                id="personalEvents"
+                                checked
+                                style="border-color: #36b9cc; color: #36b9cc"
+                            />
+                            <label
+                                class="form-check-label"
+                                for="personalEvents"
+                            >
+                                <span
+                                    class="day-dot"
+                                    style="background-color: #36b9cc"
+                                ></span>
+                                Personal
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upcoming Events -->
+                <div>
+                    <h6 class="text-uppercase fw-bold mb-3">Upcoming Events</h6>
+
+                    <div class="upcoming-event" style="border-color: #f6c23e">
+                        <h6 class="mb-1">Team Weekly Meeting</h6>
+                        <div class="text-xs text-muted mb-1">
+                            <i class="far fa-clock me-1"></i> Today, 10:00 AM -
+                            11:30 AM
+                        </div>
+                        <div class="text-xs text-muted">
+                            <i class="fas fa-video me-1"></i> Zoom Meeting
+                        </div>
+                    </div>
+
+                    <div class="upcoming-event" style="border-color: #e74a3b">
+                        <h6 class="mb-1">Project Deadline</h6>
+                        <div class="text-xs text-muted mb-1">
+                            <i class="far fa-clock me-1"></i> Tomorrow, All Day
+                        </div>
+                        <div class="text-xs text-muted">
+                            <i class="fas fa-tasks me-1"></i> Website Redesign
+                        </div>
+                    </div>
+
+                    <div class="upcoming-event" style="border-color: #1cc88a">
+                        <h6 class="mb-1">Bug Fix Review</h6>
+                        <div class="text-xs text-muted mb-1">
+                            <i class="far fa-clock me-1"></i> May 3, 2:00 PM -
+                            3:00 PM
+                        </div>
+                        <div class="text-xs text-muted">
+                            <i class="fas fa-clipboard-list me-1"></i> Mobile
+                            App Task
+                        </div>
+                    </div>
+
+                    <div class="upcoming-event" style="border-color: #4e73df">
+                        <h6 class="mb-1">Client Project Kickoff</h6>
+                        <div class="text-xs text-muted mb-1">
+                            <i class="far fa-clock me-1"></i> May 4, 9:30 AM -
+                            11:00 AM
+                        </div>
+                        <div class="text-xs text-muted">
+                            <i class="fas fa-project-diagram me-1"></i> CRM
+                            Implementation
+                        </div>
+                    </div>
+
+                    <div class="mt-3 text-center">
+                        <a href="#" class="btn btn-sm btn-light"
+                            >View All Events</a
+                        >
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Calendar -->
+        <div class="col-lg-9">
+            <div class="calendar-card">
+                <div id="calendar"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Event Modal -->
+<div
+    class="modal fade"
+    id="eventModal"
+    tabindex="-1"
+    aria-labelledby="eventModalLabel"
+    aria-hidden="true"
+>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventModalLabel">
+                    <i class="fas fa-calendar-plus me-2"></i>Add New Event
+                </h5>
+                <button
+                    type="button"
+                    class="btn-close btn-close-white"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
+            </div>
+            <div class="modal-body">
+                <form id="eventForm">
+                    <div class="form-group-calendar">
+                        <label for="eventTitle">Event Title</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="eventTitle"
+                            placeholder="Enter event title"
+                            required
+                        />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group-calendar">
+                                <label for="eventStartDate"
+                                    >Start Date & Time</label
+                                >
+                                <input
+                                    type="datetime-local"
+                                    class="form-control"
+                                    id="eventStartDate"
+                                    required
+                                />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-calendar">
+                                <label for="eventEndDate"
+                                    >End Date & Time</label
+                                >
+                                <input
+                                    type="datetime-local"
+                                    class="form-control"
+                                    id="eventEndDate"
+                                    required
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group-calendar">
+                        <label for="eventType">Event Type</label>
+                        <select class="form-select" id="eventType" required>
+                            <option value="">Select event type</option>
+                            <option value="project">Project</option>
+                            <option value="task">Task</option>
+                            <option value="meeting">Meeting</option>
+                            <option value="deadline">Deadline</option>
+                            <option value="personal">Personal</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group-calendar">
+                        <label for="eventLocation">Location (Optional)</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="eventLocation"
+                            placeholder="Enter location or meeting link"
+                        />
+                    </div>
+
+                    <div class="form-group-calendar">
+                        <label for="eventDescription"
+                            >Description (Optional)</label
+                        >
+                        <textarea
+                            class="form-control"
+                            id="eventDescription"
+                            rows="3"
+                            placeholder="Enter event description"
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group-calendar">
+                        <label>Select Color</label>
+                        <div class="event-color-selector">
+                            <span
+                                class="color-option active"
+                                style="background-color: #4e73df"
+                                data-color="#4e73df"
+                            ></span>
+                            <span
+                                class="color-option"
+                                style="background-color: #1cc88a"
+                                data-color="#1cc88a"
+                            ></span>
+                            <span
+                                class="color-option"
+                                style="background-color: #f6c23e"
+                                data-color="#f6c23e"
+                            ></span>
+                            <span
+                                class="color-option"
+                                style="background-color: #e74a3b"
+                                data-color="#e74a3b"
+                            ></span>
+                            <span
+                                class="color-option"
+                                style="background-color: #36b9cc"
+                                data-color="#36b9cc"
+                            ></span>
+                            <span
+                                class="color-option"
+                                style="background-color: #6f42c1"
+                                data-color="#6f42c1"
+                            ></span>
+                        </div>
+                    </div>
+
+                    <div class="form-check mt-3">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="allDayEvent"
+                        />
+                        <label class="form-check-label" for="allDayEvent">
+                            All-day event
+                        </label>
+                    </div>
+
+                    <div class="form-check mt-2">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="sendReminder"
+                        />
+                        <label class="form-check-label" for="sendReminder">
+                            Send reminder notification
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    data-bs-dismiss="modal"
+                >
+                    Cancel
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    id="saveEventButton"
+                >
+                    Save Event
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Initialize main calendar
+        const calendarEl = document.getElementById("calendar");
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: "dayGridMonth",
+            headerToolbar: {
+                left: "prev,next today",
+                center: "title",
+                right: "dayGridMonth,timeGridWeek,timeGridDay",
+            },
+            themeSystem: "bootstrap5",
+            selectable: true,
+            selectMirror: true,
+            dayMaxEvents: true,
+            editable: true,
+            eventTimeFormat: {
+                hour: "2-digit",
+                minute: "2-digit",
+                meridiem: "short",
+            },
+            events: [
+                {
+                    title: "Team Weekly Meeting",
+                    start: "2025-05-01T10:00:00",
+                    end: "2025-05-01T11:30:00",
+                    className: "meeting-event",
+                    extendedProps: {
+                        location: "Zoom Meeting",
+                        description:
+                            "Weekly team sync-up to discuss project progress",
+                        type: "meeting",
+                    },
+                },
+                {
+                    title: "Project Deadline",
+                    start: "2025-05-02",
+                    allDay: true,
+                    className: "deadline-event",
+                    extendedProps: {
+                        description:
+                            "Final deadline for Website Redesign project",
+                        type: "deadline",
+                    },
+                },
+                {
+                    title: "Bug Fix Review",
+                    start: "2025-05-03T14:00:00",
+                    end: "2025-05-03T15:00:00",
+                    className: "task-event",
+                    extendedProps: {
+                        description:
+                            "Review bug fixes for the mobile application",
+                        type: "task",
+                    },
+                },
+                {
+                    title: "Client Project Kickoff",
+                    start: "2025-05-04T09:30:00",
+                    end: "2025-05-04T11:00:00",
+                    className: "project-event",
+                    extendedProps: {
+                        description:
+                            "Kickoff meeting for the new CRM Implementation project",
+                        location: "Conference Room A",
+                        type: "project",
+                    },
+                },
+                {
+                    title: "Design Review",
+                    start: "2025-05-08T13:00:00",
+                    end: "2025-05-08T15:00:00",
+                    className: "task-event",
+                    extendedProps: {
+                        description: "Review new application design mockups",
+                        type: "task",
+                    },
+                },
+                {
+                    title: "Marketing Meeting",
+                    start: "2025-05-10T11:00:00",
+                    end: "2025-05-10T12:30:00",
+                    className: "meeting-event",
+                    extendedProps: {
+                        description: "Discuss Q3 marketing strategy",
+                        location: "Meeting Room 2B",
+                        type: "meeting",
+                    },
+                },
+                {
+                    title: "Database Migration",
+                    start: "2025-05-15",
+                    allDay: true,
+                    className: "project-event",
+                    extendedProps: {
+                        description:
+                            "Scheduled database migration to new servers",
+                        type: "project",
+                    },
+                },
+                {
+                    title: "API Deployment",
+                    start: "2025-05-18",
+                    allDay: true,
+                    className: "task-event",
+                    extendedProps: {
+                        description: "Deploy new API endpoints to production",
+                        type: "task",
+                    },
+                },
+                {
+                    title: "Team Lunch",
+                    start: "2025-05-20T12:00:00",
+                    end: "2025-05-20T13:30:00",
+                    className: "personal-event",
+                    extendedProps: {
+                        description:
+                            "Team building lunch at Italian Restaurant",
+                        location: "Pasta Place Downtown",
+                        type: "personal",
+                    },
+                },
+                {
+                    title: "Quarterly Review",
+                    start: "2025-05-25T09:00:00",
+                    end: "2025-05-25T17:00:00",
+                    className: "meeting-event",
+                    extendedProps: {
+                        description: "Q2 performance review with management",
+                        location: "Executive Conference Room",
+                        type: "meeting",
+                    },
+                },
+            ],
+            select: function (info) {
+                // Clear form when selecting dates
+                document.getElementById("eventTitle").value = "";
+                document.getElementById("eventDescription").value = "";
+                document.getElementById("eventLocation").value = "";
+                document.getElementById("eventType").value = "";
+
+                // Set selected dates in form
+                const startDate = info.startStr;
+                const endDate = info.endStr;
+
+                if (startDate.includes("T")) {
+                    document.getElementById("eventStartDate").value =
+                        startDate.substring(0, 16);
+                } else {
+                    document.getElementById("eventStartDate").value =
+                        startDate + "T09:00";
+                }
+
+                if (endDate.includes("T")) {
+                    document.getElementById("eventEndDate").value =
+                        endDate.substring(0, 16);
+                } else {
+                    // Adjust end date for all-day events (subtract 1 day)
+                    let dt = new Date(endDate);
+                    dt.setDate(dt.getDate() - 1);
+                    document.getElementById("eventEndDate").value =
+                        dt.toISOString().substring(0, 10) + "T17:00";
+                }
+
+                document.getElementById("allDayEvent").checked =
+                    !startDate.includes("T");
+
+                // Show modal
+                const eventModal = new bootstrap.Modal(
+                    document.getElementById("eventModal")
+                );
+                eventModal.show();
+            },
+            eventClick: function (info) {
+                // View event details (you can implement this if needed)
+                alert(
+                    "Event: " +
+                        info.event.title +
+                        "\n" +
+                        "Start: " +
+                        info.event.start.toLocaleString() +
+                        "\n" +
+                        (info.event.end
+                            ? "End: " + info.event.end.toLocaleString() + "\n"
+                            : "") +
+                        (info.event.extendedProps.description
+                            ? "Description: " +
+                              info.event.extendedProps.description +
+                              "\n"
+                            : "") +
+                        (info.event.extendedProps.location
+                            ? "Location: " + info.event.extendedProps.location
+                            : "")
+                );
+            },
+        });
+
+        calendar.render();
+
+        // Initialize mini calendar
+        const miniCalendarEl = document.getElementById("miniCalendar");
+        const miniCalendar = new FullCalendar.Calendar(miniCalendarEl, {
+            initialView: "dayGridMonth",
+            headerToolbar: {
+                left: "prev,next",
+                center: "title",
+                right: "",
+            },
+            themeSystem: "bootstrap5",
+            height: "auto",
+            selectable: false,
+            dayMaxEvents: false,
+            showNonCurrentDates: false,
+        });
+
+        miniCalendar.render();
+
+        // Handle event type checkboxes
+        document
+            .querySelectorAll(".event-type-checkbox input")
+            .forEach(function (checkbox) {
+                checkbox.addEventListener("change", function () {
+                    const eventType = this.id.replace("Events", "");
+                    const eventElements = document.querySelectorAll(
+                        `.${eventType}-event`
+                    );
+
+                    eventElements.forEach(function (eventElement) {
+                        if (checkbox.checked) {
+                            eventElement.style.display = "block";
+                        } else {
+                            eventElement.style.display = "none";
+                        }
+                    });
+                });
+            });
+
+        // Handle color selection for new events
+        document
+            .querySelectorAll(".color-option")
+            .forEach(function (colorOption) {
+                colorOption.addEventListener("click", function () {
+                    // Remove active class from all options
+                    document
+                        .querySelectorAll(".color-option")
+                        .forEach(function (option) {
+                            option.classList.remove("active");
+                        });
+
+                    // Add active class to selected option
+                    this.classList.add("active");
+                });
+            });
+
+        // Handle event type change to set default color
+        document
+            .getElementById("eventType")
+            .addEventListener("change", function () {
+                const colorMap = {
+                    project: "#4e73df",
+                    task: "#1cc88a",
+                    meeting: "#f6c23e",
+                    deadline: "#e74a3b",
+                    personal: "#36b9cc",
+                };
+
+                const selectedColor = colorMap[this.value] || "#4e73df";
+
+                // Remove active class from all options
+                document
+                    .querySelectorAll(".color-option")
+                    .forEach(function (option) {
+                        option.classList.remove("active");
+
+                        // Add active class to matching color
+                        if (option.style.backgroundColor === selectedColor) {
+                            option.classList.add("active");
+                        }
+                    });
+            });
+
+        // Handle all-day event checkbox
+        document
+            .getElementById("allDayEvent")
+            .addEventListener("change", function () {
+                const startDateInput =
+                    document.getElementById("eventStartDate");
+                const endDateInput = document.getElementById("eventEndDate");
+
+                if (this.checked) {
+                    // Store time values to restore them if unchecked
+                    startDateInput.dataset.time =
+                        startDateInput.value.substring(11);
+                    endDateInput.dataset.time =
+                        endDateInput.value.substring(11);
+
+                    // Set to start of day
+                    startDateInput.value =
+                        startDateInput.value.substring(0, 10) + "T00:00";
+                    endDateInput.value =
+                        endDateInput.value.substring(0, 10) + "T23:59";
+                } else {
+                    // Restore time values if they exist
+                    if (startDateInput.dataset.time) {
+                        startDateInput.value =
+                            startDateInput.value.substring(0, 10) +
+                            "T" +
+                            startDateInput.dataset.time;
+                    } else {
+                        startDateInput.value =
+                            startDateInput.value.substring(0, 10) + "T09:00";
+                    }
+
+                    if (endDateInput.dataset.time) {
+                        endDateInput.value =
+                            endDateInput.value.substring(0, 10) +
+                            "T" +
+                            endDateInput.dataset.time;
+                    } else {
+                        endDateInput.value =
+                            endDateInput.value.substring(0, 10) + "T17:00";
+                    }
+                }
+            });
+
+        // Handle save event button
+        document
+            .getElementById("saveEventButton")
+            .addEventListener("click", function () {
+                const eventForm = document.getElementById("eventForm");
+                const formElements = eventForm.elements;
+
+                // Basic form validation
+                if (formElements.eventTitle.value.trim() === "") {
+                    alert("Please enter an event title");
+                    return;
+                }
+
+                const startDate = formElements.eventStartDate.value;
+                const endDate = formElements.eventEndDate.value;
+
+                if (!startDate || !endDate) {
+                    alert("Please select start and end dates");
+                    return;
+                }
+
+                if (formElements.eventType.value === "") {
+                    alert("Please select an event type");
+                    return;
+                }
+
+                // Get selected color
+                const selectedColorElement = document.querySelector(
+                    ".color-option.active"
+                );
+                const selectedColor = selectedColorElement
+                    ? selectedColorElement.getAttribute("data-color")
+                    : "#4e73df";
+
+                // Create event object
+                const newEvent = {
+                    title: formElements.eventTitle.value,
+                    start: formElements.eventStartDate.value,
+                    end: formElements.eventEndDate.value,
+                    allDay: formElements.allDayEvent.checked,
+                    className: formElements.eventType.value + "-event",
+                    backgroundColor: selectedColor,
+                    borderColor: selectedColor,
+                    extendedProps: {
+                        type: formElements.eventType.value,
+                        description: formElements.eventDescription.value,
+                        location: formElements.eventLocation.value,
+                    },
+                };
+
+                // Add event to calendar
+                calendar.addEvent(newEvent);
+
+                // Close modal
+                const eventModal = bootstrap.Modal.getInstance(
+                    document.getElementById("eventModal")
+                );
+                eventModal.hide();
+
+                // Show success message
+                alert("Event added successfully!");
+            });
+
+        // Handle window resize
+        window.addEventListener("resize", function () {
+            calendar.updateSize();
+            miniCalendar.updateSize();
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if is_edit %}Edit User{% else %}Create User{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        {% if is_edit %}Edit User{% else %}Create New User{% endif %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if error %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ error }}
+                    </div>
+                    {% endif %}
+                    
+                    <form method="POST" class="user-form">
+                        <div class="row">
+                            <!-- Basic User Information -->
+                            <div class="col-lg-6">
+                                <h4 class="small font-weight-bold mb-3">Basic Information</h4>
+                                <div class="form-group">
+                                    <label for="email">Email <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" id="email" name="email" required
+                                        value="{% if is_edit %}{{ user.email }}{% elif form_data %}{{ form_data.email }}{% endif %}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="username">Username <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="username" name="username" required
+                                        value="{% if is_edit %}{{ user.username }}{% elif form_data %}{{ form_data.username }}{% endif %}">
+                                </div>
+                                {% if not is_edit %}
+                                <div class="form-group">
+                                    <label for="password">Password <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control" id="password" name="password" 
+                                        required minlength="8">
+                                    <small class="form-text text-muted">Password must be at least 8 characters long</small>
+                                </div>
+                                {% endif %}
+                                <div class="form-group">
+                                    <label for="role">Role <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="role" name="role" required>
+                                        {% for role in roles %}
+                                        <option value="{{ role }}" 
+                                            {% if is_edit and user.role == role %}selected
+                                            {% elif form_data and form_data.role == role %}selected
+                                            {% endif %}>
+                                            {{ role.value|capitalize }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                {% if is_edit %}
+                                <div class="form-group">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="is_active" name="is_active"
+                                            {% if user.is_active %}checked{% endif %}>
+                                        <label class="custom-control-label" for="is_active">Active Account</label>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="is_verified" name="is_verified"
+                                            {% if user.is_verified %}checked{% endif %}>
+                                        <label class="custom-control-label" for="is_verified">Email Verified</label>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Profile Information -->
+                            <div class="col-lg-6">
+                                <h4 class="small font-weight-bold mb-3">Profile Information</h4>
+                                <div class="form-group">
+                                    <label for="first_name">First Name</label>
+                                    <input type="text" class="form-control" id="first_name" name="first_name"
+                                        value="{% if is_edit and user.profile %}{{ user.profile.first_name }}{% elif form_data %}{{ form_data.first_name }}{% endif %}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="last_name">Last Name</label>
+                                    <input type="text" class="form-control" id="last_name" name="last_name"
+                                        value="{% if is_edit and user.profile %}{{ user.profile.last_name }}{% elif form_data %}{{ form_data.last_name }}{% endif %}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="display_name">Display Name</label>
+                                    <input type="text" class="form-control" id="display_name" name="display_name"
+                                        value="{% if is_edit and user.profile %}{{ user.profile.display_name }}{% elif form_data %}{{ form_data.display_name }}{% endif %}">
+                                    <small class="form-text text-muted">Name displayed in the system</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="float-right">
+                                    <a href="{{ url_for('user_list_view') }}" class="btn btn-secondary">Cancel</a>
+                                    <button type="submit" class="btn btn-primary">
+                                        {% if is_edit %}Save Changes{% else %}Create User{% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Form validation
+        $('.user-form').submit(function(event) {
+            var password = $('#password').val();
+            {% if not is_edit %}
+            if (password.length < 8) {
+                event.preventDefault();
+                toastr.error('Password must be at least 8 characters long');
+                return false;
+            }
+            {% endif %}
+            return true;
+        });
+    });
+</script>
+{% endblock %}

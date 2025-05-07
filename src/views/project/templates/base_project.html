@@ -1,0 +1,30 @@
+{% extends "base.html" %} {% block title %}{% block project_title %}Projects{%
+endblock %} | CSA Platform{% endblock %} {% block head_extra %}
+<style>
+    /* Common project styles */
+    .project-header {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .status-badge {
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+
+    .project-card {
+        transition: transform 0.3s;
+        cursor: pointer;
+    }
+
+    .project-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% block project_styles %}{% endblock %} {% endblock %} {% block content %}
+<div class="container mt-4">{% block project_content %}{% endblock %}</div>
+{% endblock %}

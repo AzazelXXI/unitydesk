@@ -1,0 +1,800 @@
+{% extends "base.html" %} {% block title %}Analytics Dashboard - CSA Hello
+System{% endblock %} {% block extra_css %}
+<link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css"
+/>
+<style>
+    .stat-card {
+        border-left: 4px solid;
+        transition: transform 0.2s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    .stat-card-primary {
+        border-color: var(--primary);
+    }
+    .stat-card-success {
+        border-color: var(--success);
+    }
+    .stat-card-info {
+        border-color: var(--info);
+    }
+    .stat-card-warning {
+        border-color: var(--warning);
+    }
+
+    .stat-icon {
+        font-size: 2rem;
+        opacity: 0.25;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 350px;
+        margin-bottom: 2rem;
+    }
+
+    .progress-bar-container {
+        height: 8px;
+        margin-top: 10px;
+    }
+
+    .progress-bar-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 4px;
+    }
+
+    .activity-timeline .timeline-item {
+        position: relative;
+        padding-left: 30px;
+        padding-bottom: 1.5rem;
+    }
+
+    .activity-timeline .timeline-item:before {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 0;
+        height: 100%;
+        border-left: 2px solid #e9ecef;
+    }
+
+    .activity-timeline .timeline-item:last-child:before {
+        height: 15px;
+    }
+
+    .activity-timeline .timeline-item .timeline-badge {
+        position: absolute;
+        left: -5px;
+        top: 0;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        z-index: 1;
+    }
+
+    .data-tile {
+        border-radius: 0.5rem;
+        padding: 1.25rem;
+        height: 100%;
+        transition: all 0.3s;
+    }
+
+    .data-tile:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .tab-card .nav-link {
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .tab-card .nav-link.active {
+        color: var(--primary);
+        border-bottom: 2px solid var(--primary);
+    }
+
+    .tab-card .tab-content {
+        padding-top: 1.5rem;
+    }
+</style>
+{% endblock %} {% block content %}
+<div class="container-fluid px-4">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-chart-line me-2"></i>Analytics Dashboard
+        </h1>
+        <div>
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary">
+                    Day
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary active"
+                >
+                    Week
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary">
+                    Month
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary">
+                    Year
+                </button>
+            </div>
+            <button class="btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-download fa-sm text-white-50 me-1"></i>
+                Generate Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards Row -->
+    <div class="row">
+        <!-- Projects Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div
+                class="card border-0 shadow h-100 py-2 stat-card stat-card-primary"
+            >
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div
+                                class="text-xs font-weight-bold text-primary text-uppercase mb-1"
+                            >
+                                Active Projects
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                28
+                            </div>
+                            <div class="mt-2 text-xs text-success">
+                                <i class="fas fa-arrow-up me-1"></i>12% from
+                                last month
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i
+                                class="fas fa-tasks fa-2x text-gray-300 stat-icon"
+                            ></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div
+                class="card border-0 shadow h-100 py-2 stat-card stat-card-success"
+            >
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div
+                                class="text-xs font-weight-bold text-success text-uppercase mb-1"
+                            >
+                                Completed Tasks
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                216
+                            </div>
+                            <div class="mt-2 text-xs text-success">
+                                <i class="fas fa-arrow-up me-1"></i>8% from last
+                                week
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i
+                                class="fas fa-clipboard-check fa-2x text-gray-300 stat-icon"
+                            ></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hours Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div
+                class="card border-0 shadow h-100 py-2 stat-card stat-card-info"
+            >
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div
+                                class="text-xs font-weight-bold text-info text-uppercase mb-1"
+                            >
+                                Hours Tracked
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                1,248
+                            </div>
+                            <div class="mt-2 text-xs text-success">
+                                <i class="fas fa-arrow-up me-1"></i>5% from last
+                                week
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i
+                                class="fas fa-clock fa-2x text-gray-300 stat-icon"
+                            ></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div
+                class="card border-0 shadow h-100 py-2 stat-card stat-card-warning"
+            >
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div
+                                class="text-xs font-weight-bold text-warning text-uppercase mb-1"
+                            >
+                                Revenue Generated
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                $58,642
+                            </div>
+                            <div class="mt-2 text-xs text-success">
+                                <i class="fas fa-arrow-up me-1"></i>15% from
+                                last month
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i
+                                class="fas fa-dollar-sign fa-2x text-gray-300 stat-icon"
+                            ></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row">
+        <!-- Performance Chart -->
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow mb-4">
+                <div
+                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-white"
+                >
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-area me-1"></i> Performance
+                        Overview
+                    </h6>
+                    <div class="dropdown no-arrow">
+                        <a
+                            class="dropdown-toggle"
+                            href="#"
+                            role="button"
+                            id="dropdownMenuLink"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                        >
+                            <i
+                                class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"
+                            ></i>
+                        </a>
+                        <div
+                            class="dropdown-menu dropdown-menu-end shadow"
+                            aria-labelledby="dropdownMenuLink"
+                        >
+                            <div class="dropdown-header">Chart Options:</div>
+                            <a class="dropdown-item" href="#"
+                                ><i class="fas fa-download me-1"></i> Export
+                                Data</a
+                            >
+                            <a class="dropdown-item" href="#"
+                                ><i class="fas fa-cog me-1"></i> Settings</a
+                            >
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#"
+                                ><i class="fas fa-question-circle me-1"></i>
+                                Help</a
+                            >
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Projects Progress -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow mb-4">
+                <div
+                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-white"
+                >
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-clipboard-list me-1"></i> Projects
+                        Progress
+                    </h6>
+                    <div class="dropdown no-arrow">
+                        <a
+                            class="dropdown-toggle"
+                            href="#"
+                            role="button"
+                            id="dropdownMenuLink"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                        >
+                            <i
+                                class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"
+                            ></i>
+                        </a>
+                        <div
+                            class="dropdown-menu dropdown-menu-end shadow"
+                            aria-labelledby="dropdownMenuLink"
+                        >
+                            <div class="dropdown-header">Actions:</div>
+                            <a class="dropdown-item" href="#"
+                                ><i class="fas fa-plus me-1"></i> Add New</a
+                            >
+                            <a class="dropdown-item" href="#"
+                                ><i class="fas fa-filter me-1"></i> Filter</a
+                            >
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#"
+                                ><i class="fas fa-external-link-alt me-1"></i>
+                                Go to Projects</a
+                            >
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Project 1 -->
+                    <h6 class="mb-1">Website Redesign</h6>
+                    <div class="progress-bar-label">
+                        <small>Task completion</small>
+                        <small class="text-primary">75%</small>
+                    </div>
+                    <div class="progress progress-bar-container mb-3">
+                        <div
+                            class="progress-bar bg-primary"
+                            role="progressbar"
+                            style="width: 75%"
+                            aria-valuenow="75"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                        ></div>
+                    </div>
+
+                    <!-- Project 2 -->
+                    <h6 class="mb-1">Mobile App Development</h6>
+                    <div class="progress-bar-label">
+                        <small>Task completion</small>
+                        <small class="text-success">85%</small>
+                    </div>
+                    <div class="progress progress-bar-container mb-3">
+                        <div
+                            class="progress-bar bg-success"
+                            role="progressbar"
+                            style="width: 85%"
+                            aria-valuenow="85"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                        ></div>
+                    </div>
+
+                    <!-- Project 3 -->
+                    <h6 class="mb-1">CRM Implementation</h6>
+                    <div class="progress-bar-label">
+                        <small>Task completion</small>
+                        <small class="text-info">45%</small>
+                    </div>
+                    <div class="progress progress-bar-container mb-3">
+                        <div
+                            class="progress-bar bg-info"
+                            role="progressbar"
+                            style="width: 45%"
+                            aria-valuenow="45"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                        ></div>
+                    </div>
+
+                    <!-- Project 4 -->
+                    <h6 class="mb-1">Marketing Campaign</h6>
+                    <div class="progress-bar-label">
+                        <small>Task completion</small>
+                        <small class="text-warning">30%</small>
+                    </div>
+                    <div class="progress progress-bar-container mb-3">
+                        <div
+                            class="progress-bar bg-warning"
+                            role="progressbar"
+                            style="width: 30%"
+                            aria-valuenow="30"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                        ></div>
+                    </div>
+
+                    <!-- Project 5 -->
+                    <h6 class="mb-1">Database Migration</h6>
+                    <div class="progress-bar-label">
+                        <small>Task completion</small>
+                        <small class="text-danger">15%</small>
+                    </div>
+                    <div class="progress progress-bar-container mb-3">
+                        <div
+                            class="progress-bar bg-danger"
+                            role="progressbar"
+                            style="width: 15%"
+                            aria-valuenow="15"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                        ></div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <a href="/projects" class="btn btn-sm btn-primary">
+                            <i class="fas fa-arrow-right me-1"></i> View All
+                            Projects
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Third Row -->
+    <div class="row">
+        <!-- Task Distribution Pie Chart -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow mb-4">
+                <div
+                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-white"
+                >
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-pie me-1"></i> Task Distribution
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="taskDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow">
+                <div
+                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-white"
+                >
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-list-ul me-1"></i> Recent Activity
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="activity-timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-badge bg-primary"></div>
+                            <h6 class="mb-1">Project created</h6>
+                            <p class="small text-muted mb-0">
+                                Website Redesign project was created by John.
+                            </p>
+                            <p class="text-xs text-muted">20 minutes ago</p>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-badge bg-success"></div>
+                            <h6 class="mb-1">Task completed</h6>
+                            <p class="small text-muted mb-0">
+                                Sarah completed the task "Create wireframes".
+                            </p>
+                            <p class="text-xs text-muted">1 hour ago</p>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-badge bg-warning"></div>
+                            <h6 class="mb-1">Meeting scheduled</h6>
+                            <p class="small text-muted mb-0">
+                                Weekly team meeting at 10:00 AM tomorrow.
+                            </p>
+                            <p class="text-xs text-muted">2 hours ago</p>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-badge bg-info"></div>
+                            <h6 class="mb-1">New comment</h6>
+                            <p class="small text-muted mb-0">
+                                Michael commented on "API documentation" task.
+                            </p>
+                            <p class="text-xs text-muted">3 hours ago</p>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-badge bg-danger"></div>
+                            <h6 class="mb-1">Bug reported</h6>
+                            <p class="small text-muted mb-0">
+                                David reported a bug in the login system.
+                            </p>
+                            <p class="text-xs text-muted">5 hours ago</p>
+                        </div>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="#" class="btn btn-sm btn-light"
+                            >View All Activity</a
+                        >
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Performance -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow">
+                <div
+                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-white"
+                >
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-users me-1"></i> Team Performance
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- Team Member 1 -->
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 me-3">
+                            <div class="avatar-circle bg-primary text-white">
+                                JD
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">John Doe</h6>
+                            <div class="progress-bar-label">
+                                <small>Tasks completed: 28/32</small>
+                                <small class="text-primary">87%</small>
+                            </div>
+                            <div class="progress progress-bar-container">
+                                <div
+                                    class="progress-bar bg-primary"
+                                    style="width: 87%"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Team Member 2 -->
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 me-3">
+                            <div class="avatar-circle bg-success text-white">
+                                SM
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">Sarah Miller</h6>
+                            <div class="progress-bar-label">
+                                <small>Tasks completed: 19/24</small>
+                                <small class="text-success">79%</small>
+                            </div>
+                            <div class="progress progress-bar-container">
+                                <div
+                                    class="progress-bar bg-success"
+                                    style="width: 79%"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Team Member 3 -->
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 me-3">
+                            <div class="avatar-circle bg-info text-white">
+                                RJ
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">Robert Johnson</h6>
+                            <div class="progress-bar-label">
+                                <small>Tasks completed: 22/30</small>
+                                <small class="text-info">73%</small>
+                            </div>
+                            <div class="progress progress-bar-container">
+                                <div
+                                    class="progress-bar bg-info"
+                                    style="width: 73%"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Team Member 4 -->
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 me-3">
+                            <div class="avatar-circle bg-warning text-white">
+                                EW
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">Emily Wilson</h6>
+                            <div class="progress-bar-label">
+                                <small>Tasks completed: 14/20</small>
+                                <small class="text-warning">70%</small>
+                            </div>
+                            <div class="progress progress-bar-container">
+                                <div
+                                    class="progress-bar bg-warning"
+                                    style="width: 70%"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Team Member 5 -->
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 me-3">
+                            <div class="avatar-circle bg-danger text-white">
+                                MB
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">Michael Brown</h6>
+                            <div class="progress-bar-label">
+                                <small>Tasks completed: 17/26</small>
+                                <small class="text-danger">65%</small>
+                            </div>
+                            <div class="progress progress-bar-container">
+                                <div
+                                    class="progress-bar bg-danger"
+                                    style="width: 65%"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <a href="#" class="btn btn-sm btn-light"
+                            >View Full Team</a
+                        >
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+    // Performance Chart
+    const performanceCtx = document
+        .getElementById("performanceChart")
+        .getContext("2d");
+    const performanceChart = new Chart(performanceCtx, {
+        type: "line",
+        data: {
+            labels: [
+                "Jan",
+                "Feb",
+                "Mar",
+                "Apr",
+                "May",
+                "Jun",
+                "Jul",
+                "Aug",
+                "Sep",
+                "Oct",
+                "Nov",
+                "Dec",
+            ],
+            datasets: [
+                {
+                    label: "Projects",
+                    data: [15, 19, 18, 22, 24, 25, 28, 30, 35, 32, 34, 28],
+                    borderColor: "#4e73df",
+                    backgroundColor: "rgba(78, 115, 223, 0.05)",
+                    tension: 0.4,
+                    fill: true,
+                },
+                {
+                    label: "Tasks Completed",
+                    data: [
+                        95, 102, 114, 132, 148, 140, 164, 178, 190, 207, 216,
+                        236,
+                    ],
+                    borderColor: "#1cc88a",
+                    backgroundColor: "rgba(28, 200, 138, 0.05)",
+                    tension: 0.4,
+                    fill: true,
+                },
+                {
+                    label: "Revenue ($1000)",
+                    data: [30, 32, 28, 40, 38, 46, 44, 48, 52, 54, 58, 62],
+                    borderColor: "#f6c23e",
+                    backgroundColor: "rgba(246, 194, 62, 0.05)",
+                    tension: 0.4,
+                    fill: true,
+                },
+            ],
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: "top",
+                },
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: "rgba(0, 0, 0, 0.05)",
+                    },
+                },
+                x: {
+                    grid: {
+                        display: false,
+                    },
+                },
+            },
+        },
+    });
+
+    // Task Distribution Chart
+    const taskDistributionCtx = document
+        .getElementById("taskDistributionChart")
+        .getContext("2d");
+    const taskDistributionChart = new Chart(taskDistributionCtx, {
+        type: "doughnut",
+        data: {
+            labels: ["Completed", "In Progress", "Not Started", "Overdue"],
+            datasets: [
+                {
+                    data: [216, 124, 68, 32],
+                    backgroundColor: [
+                        "#1cc88a",
+                        "#4e73df",
+                        "#f8f9fc",
+                        "#e74a3b",
+                    ],
+                    hoverBackgroundColor: [
+                        "#17a673",
+                        "#2e59d9",
+                        "#dbdeed",
+                        "#c3392b",
+                    ],
+                    hoverBorderColor: "rgba(234, 236, 244, 1)",
+                },
+            ],
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: "bottom",
+                },
+            },
+            cutout: "70%",
+        },
+    });
+
+    // Add responsive behavior
+    window.addEventListener("resize", function () {
+        performanceChart.resize();
+        taskDistributionChart.resize();
+    });
+
+    // Initialize tooltips
+    document.addEventListener("DOMContentLoaded", function () {
+        const tooltipTriggerList = [].slice.call(
+            document.querySelectorAll('[data-bs-toggle="tooltip"]')
+        );
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}
