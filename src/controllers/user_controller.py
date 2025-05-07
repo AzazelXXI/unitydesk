@@ -21,6 +21,7 @@ from src.services.auth_service import (
     get_password_hash,
     authenticate_user,
     create_access_token,
+    create_refresh_token,
     ACCESS_TOKEN_EXPIRE_MINUTES,
 )
 
@@ -190,7 +191,7 @@ async def login_for_access_token(
     db: AsyncSession, username: str, password: str
 ) -> Optional[Token]:
     """
-    Authenticate user and create access token
+    Authenticate user and create access and refresh tokens
     """
     user = await authenticate_user(db, username, password)
     if not user:
@@ -201,11 +202,20 @@ async def login_for_access_token(
     token_data = {"sub": user.username, "id": user.id, "role": user.role}
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    refresh_token_expires = timedelta(days=7)  # You can make this configurable
     access_token = await create_access_token(
         data=token_data, expires_delta=access_token_expires
     )
+    refresh_token = await create_refresh_token(
+        data=token_data, expires_delta=refresh_token_expires
+    )
 
-    return Token(access_token=access_token, token_type="bearer")
+    return Token(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        expires_in=access_token_expires.total_seconds(),
+    )
 
 
 async def change_user_password(

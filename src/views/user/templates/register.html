@@ -1,0 +1,755 @@
+{% extends "base.html" %} {% block title %}Create Account - CSA Hello System{%
+endblock %} {% block extra_css %}
+<style>
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+    }
+    .register-container {
+        min-height: calc(100vh - 100px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 0;
+    }
+    .register-card {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 15px 35px rgba(50, 50, 93, 0.1),
+            0 5px 15px rgba(0, 0, 0, 0.07);
+        width: 100%;
+        max-width: 1000px;
+        background: white;
+    }
+    .register-image {
+        background: url("/user/static/img/login-bg.jpg") center/cover no-repeat;
+        min-height: 100%;
+    }
+    .register-form {
+        padding: 2.5rem;
+    }
+    .form-floating {
+        margin-bottom: 1.25rem;
+    }
+    .btn-register {
+        padding: 0.75rem;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    .password-toggle {
+        cursor: pointer;
+    }
+    .password-toggle:hover {
+        color: #4e73df;
+    }
+    .steps-indicator {
+        display: flex;
+        margin-bottom: 2rem;
+    }
+    .step {
+        flex: 1;
+        text-align: center;
+        padding: 0.75rem 0;
+        position: relative;
+        color: #6c757d;
+    }
+    .step::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background-color: #e9ecef;
+        z-index: 1;
+    }
+    .step.active {
+        color: #4e73df;
+        font-weight: 500;
+    }
+    .step.active::after {
+        background-color: #4e73df;
+    }
+    .step.completed::after {
+        background-color: #4e73df;
+    }
+    .step-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        color: #6c757d;
+        font-size: 12px;
+        margin-right: 6px;
+    }
+    .step.active .step-number {
+        background-color: #4e73df;
+        color: white;
+    }
+    .step.completed .step-number {
+        background-color: #4e73df;
+        color: white;
+    }
+    .register-step {
+        display: none;
+    }
+    .register-step.active {
+        display: block;
+    }
+    .password-requirements {
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+    }
+    .requirement {
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+    .requirement.met {
+        color: #198754;
+    }
+    .requirement i {
+        margin-right: 0.25rem;
+    }
+</style>
+{% endblock %} {% block content %}
+<div class="register-container">
+    <div class="register-card">
+        <div class="row g-0">
+            <!-- Left Side - Register Form -->
+            <div class="col-lg-8 register-form">
+                <div class="mb-4">
+                    <h2 class="fw-bold mb-1">Create Your Account</h2>
+                    <p class="text-muted">
+                        Join CSA Hello System to start collaborating
+                    </p>
+                </div>
+
+                <!-- Progress Steps -->
+                <div class="steps-indicator">
+                    <div class="step active" id="step1-indicator">
+                        <span class="step-number">1</span>Account Details
+                    </div>
+                    <div class="step" id="step2-indicator">
+                        <span class="step-number">2</span>Personal Info
+                    </div>
+                    <div class="step" id="step3-indicator">
+                        <span class="step-number">3</span>Confirmation
+                    </div>
+                </div>
+
+                <!-- Registration Form -->
+                <form
+                    id="registerForm"
+                    method="POST"
+                    action="/register"
+                    class="needs-validation"
+                    novalidate
+                >
+                    <!-- Step 1: Account Details -->
+                    <div id="step1" class="register-step active">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input
+                                        type="text"
+                                        class="form-control bg-light border-0"
+                                        id="username"
+                                        name="username"
+                                        placeholder="Choose a username"
+                                        required
+                                    />
+                                    <label for="username"
+                                        ><i
+                                            class="fas fa-user text-muted me-2"
+                                        ></i
+                                        >Username</label
+                                    >
+                                    <div class="invalid-feedback">
+                                        <i
+                                            class="fas fa-exclamation-circle me-1"
+                                        ></i
+                                        >Please choose a username
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input
+                                        type="email"
+                                        class="form-control bg-light border-0"
+                                        id="email"
+                                        name="email"
+                                        placeholder="Enter your email"
+                                        required
+                                    />
+                                    <label for="email"
+                                        ><i
+                                            class="fas fa-envelope text-muted me-2"
+                                        ></i
+                                        >Email Address</label
+                                    >
+                                    <div class="invalid-feedback">
+                                        <i
+                                            class="fas fa-exclamation-circle me-1"
+                                        ></i
+                                        >Please enter a valid email
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating position-relative">
+                                    <input
+                                        type="password"
+                                        class="form-control bg-light border-0"
+                                        id="password"
+                                        name="password"
+                                        placeholder="Create a password"
+                                        required
+                                    />
+                                    <label for="password"
+                                        ><i
+                                            class="fas fa-lock text-muted me-2"
+                                        ></i
+                                        >Password</label
+                                    >
+                                    <span
+                                        class="position-absolute top-50 end-0 translate-middle-y me-3 password-toggle"
+                                        onclick="togglePasswordVisibility('password')"
+                                    >
+                                        <i class="fas fa-eye text-muted"></i>
+                                    </span>
+                                    <div class="invalid-feedback">
+                                        <i
+                                            class="fas fa-exclamation-circle me-1"
+                                        ></i
+                                        >Please create a password
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating position-relative">
+                                    <input
+                                        type="password"
+                                        class="form-control bg-light border-0"
+                                        id="confirmPassword"
+                                        name="confirmPassword"
+                                        placeholder="Confirm password"
+                                        required
+                                    />
+                                    <label for="confirmPassword"
+                                        ><i
+                                            class="fas fa-lock text-muted me-2"
+                                        ></i
+                                        >Confirm Password</label
+                                    >
+                                    <span
+                                        class="position-absolute top-50 end-0 translate-middle-y me-3 password-toggle"
+                                        onclick="togglePasswordVisibility('confirmPassword')"
+                                    >
+                                        <i class="fas fa-eye text-muted"></i>
+                                    </span>
+                                    <div class="invalid-feedback">
+                                        <i
+                                            class="fas fa-exclamation-circle me-1"
+                                        ></i
+                                        >Passwords must match
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="password-requirements mt-2 mb-3">
+                            <div class="requirement" id="req-length">
+                                <i class="fas fa-circle"></i> At least 8
+                                characters long
+                            </div>
+                            <div class="requirement" id="req-lowercase">
+                                <i class="fas fa-circle"></i> At least one
+                                lowercase letter
+                            </div>
+                            <div class="requirement" id="req-uppercase">
+                                <i class="fas fa-circle"></i> At least one
+                                uppercase letter
+                            </div>
+                            <div class="requirement" id="req-number">
+                                <i class="fas fa-circle"></i> At least one
+                                number
+                            </div>
+                            <div class="requirement" id="req-special">
+                                <i class="fas fa-circle"></i> At least one
+                                special character
+                            </div>
+                            <div class="requirement" id="req-match">
+                                <i class="fas fa-circle"></i> Passwords match
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4">
+                            <button
+                                type="button"
+                                class="btn btn-primary px-4 py-2"
+                                onclick="nextStep(1)"
+                            >
+                                <span class="d-flex align-items-center">
+                                    <span>Continue</span>
+                                    <i class="fas fa-arrow-right ms-2"></i>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Personal Information -->
+                    <div id="step2" class="register-step">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input
+                                        type="text"
+                                        class="form-control bg-light border-0"
+                                        id="firstName"
+                                        name="first_name"
+                                        placeholder="Enter first name"
+                                        required
+                                    />
+                                    <label for="firstName"
+                                        ><i
+                                            class="fas fa-user text-muted me-2"
+                                        ></i
+                                        >First Name</label
+                                    >
+                                    <div class="invalid-feedback">
+                                        <i
+                                            class="fas fa-exclamation-circle me-1"
+                                        ></i
+                                        >Please enter your first name
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input
+                                        type="text"
+                                        class="form-control bg-light border-0"
+                                        id="lastName"
+                                        name="last_name"
+                                        placeholder="Enter last name"
+                                        required
+                                    />
+                                    <label for="lastName"
+                                        ><i
+                                            class="fas fa-user text-muted me-2"
+                                        ></i
+                                        >Last Name</label
+                                    >
+                                    <div class="invalid-feedback">
+                                        <i
+                                            class="fas fa-exclamation-circle me-1"
+                                        ></i
+                                        >Please enter your last name
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input
+                                        type="tel"
+                                        class="form-control bg-light border-0"
+                                        id="phoneNumber"
+                                        name="phone_number"
+                                        placeholder="Enter phone number"
+                                    />
+                                    <label for="phoneNumber"
+                                        ><i
+                                            class="fas fa-phone text-muted me-2"
+                                        ></i
+                                        >Phone Number (Optional)</label
+                                    >
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select
+                                        class="form-select bg-light border-0"
+                                        id="department"
+                                        name="department"
+                                    >
+                                        <option value="" selected disabled>
+                                            Select department
+                                        </option>
+                                        <option value="engineering">
+                                            Engineering
+                                        </option>
+                                        <option value="marketing">
+                                            Marketing
+                                        </option>
+                                        <option value="sales">Sales</option>
+                                        <option value="hr">
+                                            Human Resources
+                                        </option>
+                                        <option value="finance">Finance</option>
+                                        <option value="operations">
+                                            Operations
+                                        </option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                    <label for="department"
+                                        ><i
+                                            class="fas fa-building text-muted me-2"
+                                        ></i
+                                        >Department (Optional)</label
+                                    >
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <button
+                                type="button"
+                                class="btn btn-outline-secondary px-4 py-2"
+                                onclick="prevStep(2)"
+                            >
+                                <span class="d-flex align-items-center">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    <span>Back</span>
+                                </span>
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-primary px-4 py-2"
+                                onclick="nextStep(2)"
+                            >
+                                <span class="d-flex align-items-center">
+                                    <span>Continue</span>
+                                    <i class="fas fa-arrow-right ms-2"></i>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Confirmation & Agreement -->
+                    <div id="step3" class="register-step">
+                        <div class="alert alert-info mb-4">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <i class="fas fa-info-circle fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">One Last Step!</h5>
+                                    <p class="mb-0">
+                                        Please review your information and
+                                        confirm the terms below.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card bg-light border-0 mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">
+                                    Your Information
+                                </h5>
+                                <div class="row mb-2">
+                                    <div class="col-md-4 text-muted">
+                                        Username:
+                                    </div>
+                                    <div
+                                        class="col-md-8 fw-semibold"
+                                        id="summary-username"
+                                    ></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-md-4 text-muted">
+                                        Email:
+                                    </div>
+                                    <div
+                                        class="col-md-8 fw-semibold"
+                                        id="summary-email"
+                                    ></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-md-4 text-muted">Name:</div>
+                                    <div
+                                        class="col-md-8 fw-semibold"
+                                        id="summary-name"
+                                    ></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                id="agreeTerms"
+                                name="agree_terms"
+                                required
+                            />
+                            <label class="form-check-label" for="agreeTerms">
+                                I agree to the
+                                <a href="#" class="text-decoration-none"
+                                    >Terms of Service</a
+                                >
+                                and
+                                <a href="#" class="text-decoration-none"
+                                    >Privacy Policy</a
+                                >
+                            </label>
+                            <div class="invalid-feedback">
+                                You must agree to the terms before registering
+                            </div>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                id="marketingConsent"
+                                name="marketing_consent"
+                            />
+                            <label
+                                class="form-check-label"
+                                for="marketingConsent"
+                            >
+                                I'd like to receive updates and marketing
+                                communications from CSA Hello System (Optional)
+                            </label>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <button
+                                type="button"
+                                class="btn btn-outline-secondary px-4 py-2"
+                                onclick="prevStep(3)"
+                            >
+                                <span class="d-flex align-items-center">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    <span>Back</span>
+                                </span>
+                            </button>
+                            <button
+                                type="submit"
+                                class="btn btn-primary px-4 py-2"
+                            >
+                                <span class="d-flex align-items-center">
+                                    <i class="fas fa-user-plus me-2"></i>
+                                    <span>Create Account</span>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Login Link -->
+                <div class="text-center mt-4">
+                    <p>
+                        Already have an account?
+                        <a href="/login" class="text-primary fw-bold"
+                            >Sign in</a
+                        >
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right Side - Image -->
+            <div
+                class="col-lg-4 d-none d-lg-block register-image position-relative"
+            >
+                <div class="position-absolute bottom-0 start-0 p-4 text-white">
+                    <h4 class="fw-bold mb-3">Join our community</h4>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Collaborative project management
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle me-2"></i> Secure
+                            communication
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle me-2"></i> Integrated
+                            calendar
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle me-2"></i> Streamlined
+                            task tracking
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+    // Password visibility toggle
+    function togglePasswordVisibility(inputId) {
+        const passwordInput = document.getElementById(inputId);
+        const icon =
+            passwordInput.nextElementSibling.nextElementSibling.querySelector(
+                "i"
+            );
+
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+        } else {
+            passwordInput.type = "password";
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+        }
+    }
+
+    // Multi-step form navigation
+    function nextStep(currentStep) {
+        // Validate current step
+        const currentStepElement = document.getElementById(
+            `step${currentStep}`
+        );
+        const inputs = currentStepElement.querySelectorAll(
+            "input[required], select[required]"
+        );
+        let isValid = true;
+
+        inputs.forEach((input) => {
+            if (!input.checkValidity()) {
+                input.classList.add("is-invalid");
+                isValid = false;
+            } else {
+                input.classList.remove("is-invalid");
+            }
+        });
+
+        if (currentStep === 1) {
+            // Check password requirements and matching
+            const password = document.getElementById("password");
+            const confirmPassword = document.getElementById("confirmPassword");
+
+            if (password.value !== confirmPassword.value) {
+                confirmPassword.classList.add("is-invalid");
+                isValid = false;
+            }
+
+            if (!checkPasswordRequirements(password.value)) {
+                isValid = false;
+            }
+        }
+
+        if (!isValid) return;
+
+        // Update steps display
+        document
+            .getElementById(`step${currentStep}`)
+            .classList.remove("active");
+        document
+            .getElementById(`step${currentStep + 1}`)
+            .classList.add("active");
+
+        document
+            .getElementById(`step${currentStep}-indicator`)
+            .classList.add("completed");
+        document
+            .getElementById(`step${currentStep + 1}-indicator`)
+            .classList.add("active");
+
+        // If moving to confirmation step, populate summary
+        if (currentStep === 2) {
+            document.getElementById("summary-username").textContent =
+                document.getElementById("username").value;
+            document.getElementById("summary-email").textContent =
+                document.getElementById("email").value;
+            document.getElementById("summary-name").textContent =
+                document.getElementById("firstName").value +
+                " " +
+                document.getElementById("lastName").value;
+        }
+    }
+
+    function prevStep(currentStep) {
+        document
+            .getElementById(`step${currentStep}`)
+            .classList.remove("active");
+        document
+            .getElementById(`step${currentStep - 1}`)
+            .classList.add("active");
+
+        document
+            .getElementById(`step${currentStep}-indicator`)
+            .classList.remove("active");
+        document
+            .getElementById(`step${currentStep - 1}-indicator`)
+            .classList.add("active");
+    }
+
+    // Password requirements checker
+    function checkPasswordRequirements(password) {
+        const confirmPassword =
+            document.getElementById("confirmPassword").value;
+
+        const requirements = {
+            "req-length": password.length >= 8,
+            "req-lowercase": /[a-z]/.test(password),
+            "req-uppercase": /[A-Z]/.test(password),
+            "req-number": /[0-9]/.test(password),
+            "req-special": /[^A-Za-z0-9]/.test(password),
+            "req-match": password === confirmPassword && password !== "",
+        };
+
+        let allMet = true;
+
+        for (const [id, met] of Object.entries(requirements)) {
+            const reqElement = document.getElementById(id);
+
+            if (met) {
+                reqElement.classList.add("met");
+                reqElement.querySelector("i").classList.remove("fa-circle");
+                reqElement.querySelector("i").classList.add("fa-check-circle");
+            } else {
+                reqElement.classList.remove("met");
+                reqElement
+                    .querySelector("i")
+                    .classList.remove("fa-check-circle");
+                reqElement.querySelector("i").classList.add("fa-circle");
+                allMet = false;
+            }
+        }
+
+        return allMet;
+    }
+
+    // Listen for password input changes
+    document.addEventListener("DOMContentLoaded", function () {
+        const passwordInput = document.getElementById("password");
+        const confirmPasswordInput = document.getElementById("confirmPassword");
+
+        if (passwordInput && confirmPasswordInput) {
+            passwordInput.addEventListener("input", function () {
+                checkPasswordRequirements(this.value);
+            });
+
+            confirmPasswordInput.addEventListener("input", function () {
+                checkPasswordRequirements(passwordInput.value);
+            });
+        }
+
+        // Form submission
+        const form = document.getElementById("registerForm");
+        if (form) {
+            form.addEventListener("submit", function (event) {
+                if (
+                    !this.checkValidity() ||
+                    !document.getElementById("agreeTerms").checked
+                ) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+
+                this.classList.add("was-validated");
+            });
+        }
+    });
+</script>
+{% endblock %}

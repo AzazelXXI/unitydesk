@@ -3,7 +3,15 @@ from typing import Optional, List, Dict, Any, Union
 from datetime import datetime, date
 from enum import Enum
 
-from src.models.marketing_project import ProjectStatus, ProjectType, WorkflowStage, TaskPriority, TaskStatus, AssetType, ReportType
+from src.models.marketing_project import (
+    ProjectStatus,
+    ProjectType,
+    WorkflowStage,
+    TaskPriority,
+    TaskStatus,
+    AssetType,
+    ReportType,
+)
 
 
 # Base Schemas with shared attributes
@@ -13,7 +21,7 @@ class BaseSchema(BaseModel):
     updated_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Client Schemas
@@ -113,7 +121,7 @@ class MarketingProjectRead(MarketingProjectReadBasic):
     client: Optional[ClientRead] = None
     team_members: List[Dict[str, Any]] = []
     task_stats: Optional[Dict[str, int]] = None  # Summary of task status counts
-    workflow_progress: Optional[float] = None    # Percentage of workflow completion
+    workflow_progress: Optional[float] = None  # Percentage of workflow completion
 
 
 # Workflow Step Schemas

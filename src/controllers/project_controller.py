@@ -1,327 +1,308 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy import update, delete, func
-from sqlalchemy.orm import joinedload
-from typing import List, Optional, Dict, Any
-import logging
+from fastapi import APIRouter, Request, Depends, HTTPException, Form
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from typing import Optional, List
+from sqlalchemy.orm import Session
 from datetime import datetime
-from fastapi import HTTPException, status
+import os
 
-from src.models.marketing_project import (
-    MarketingProject, ProjectStatus, ProjectType, WorkflowStage, 
-    WorkflowStep, MarketingTask, TaskStatus
-)
-from src.schemas.marketing_project import (
-    MarketingProjectCreate, MarketingProjectUpdate, MarketingProjectRead,
-    MarketingProjectReadBasic, ProjectTeamMember
-)
+from src.database import get_db
+from src.models.user import User
+from src.middleware.auth_middleware import get_current_user
 
-# Configure logging
-logger = logging.getLogger(__name__)
 
 class ProjectController:
-    """Controller for handling marketing project operations"""
-    
-    @staticmethod
-    async def create_project(project_data: MarketingProjectCreate, db: AsyncSession) -> MarketingProject:
-        """
-        Create a new marketing project
-        """
-        try:
-            # Create new project
-            new_project = MarketingProject(
-                name=project_data.name,
-                description=project_data.description,
-                project_type=project_data.project_type,
-                status=project_data.status,
-                current_stage=project_data.current_stage,
-                client_id=project_data.client_id,
-                client_brief=project_data.client_brief,
-                start_date=project_data.start_date,
-                target_end_date=project_data.target_end_date,
-                actual_end_date=project_data.actual_end_date,
-                estimated_budget=project_data.estimated_budget,
-                actual_cost=project_data.actual_cost,
-                owner_id=project_data.owner_id
-            )
-            
-            db.add(new_project)
-            await db.commit()
-            await db.refresh(new_project)
-            
-            # Add team members if provided
-            if project_data.team_members:
-                for member in project_data.team_members:
-                    await ProjectController._add_team_member(new_project.id, member, db)
-            
-            # Create workflow steps for the project
-            await ProjectController._initialize_workflow(new_project.id, db)
-            
-            logger.info(f"Created new marketing project: {new_project.name}")
-            
-            # Return the project with detailed information
-            return await ProjectController.get_project(new_project.id, db)
-        except Exception as e:
-            logger.error(f"Error creating marketing project: {str(e)}")
-            await db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to create marketing project: {str(e)}"
-            )
-    
-    @staticmethod
-    async def _add_team_member(project_id: int, member_data: ProjectTeamMember, db: AsyncSession):
-        """Helper method to add a team member to a project"""
-        # This would be implemented based on your project-user relationship model
-        # For simplicity, assuming you have a project_team_members table
-        pass
-    
-    @staticmethod
-    async def _initialize_workflow(project_id: int, db: AsyncSession):
-        """Helper method to initialize workflow steps for a new project"""
-        # Create all workflow steps for the project
-        steps = [
-            # Define all workflow steps based on your business process
-            # Example:
-            WorkflowStep(
-                project_id=project_id,
-                step_number=1,
-                name="Project Initiation",
-                description="Kick off the project and gather requirements",
-                stage=WorkflowStage.INITIATION,
-                status="pending"
-            ),
-            WorkflowStep(
-                project_id=project_id,
-                step_number=2,
-                name="Strategy Development",
-                description="Develop marketing strategy and approach",
-                stage=WorkflowStage.PLANNING,
-                status="pending"
-            ),
-            # Add more steps as needed
-        ]
-        
-        for step in steps:
-            db.add(step)
-        
-        await db.commit()
-    
+    """
+    Controller class for handling project-related operations.
+    """
+
     @staticmethod
     async def get_projects(
         skip: int = 0,
         limit: int = 100,
-        status: Optional[ProjectStatus] = None,
-        project_type: Optional[ProjectType] = None,
-        client_id: Optional[int] = None,
-        search: Optional[str] = None,
-        db: AsyncSession = None
-    ) -> List[MarketingProject]:
+        status=None,
+        project_type=None,
+        client_id=None,
+        search=None,
+        db=None,
+    ):
         """
-        Get all marketing projects with optional filtering
+        Get all projects from the database with optional filtering.
+
+        Args:
+            skip: Number of records to skip (pagination)
+            limit: Maximum number of records to return
+            status: Filter by project status
+            project_type: Filter by project type
+            client_id: Filter by client ID
+            search: Search in project name and description
+            db: Database session
+
+        Returns:
+            List of marketing project objects
         """
-        try:
-            query = select(MarketingProject).options(
-                joinedload(MarketingProject.client)
-            ).offset(skip).limit(limit)
-            
-            # Apply filters if provided
-            if status:
-                query = query.filter(MarketingProject.status == status)
-            if project_type:
-                query = query.filter(MarketingProject.project_type == project_type)
-            if client_id:
-                query = query.filter(MarketingProject.client_id == client_id)
-            if search:
-                query = query.filter(MarketingProject.name.ilike(f"%{search}%"))
-            
-            result = await db.execute(query)
-            projects = result.scalars().unique().all()
-            
-            # For each project, calculate progress and task stats
-            for project in projects:
-                project.task_stats = await ProjectController._calculate_task_stats(project.id, db)
-                project.workflow_progress = await ProjectController._calculate_workflow_progress(project.id, db)
-            
-            return projects
-        except Exception as e:
-            logger.error(f"Error fetching projects: {str(e)}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to fetch projects: {str(e)}"
-            )
-    
-    @staticmethod
-    async def get_project(project_id: int, db: AsyncSession) -> MarketingProject:
-        """
-        Get a specific marketing project by ID
-        """
-        try:
-            query = select(MarketingProject).filter(
-                MarketingProject.id == project_id
-            ).options(
-                joinedload(MarketingProject.client)
-            )
-            
-            result = await db.execute(query)
-            project = result.scalars().unique().first()
-            
-            if not project:
-                logger.warning(f"Marketing project with ID {project_id} not found")
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Marketing project with ID {project_id} not found"
+        from sqlalchemy import or_
+        from sqlalchemy.future import select
+        from src.models.marketing_project import MarketingProject
+
+        # Build the query
+        query = select(MarketingProject)
+
+        # Apply filters if provided
+        if status:
+            query = query.where(MarketingProject.status == status)
+
+        if project_type:
+            query = query.where(MarketingProject.project_type == project_type)
+
+        if client_id:
+            query = query.where(MarketingProject.client_id == client_id)
+
+        if search:
+            search_term = f"%{search}%"
+            query = query.where(
+                or_(
+                    MarketingProject.name.ilike(search_term),
+                    MarketingProject.description.ilike(search_term),
                 )
-            
-            # Calculate additional data
-            project.task_stats = await ProjectController._calculate_task_stats(project_id, db)
-            project.workflow_progress = await ProjectController._calculate_workflow_progress(project_id, db)
-            
-            # Get team members
-            # This would be implemented based on your project-user relationship model
-            project.team_members = []
-            
-            return project
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Error fetching project {project_id}: {str(e)}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to fetch project: {str(e)}"
             )
-    
+
+        # Add pagination
+        query = query.offset(skip).limit(limit)
+
+        # Execute query
+        result = await db.execute(query)
+        return result.scalars().all() @ staticmethod
+
+    async def get_project(project_id: int, db):
+        """
+        Get a project by its ID.
+
+        Args:
+            project_id: ID of the project to retrieve
+            db: Database session
+
+        Returns:
+            Marketing project object or None if not found
+
+        Raises:
+            HTTPException: If project is not found
+        """
+        from sqlalchemy.future import select
+        from fastapi import HTTPException, status
+        from src.models.marketing_project import MarketingProject
+
+        query = select(MarketingProject).where(MarketingProject.id == project_id)
+        result = await db.execute(query)
+        project = result.scalars().first()
+
+        if not project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project with ID {project_id} not found",
+            )
+
+        return project
+
     @staticmethod
-    async def update_project(project_id: int, project_data: MarketingProjectUpdate, db: AsyncSession) -> MarketingProject:
+    async def create_project(project_data, db):
         """
-        Update a marketing project
+        Create a new project with the given data.
+
+        Args:
+            project_data: Project data from the request
+            db: Database session
+
+        Returns:
+            Created marketing project object
         """
-        try:
-            # Get the project
-            query = select(MarketingProject).filter(MarketingProject.id == project_id)
-            result = await db.execute(query)
-            project = result.scalars().first()
-            
-            if not project:
-                logger.warning(f"Marketing project with ID {project_id} not found")
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Marketing project with ID {project_id} not found"
+        from src.models.marketing_project import MarketingProject
+
+        # Create dict of project data excluding relationships
+        project_dict = project_data.model_dump(exclude={"team_members"})
+
+        # Create new project
+        project = MarketingProject(**project_dict)
+
+        # Add to database
+        db.add(project)
+        await db.commit()
+        await db.refresh(project)
+
+        # Handle team members if provided
+        if hasattr(project_data, "team_members") and project_data.team_members:
+            from src.models.marketing_project import project_team_association
+
+            for team_member in project_data.team_members:
+                await db.execute(
+                    project_team_association.insert().values(
+                        project_id=project.id,
+                        user_id=team_member.user_id,
+                        role=team_member.role,
+                        joined_at=team_member.joined_at or datetime.utcnow(),
+                    )
                 )
-            
-            # Update project attributes
-            update_data = project_data.dict(exclude_unset=True)
-            
-            # Handle status transitions
-            if "status" in update_data and update_data["status"] != project.status:
-                # Handle status change logic
-                # For example, if changing to COMPLETED, set actual_end_date
-                if update_data["status"] == ProjectStatus.COMPLETED and not project.actual_end_date:
-                    update_data["actual_end_date"] = datetime.now()
-            
-            for key, value in update_data.items():
-                setattr(project, key, value)
-            
+
             await db.commit()
-            await db.refresh(project)
-            
-            logger.info(f"Updated marketing project {project_id}: {project.name}")
-            
-            # Return the updated project with details
-            return await ProjectController.get_project(project_id, db)
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Error updating project {project_id}: {str(e)}")
-            await db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to update project: {str(e)}"
-            )
-    
+
+        return project
+
     @staticmethod
-    async def delete_project(project_id: int, db: AsyncSession) -> None:
+    async def update_project(project_id: int, project_data, db):
         """
-        Delete a marketing project
+        Update a project with the given data.
+
+        Args:
+            project_id: ID of the project to update
+            project_data: Updated project data
+            db: Database session
+
+        Returns:
+            Updated marketing project object
+
+        Raises:
+            HTTPException: If project is not found
         """
-        try:
-            # Get the project
-            query = select(MarketingProject).filter(MarketingProject.id == project_id)
-            result = await db.execute(query)
-            project = result.scalars().first()
-            
-            if not project:
-                logger.warning(f"Marketing project with ID {project_id} not found")
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Marketing project with ID {project_id} not found"
-                )
-            
-            # Delete the project
-            await db.delete(project)
-            await db.commit()
-            
-            logger.info(f"Deleted marketing project {project_id}")
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Error deleting project {project_id}: {str(e)}")
-            await db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to delete project: {str(e)}"
-            )
-    
+        # First get the project
+        project = await ProjectController.get_project(project_id, db)
+
+        # Update attributes
+        update_data = project_data.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(project, key, value)
+
+        # Commit changes
+        await db.commit()
+        await db.refresh(project)
+
+        return project
+
     @staticmethod
-    async def _calculate_task_stats(project_id: int, db: AsyncSession) -> Dict[str, int]:
-        """Helper method to calculate task statistics for a project"""
-        try:
-            # Count tasks by status
-            task_stats = {}
-            
-            # Query to count tasks by status
-            for task_status in TaskStatus:
-                query = select(func.count()).select_from(MarketingTask).filter(
-                    MarketingTask.project_id == project_id,
-                    MarketingTask.status == task_status
-                )
-                result = await db.execute(query)
-                count = result.scalar()
-                task_stats[task_status.name] = count
-            
-            # Add total count
-            query = select(func.count()).select_from(MarketingTask).filter(
-                MarketingTask.project_id == project_id
-            )
-            result = await db.execute(query)
-            total = result.scalar()
-            task_stats["TOTAL"] = total
-            
-            return task_stats
-        except Exception as e:
-            logger.error(f"Error calculating task stats for project {project_id}: {str(e)}")
-            return {}
-    
-    @staticmethod
-    async def _calculate_workflow_progress(project_id: int, db: AsyncSession) -> float:
-        """Helper method to calculate workflow progress percentage for a project"""
-        try:
-            # Get all workflow steps for the project
-            query = select(WorkflowStep).filter(WorkflowStep.project_id == project_id)
-            result = await db.execute(query)
-            steps = result.scalars().all()
-            
-            if not steps:
-                return 0.0
-            
-            # Count completed steps
-            completed = sum(1 for step in steps if step.status == "completed")
-            total = len(steps)
-            
-            # Calculate progress percentage
-            progress = (completed / total) * 100 if total > 0 else 0
-            
-            return progress
-        except Exception as e:
-            logger.error(f"Error calculating workflow progress for project {project_id}: {str(e)}")
-            return 0.0
+    async def delete_project(project_id: int, db):
+        """
+        Delete a project by ID.
+
+        Args:
+            project_id: ID of the project to delete
+            db: Database session
+
+        Returns:
+            Boolean indicating success
+
+        Raises:
+            HTTPException: If project is not found
+        """
+        # First get the project
+        project = await ProjectController.get_project(project_id, db)
+
+        # Delete the project
+        await db.delete(project)
+        await db.commit()
+
+        return True
+
+
+# Create the router
+router = APIRouter(
+    prefix="/project",
+    tags=["project"],
+    responses={404: {"description": "Not found"}},
+)
+
+# Setup templates
+templates_path = os.path.join(os.path.dirname(__file__), "../web/project/templates")
+templates = Jinja2Templates(directory=templates_path)
+
+
+# Define the routes
+@router.get("/", response_class=HTMLResponse)
+async def projects_page(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Render the projects list page with the modern template.
+    """
+    # In a real application, we would fetch projects from the database
+    # For now, we'll just render the template
+    return templates.TemplateResponse(
+        "projects_modern.html", {"request": request, "current_user": current_user}
+    )
+
+
+@router.get("/new", response_class=HTMLResponse)
+async def new_project_page(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Render the new project form page with the modern template.
+    """
+    return templates.TemplateResponse(
+        "new_project_modern.html", {"request": request, "current_user": current_user}
+    )
+
+
+@router.get("/{project_id}", response_class=HTMLResponse)
+async def project_details_page(
+    request: Request,
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Render the project details page with the modern template.
+    """
+    # In a real application, we would fetch the project from the database
+    # For now, we'll just render the template
+    return templates.TemplateResponse(
+        "project_details_modern.html",
+        {"request": request, "current_user": current_user, "project_id": project_id},
+    )
+
+
+@router.post("/create")
+async def create_project(
+    request: Request,
+    name: str = Form(...),
+    description: Optional[str] = Form(None),
+    status: str = Form(...),
+    priority: str = Form(...),
+    start_date: str = Form(...),
+    end_date: str = Form(...),
+    manager_id: int = Form(...),
+    department: Optional[str] = Form(None),
+    tags: Optional[str] = Form(None),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Handle the creation of a new project from the form submission.
+    """
+    # In a real application, we would create a project in the database
+    # For now, we'll just redirect to the projects page
+
+    # Parse the form data
+    project_data = {
+        "name": name,
+        "description": description,
+        "status": status,
+        "priority": priority,
+        "start_date": start_date,
+        "end_date": end_date,
+        "manager_id": manager_id,
+        "department": department,
+        "tags": tags.split(",") if tags else [],
+    }
+
+    # Log the project creation (for demonstration purposes)
+    print(f"Creating new project: {project_data}")
+
+    # Return success response
+    return {
+        "success": True,
+        "message": "Project created successfully",
+        "redirect_url": "/project",
+    }

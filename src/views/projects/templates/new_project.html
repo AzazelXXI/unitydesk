@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create New Project - CSA Platform</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        .form-container {
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-top: 20px;
+        }
+        
+        .form-title {
+            margin-top: 0;
+            margin-bottom: 25px;
+            color: var(--secondary-color);
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        textarea.form-control {
+            min-height: 120px;
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: white;
+        }
+        
+        .form-actions {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .button {
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            cursor: pointer;
+            border: none;
+            font-size: 16px;
+        }
+        
+        .button.primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .button.secondary {
+            background-color: white;
+            color: var(--secondary-color);
+            border: 1px solid var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Create New Project</h1>
+    </header>
+    
+    <main>
+        <nav>
+            <ul>
+                <li><a href="/projects">All Projects</a></li>
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/tasks">Tasks</a></li>
+                <li><a href="/">Home</a></li>
+            </ul>
+        </nav>
+        
+        <div class="form-container">
+            <h2 class="form-title">Project Information</h2>
+            
+            <form action="/projects" method="post">
+                <div class="form-group">
+                    <label for="project-name" class="form-label">Project Name *</label>
+                    <input type="text" id="project-name" name="name" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="project-description" class="form-label">Description</label>
+                    <textarea id="project-description" name="description" class="form-control"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="project-status" class="form-label">Status</label>
+                    <select id="project-status" name="status" class="form-select">
+                        <option value="active">Active</option>
+                        <option value="planned">Planned</option>
+                        <option value="on_hold">On Hold</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group" style="width: 48%; display: inline-block; margin-right: 2%;">
+                        <label for="start-date" class="form-label">Start Date</label>
+                        <input type="date" id="start-date" name="start_date" class="form-control">
+                    </div>
+                    
+                    <div class="form-group" style="width: 48%; display: inline-block;">
+                        <label for="end-date" class="form-label">End Date</label>
+                        <input type="date" id="end-date" name="end_date" class="form-control">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="project-manager" class="form-label">Project Manager</label>
+                    <select id="project-manager" name="manager_id" class="form-select">
+                        <option value="1">Sarah Chen</option>
+                        <option value="2">Alex Johnson</option>
+                        <option value="3">Robert Williams</option>
+                        <option value="4">Jessica Lee</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="project-priority" class="form-label">Priority</label>
+                    <select id="project-priority" name="priority" class="form-select">
+                        <option value="high">High</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="button primary">Create Project</button>
+                    <a href="/projects" class="button secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 CSA Platform</p>
+    </footer>
+</body>
+</html>

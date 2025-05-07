@@ -1,9 +1,19 @@
-# Import các model để có thể import từ src.models
-from src.models.base import Base
+from sqlalchemy.orm import relationship
 from src.models.user import User, UserProfile
-from src.models.messenger import Message, Chat, ChatMember
+from src.models.messenger import Chat, Message, ChatMember
 from src.models.calendar import Calendar, Event, EventParticipant
-from src.models.document import Document, DocumentVersion, DocumentPermission
-from src.models.storage import File, Folder, FilePermission
-from src.models.task import Task, Project, TaskAssignee
-from src.models.meeting import Meeting, Participant
+from src.models.document import Document
+from src.models.task import Task, TaskAssignee, Project
+
+User.owned_chats = relationship("Chat", back_populates="owner")
+User.messages = relationship("Message", back_populates="sender")
+User.chat_memberships = relationship("ChatMember", back_populates="user")
+User.calendars = relationship("Calendar", back_populates="owner")
+User.events = relationship("Event", back_populates="organizer")
+User.event_participations = relationship("EventParticipant", back_populates="user")
+User.documents = relationship("Document", back_populates="owner")
+User.tasks_created = relationship(
+    "Task", foreign_keys="Task.creator_id", back_populates="creator"
+)
+User.task_assignments = relationship("TaskAssignee", back_populates="user")
+User.projects_owned = relationship("Project", back_populates="owner")

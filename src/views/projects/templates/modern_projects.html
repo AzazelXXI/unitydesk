@@ -1,0 +1,812 @@
+{% extends "core/templates/base.html" %}
+
+{% block title %}Projects | CSA Platform{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .project-card {
+        height: 100%;
+        transition: transform 0.3s, box-shadow 0.3s;
+        border-radius: 8px;
+        overflow: hidden;
+        border: none;
+    }
+    
+    .project-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .project-card .card-img-top {
+        height: 140px;
+        object-fit: cover;
+    }
+    
+    .project-card .card-body {
+        position: relative;
+        padding: 1.25rem;
+    }
+    
+    .project-status {
+        position: absolute;
+        top: -15px;
+        right: 15px;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .status-active {
+        background-color: #28a745;
+    }
+    
+    .status-completed {
+        background-color: #007bff;
+    }
+    
+    .status-on-hold {
+        background-color: #ffc107;
+    }
+    
+    .status-cancelled {
+        background-color: #dc3545;
+    }
+    
+    .project-progress {
+        height: 6px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .project-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 10px;
+    }
+    
+    .project-meta-item {
+        display: flex;
+        align-items: center;
+    }
+    
+    .project-meta-item i {
+        margin-right: 5px;
+    }
+    
+    .team-members {
+        display: flex;
+        margin-top: 10px;
+    }
+    
+    .team-member {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: bold;
+        margin-right: -10px;
+        border: 2px solid white;
+    }
+    
+    .more-members {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: bold;
+        margin-right: -10px;
+        border: 2px solid white;
+    }
+    
+    .project-stats {
+        display: flex;
+        gap: 15px;
+        margin: 20px 0;
+    }
+    
+    .stat-card {
+        flex: 1;
+        background-color: white;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+    }
+    
+    .filter-bar {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .filter-label {
+        font-size: 0.75rem;
+        font-weight: bold;
+        color: #6c757d;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+    }
+    
+    .project-list-table {
+        width: 100%;
+    }
+    
+    .project-list-table td, .project-list-table th {
+        padding: 12px 15px;
+        vertical-align: middle;
+    }
+    
+    .project-list-table tr {
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .project-list-table tr:last-child {
+        border-bottom: none;
+    }
+    
+    .project-name {
+        font-weight: 600;
+    }
+    
+    .project-name a {
+        text-decoration: none;
+        color: var(--secondary-color);
+    }
+    
+    .project-name a:hover {
+        color: var(--primary-color);
+    }
+    
+    .project-item-meta {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+    
+    .project-tags .badge {
+        margin-right: 5px;
+        font-weight: normal;
+    }
+    
+    .list-view-switch {
+        cursor: pointer;
+        padding: 5px 10px;
+        border-radius: 4px;
+        margin-right: 5px;
+    }
+    
+    .list-view-switch.active {
+        background-color: #e9ecef;
+    }
+    
+    .loader {
+        display: none;
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block header %}Project Management{% endblock %}
+
+{% block header_actions %}
+<div class="btn-toolbar mb-2 mb-md-0">
+    <div class="btn-group me-2">
+        <button type="button" class="list-view-switch active" id="gridViewBtn">
+            <i class="bi bi-grid-3x3-gap"></i>
+        </button>
+        <button type="button" class="list-view-switch" id="listViewBtn">
+            <i class="bi bi-list"></i>
+        </button>
+    </div>
+    <button type="button" class="btn btn-sm btn-primary" id="newProjectBtn">
+        <i class="bi bi-plus"></i> New Project
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Project Statistics -->
+<div class="project-stats">
+    <div class="stat-card">
+        <div class="stat-value text-primary">{{ stats.total_projects }}</div>
+        <div class="stat-label">Projects</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value text-success">{{ stats.active_projects }}</div>
+        <div class="stat-label">Active</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value text-info">{{ stats.completed_projects }}</div>
+        <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value text-warning">{{ stats.on_hold_projects }}</div>
+        <div class="stat-label">On Hold</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.avg_completion }}%</div>
+        <div class="stat-label">Avg. Completion</div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <div class="row g-3">
+        <div class="col-md-3">
+            <div class="filter-label">Status</div>
+            <select class="form-select form-select-sm" id="statusFilter">
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="on_hold">On Hold</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <div class="filter-label">Client</div>
+            <select class="form-select form-select-sm" id="clientFilter">
+                <option value="">All Clients</option>
+                {% for client in clients %}
+                <option value="{{ client.id }}">{{ client.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <div class="filter-label">Department</div>
+            <select class="form-select form-select-sm" id="departmentFilter">
+                <option value="">All Departments</option>
+                {% for department in departments %}
+                <option value="{{ department.id }}">{{ department.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <div class="filter-label">Search</div>
+            <div class="input-group input-group-sm">
+                <input type="text" class="form-control" id="projectSearch" placeholder="Search projects...">
+                <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grid View -->
+<div id="gridView">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for project in projects %}
+        <div class="col">
+            <div class="card project-card">
+                <img src="{{ project.image_url|default:'/static/images/project-placeholder.jpg' }}" class="card-img-top" alt="{{ project.name }}">
+                <div class="card-body">
+                    <div class="project-status status-{{ project.status }}">
+                        <i class="bi {% if project.status == 'active' %}bi-play-fill{% elif project.status == 'completed' %}bi-check-lg{% elif project.status == 'on_hold' %}bi-pause-fill{% else %}bi-x-lg{% endif %}"></i>
+                    </div>
+                    <h5 class="card-title mb-1">
+                        <a href="/projects/{{ project.id }}" class="text-decoration-none">{{ project.name }}</a>
+                    </h5>
+                    <div class="text-muted small">{{ project.client.name }}</div>
+                    <p class="card-text mt-2">{{ project.description|truncatewords:15 }}</p>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-muted small">Progress: {{ project.progress }}%</div>
+                    </div>
+                    <div class="progress project-progress">
+                        <div class="progress-bar {% if project.progress < 25 %}bg-danger{% elif project.progress < 75 %}bg-warning{% else %}bg-success{% endif %}" role="progressbar" style="width: {{ project.progress }}%" aria-valuenow="{{ project.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    
+                    <div class="project-meta">
+                        <div class="project-meta-item">
+                            <i class="bi bi-calendar"></i> {{ project.end_date }}
+                        </div>
+                        <div class="project-meta-item">
+                            <i class="bi bi-check2-square"></i> {{ project.tasks_count }}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div class="team-members">
+                            {% for member in project.team|slice:":3" %}
+                            <div class="team-member" title="{{ member.name }}">
+                                {{ member.initials }}
+                            </div>
+                            {% endfor %}
+                            {% if project.team|length > 3 %}
+                            <div class="more-members">+{{ project.team|length|add:"-3" }}</div>
+                            {% endif %}
+                        </div>
+                        <a href="/projects/{{ project.id }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- List View (Hidden by Default) -->
+<div id="listView" style="display: none;">
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table project-list-table">
+                <thead>
+                    <tr>
+                        <th>Project</th>
+                        <th>Client</th>
+                        <th>Status</th>
+                        <th>Progress</th>
+                        <th>Deadline</th>
+                        <th>Team</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for project in projects %}
+                    <tr>
+                        <td>
+                            <div class="project-name">
+                                <a href="/projects/{{ project.id }}">{{ project.name }}</a>
+                            </div>
+                            <div class="project-item-meta">{{ project.tasks_count }} tasks</div>
+                        </td>
+                        <td>{{ project.client.name }}</td>
+                        <td>
+                            <span class="badge {% if project.status == 'active' %}bg-success{% elif project.status == 'completed' %}bg-primary{% elif project.status == 'on_hold' %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ project.status|title|replace('_', ' ') }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="progress" style="height: 5px; width: 100px;">
+                                <div class="progress-bar {% if project.progress < 25 %}bg-danger{% elif project.progress < 75 %}bg-warning{% else %}bg-success{% endif %}" role="progressbar" style="width: {{ project.progress }}%" aria-valuenow="{{ project.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div class="small mt-1">{{ project.progress }}%</div>
+                        </td>
+                        <td>{{ project.end_date }}</td>
+                        <td>
+                            <div class="team-members">
+                                {% for member in project.team|slice:":3" %}
+                                <div class="team-member" title="{{ member.name }}">
+                                    {{ member.initials }}
+                                </div>
+                                {% endfor %}
+                                {% if project.team|length > 3 %}
+                                <div class="more-members">+{{ project.team|length|add:"-3" }}</div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="/projects/{{ project.id }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-primary btn-edit-project" data-project-id="{{ project.id }}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-delete-project" data-project-id="{{ project.id }}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="loader" id="projectLoader"></div>
+
+<!-- Pagination -->
+<nav aria-label="Project pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if pagination.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ pagination.previous_page }}" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <a class="page-link" href="#" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+        {% endif %}
+        
+        {% for page_num in pagination.page_range %}
+        <li class="page-item {% if page_num == pagination.current_page %}active{% endif %}">
+            <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+        </li>
+        {% endfor %}
+        
+        {% if pagination.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ pagination.next_page }}" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <a class="page-link" href="#" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+
+<!-- New Project Modal -->
+<div class="modal fade" id="projectModal" tabindex="-1" aria-labelledby="projectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="projectModalLabel">New Project</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="projectForm">
+                    <input type="hidden" id="projectId">
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="projectName" class="form-label">Project Name</label>
+                            <input type="text" class="form-control" id="projectName" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="projectStatus" class="form-label">Status</label>
+                            <select class="form-select" id="projectStatus" required>
+                                <option value="active">Active</option>
+                                <option value="on_hold">On Hold</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="projectClient" class="form-label">Client</label>
+                            <select class="form-select" id="projectClient" required>
+                                <option value="">Select Client</option>
+                                {% for client in clients %}
+                                <option value="{{ client.id }}">{{ client.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="projectDepartment" class="form-label">Department</label>
+                            <select class="form-select" id="projectDepartment" required>
+                                <option value="">Select Department</option>
+                                {% for department in departments %}
+                                <option value="{{ department.id }}">{{ department.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="projectStartDate" class="form-label">Start Date</label>
+                            <input type="text" class="form-control" id="projectStartDate" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="projectEndDate" class="form-label">End Date</label>
+                            <input type="text" class="form-control" id="projectEndDate" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="projectDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="projectDescription" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="projectMembers" class="form-label">Team Members</label>
+                        <select class="form-select" id="projectMembers" multiple>
+                            {% for user in users %}
+                            <option value="{{ user.id }}">{{ user.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Hold Ctrl (or Cmd) to select multiple members</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="projectImage" class="form-label">Project Image (Optional)</label>
+                        <input class="form-control" type="file" id="projectImage">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveProjectBtn">Save Project</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="/static/js/common.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize datepickers
+        flatpickr("#projectStartDate", {
+            dateFormat: "Y-m-d"
+        });
+        
+        flatpickr("#projectEndDate", {
+            dateFormat: "Y-m-d"
+        });
+        
+        // View switching
+        const gridView = document.getElementById('gridView');
+        const listView = document.getElementById('listView');
+        const gridViewBtn = document.getElementById('gridViewBtn');
+        const listViewBtn = document.getElementById('listViewBtn');
+        
+        gridViewBtn.addEventListener('click', function() {
+            gridView.style.display = 'block';
+            listView.style.display = 'none';
+            gridViewBtn.classList.add('active');
+            listViewBtn.classList.remove('active');
+        });
+        
+        listViewBtn.addEventListener('click', function() {
+            gridView.style.display = 'none';
+            listView.style.display = 'block';
+            gridViewBtn.classList.remove('active');
+            listViewBtn.classList.add('active');
+        });
+        
+        // New project modal
+        const projectModal = new bootstrap.Modal(document.getElementById('projectModal'));
+        const newProjectBtn = document.getElementById('newProjectBtn');
+        const saveProjectBtn = document.getElementById('saveProjectBtn');
+        
+        newProjectBtn.addEventListener('click', function() {
+            document.getElementById('projectForm').reset();
+            document.getElementById('projectId').value = '';
+            document.getElementById('projectModalLabel').textContent = 'New Project';
+            projectModal.show();
+        });
+        
+        saveProjectBtn.addEventListener('click', function() {
+            if (validateForm(document.getElementById('projectForm'))) {
+                saveProject();
+            }
+        });
+        
+        // Edit project buttons
+        document.querySelectorAll('.btn-edit-project').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const projectId = this.getAttribute('data-project-id');
+                editProject(projectId);
+            });
+        });
+        
+        // Delete project buttons
+        document.querySelectorAll('.btn-delete-project').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const projectId = this.getAttribute('data-project-id');
+                confirmDeleteProject(projectId);
+            });
+        });
+        
+        // Filter functionality
+        document.getElementById('searchBtn').addEventListener('click', applyFilters);
+        document.getElementById('statusFilter').addEventListener('change', applyFilters);
+        document.getElementById('clientFilter').addEventListener('change', applyFilters);
+        document.getElementById('departmentFilter').addEventListener('change', applyFilters);
+        
+        // Search on Enter key
+        document.getElementById('projectSearch').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                applyFilters();
+            }
+        });
+        
+        // Functions
+        function saveProject() {
+            const projectId = document.getElementById('projectId').value;
+            const formData = new FormData();
+            
+            formData.append('name', document.getElementById('projectName').value);
+            formData.append('description', document.getElementById('projectDescription').value);
+            formData.append('status', document.getElementById('projectStatus').value);
+            formData.append('client_id', document.getElementById('projectClient').value);
+            formData.append('department_id', document.getElementById('projectDepartment').value);
+            formData.append('start_date', document.getElementById('projectStartDate').value);
+            formData.append('end_date', document.getElementById('projectEndDate').value);
+            
+            // Get selected team members
+            const teamSelect = document.getElementById('projectMembers');
+            const selectedMembers = Array.from(teamSelect.selectedOptions).map(option => option.value);
+            formData.append('team_members', JSON.stringify(selectedMembers));
+            
+            // Add image if selected
+            const imageInput = document.getElementById('projectImage');
+            if (imageInput.files.length > 0) {
+                formData.append('image', imageInput.files[0]);
+            }
+            
+            // Show loader
+            const loader = document.getElementById('projectLoader');
+            loader.style.display = 'block';
+            
+            // Determine if this is an create or update
+            const method = projectId ? 'PUT' : 'POST';
+            const url = projectId ? `/api/v1/projects/${projectId}` : '/api/v1/projects';
+            
+            fetch(url, {
+                method: method,
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.detail || `Error: ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                projectModal.hide();
+                showToast(projectId ? 'Project updated successfully' : 'Project created successfully', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            })
+            .catch(error => {
+                console.error('Error saving project:', error);
+                showToast(`Failed to save project: ${error.message}`, 'danger');
+            })
+            .finally(() => {
+                loader.style.display = 'none';
+            });
+        }
+        
+        function editProject(projectId) {
+            // Show loader
+            const loader = document.getElementById('projectLoader');
+            loader.style.display = 'block';
+            
+            // Fetch project data
+            fetch(`/api/v1/projects/${projectId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(project => {
+                // Fill form with project data
+                document.getElementById('projectId').value = project.id;
+                document.getElementById('projectName').value = project.name;
+                document.getElementById('projectDescription').value = project.description;
+                document.getElementById('projectStatus').value = project.status;
+                document.getElementById('projectClient').value = project.client.id;
+                document.getElementById('projectDepartment').value = project.department.id;
+                document.getElementById('projectStartDate').value = project.start_date;
+                document.getElementById('projectEndDate').value = project.end_date;
+                
+                // Set team members
+                const teamSelect = document.getElementById('projectMembers');
+                const teamMemberIds = project.team.map(member => member.id);
+                
+                for (let i = 0; i < teamSelect.options.length; i++) {
+                    teamSelect.options[i].selected = teamMemberIds.includes(teamSelect.options[i].value);
+                }
+                
+                // Update modal title and show
+                document.getElementById('projectModalLabel').textContent = 'Edit Project';
+                projectModal.show();
+            })
+            .catch(error => {
+                console.error('Error fetching project:', error);
+                showToast('Failed to load project data', 'danger');
+            })
+            .finally(() => {
+                loader.style.display = 'none';
+            });
+        }
+        
+        function confirmDeleteProject(projectId) {
+            confirmDialog('Are you sure you want to delete this project? This will also delete all associated tasks and data.', () => {
+                deleteProject(projectId);
+            });
+        }
+        
+        function deleteProject(projectId) {
+            // Show loader
+            const loader = document.getElementById('projectLoader');
+            loader.style.display = 'block';
+            
+            fetch(`/api/v1/projects/${projectId}`, {
+                method: 'DELETE',
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status}`);
+                }
+                showToast('Project deleted successfully', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            })
+            .catch(error => {
+                console.error('Error deleting project:', error);
+                showToast('Failed to delete project', 'danger');
+            })
+            .finally(() => {
+                loader.style.display = 'none';
+            });
+        }
+        
+        function applyFilters() {
+            // Get filter values
+            const status = document.getElementById('statusFilter').value;
+            const client = document.getElementById('clientFilter').value;
+            const department = document.getElementById('departmentFilter').value;
+            const search = document.getElementById('projectSearch').value;
+            
+            // Build query string
+            const params = new URLSearchParams();
+            if (status) params.append('status', status);
+            if (client) params.append('client_id', client);
+            if (department) params.append('department_id', department);
+            if (search) params.append('search', search);
+            
+            // Show loader
+            const loader = document.getElementById('projectLoader');
+            loader.style.display = 'block';
+            
+            // Redirect with filters
+            window.location.href = `/projects?${params.toString()}`;
+        }
+    });
+</script>
+{% endblock %}

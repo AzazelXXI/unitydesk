@@ -15,4 +15,15 @@ XlsxWriter
 jwt
 passlib
 python-jose[cryptography]
-pycryptodome
+bcrypt
+
+pytest
+httpx
+requests
+
+# anyio
+pytest-asyncio
+# pytest-tornasync
+# pytest-trio
+# pytest-twisted
+pyparsing

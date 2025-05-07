@@ -9,17 +9,19 @@ from src.models.document import DocumentType, DocumentPermissionLevel
 # Base schema
 class BaseSchema(BaseModel):
     """Base schema with common fields"""
+
     id: Optional[int] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Document schemas
 class DocumentBase(BaseModel):
     """Base schema for document information"""
+
     title: str
     description: Optional[str] = None
     document_type: DocumentType
@@ -33,11 +35,13 @@ class DocumentBase(BaseModel):
 
 class DocumentCreate(DocumentBase):
     """Schema for creating a new document"""
+
     initial_content: Optional[str] = None  # Initial document content
 
 
 class DocumentUpdate(BaseModel):
     """Schema for updating document information"""
+
     title: Optional[str] = None
     description: Optional[str] = None
     parent_folder_id: Optional[int] = None
@@ -48,6 +52,7 @@ class DocumentUpdate(BaseModel):
 
 class DocumentReadBasic(DocumentBase, BaseSchema):
     """Basic schema for reading document information"""
+
     current_version_id: Optional[int] = None
     public_token: Optional[str] = None
     view_count: int = 0
@@ -57,6 +62,7 @@ class DocumentReadBasic(DocumentBase, BaseSchema):
 
 class DocumentRead(DocumentReadBasic):
     """Full schema for reading document information"""
+
     versions: List[Dict[str, Any]] = []  # Simplified versions
     permissions: List[Dict[str, Any]] = []  # Simplified permissions
     parent_folder: Optional[Dict[str, Any]] = None  # Simplified folder info
@@ -65,6 +71,7 @@ class DocumentRead(DocumentReadBasic):
 # Document version schemas
 class DocumentVersionBase(BaseModel):
     """Base schema for document version information"""
+
     document_id: int
     version_number: int
     content: str
@@ -76,6 +83,7 @@ class DocumentVersionBase(BaseModel):
 
 class DocumentVersionCreate(BaseModel):
     """Schema for creating a new document version"""
+
     document_id: int
     content: str
     change_summary: Optional[str] = None
@@ -83,6 +91,7 @@ class DocumentVersionCreate(BaseModel):
 
 class DocumentVersionRead(DocumentVersionBase, BaseSchema):
     """Schema for reading document version information"""
+
     created_by: Dict[str, Any]  # Simplified creator info
     is_current: bool = False
 
@@ -90,6 +99,7 @@ class DocumentVersionRead(DocumentVersionBase, BaseSchema):
 # Document permission schemas
 class DocumentPermissionBase(BaseModel):
     """Base schema for document permission information"""
+
     document_id: int
     user_id: Optional[int] = None
     permission_level: DocumentPermissionLevel
@@ -101,6 +111,7 @@ class DocumentPermissionBase(BaseModel):
 
 class DocumentPermissionCreate(BaseModel):
     """Schema for creating a document permission"""
+
     document_id: int
     user_id: Optional[int] = None  # None for link sharing
     permission_level: DocumentPermissionLevel
@@ -111,6 +122,7 @@ class DocumentPermissionCreate(BaseModel):
 
 class DocumentPermissionUpdate(BaseModel):
     """Schema for updating document permission"""
+
     permission_level: Optional[DocumentPermissionLevel] = None
     password: Optional[str] = None
     expires_at: Optional[datetime] = None
@@ -118,4 +130,5 @@ class DocumentPermissionUpdate(BaseModel):
 
 class DocumentPermissionRead(DocumentPermissionBase, BaseSchema):
     """Schema for reading document permission information"""
+
     user: Optional[Dict[str, Any]] = None  # Simplified user info if applicable

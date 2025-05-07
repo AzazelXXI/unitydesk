@@ -9,17 +9,19 @@ from src.models.storage import StoragePermissionLevel
 # Base schema
 class BaseSchema(BaseModel):
     """Base schema with common fields"""
+
     id: Optional[int] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # File schemas
 class FileBase(BaseModel):
     """Base schema for file information"""
+
     name: str
     description: Optional[str] = None
     mime_type: str
@@ -34,11 +36,13 @@ class FileBase(BaseModel):
 
 class FileCreate(FileBase):
     """Schema for creating a file record"""
+
     pass
 
 
 class FileUpdate(BaseModel):
     """Schema for updating file information"""
+
     name: Optional[str] = None
     description: Optional[str] = None
     is_starred: Optional[bool] = None
@@ -48,6 +52,7 @@ class FileUpdate(BaseModel):
 
 class FileRead(FileBase, BaseSchema):
     """Schema for reading file information"""
+
     trashed_at: Optional[datetime] = None
     view_count: int = 0
     download_count: int = 0
@@ -60,6 +65,7 @@ class FileRead(FileBase, BaseSchema):
 # Folder schemas
 class FolderBase(BaseModel):
     """Base schema for folder information"""
+
     name: str
     description: Optional[str] = None
     owner_id: int
@@ -71,11 +77,13 @@ class FolderBase(BaseModel):
 
 class FolderCreate(FolderBase):
     """Schema for creating a new folder"""
+
     pass
 
 
 class FolderUpdate(BaseModel):
     """Schema for updating folder information"""
+
     name: Optional[str] = None
     description: Optional[str] = None
     is_starred: Optional[bool] = None
@@ -86,12 +94,14 @@ class FolderUpdate(BaseModel):
 
 class FolderReadBasic(FolderBase, BaseSchema):
     """Basic schema for reading folder information"""
+
     trashed_at: Optional[datetime] = None
     owner: Dict[str, Any]  # Simplified owner info
 
 
 class FolderRead(FolderReadBasic):
     """Full schema for reading folder information"""
+
     parent_folder: Optional[Dict[str, Any]] = None  # Simplified parent folder info
     file_count: int = 0
     subfolder_count: int = 0
@@ -101,6 +111,7 @@ class FolderRead(FolderReadBasic):
 # File permission schemas
 class FilePermissionBase(BaseModel):
     """Base schema for file permission information"""
+
     file_id: int
     user_id: Optional[int] = None
     permission_level: StoragePermissionLevel
@@ -112,6 +123,7 @@ class FilePermissionBase(BaseModel):
 
 class FilePermissionCreate(BaseModel):
     """Schema for creating a file permission"""
+
     file_id: int
     user_id: Optional[int] = None  # None for link sharing
     permission_level: StoragePermissionLevel
@@ -122,6 +134,7 @@ class FilePermissionCreate(BaseModel):
 
 class FilePermissionUpdate(BaseModel):
     """Schema for updating file permission"""
+
     permission_level: Optional[StoragePermissionLevel] = None
     password: Optional[str] = None
     expires_at: Optional[datetime] = None
@@ -129,4 +142,5 @@ class FilePermissionUpdate(BaseModel):
 
 class FilePermissionRead(FilePermissionBase, BaseSchema):
     """Schema for reading file permission information"""
+
     user: Optional[Dict[str, Any]] = None  # Simplified user info if applicable
