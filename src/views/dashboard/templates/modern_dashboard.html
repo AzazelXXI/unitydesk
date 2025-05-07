@@ -1,0 +1,454 @@
+{% extends "core/templates/base.html" %}
+{% from "core/templates/components.html" import alert, card, badge, status_badge, priority_badge, pagination, avatar, progress_bar, team_members, empty_state, stats_card %}
+
+{% block title %}Dashboard | CSA Platform{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .dashboard-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .task-card {
+        border-left-width: 4px;
+        transition: transform 0.2s;
+    }
+    
+    .task-card:hover {
+        transform: translateY(-3px);
+    }
+    
+    .task-due-soon {
+        border-left-color: #fd7e14;
+    }
+    
+    .task-overdue {
+        border-left-color: #dc3545;
+    }
+    
+    .project-progress-card {
+        margin-bottom: 15px;
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    
+    .calendar-cell {
+        min-height: 120px;
+        height: 100%;
+    }
+    
+    .calendar-date {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .calendar-event {
+        margin-bottom: 5px;
+        padding: 3px 8px;
+        border-radius: 3px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .event-meeting {
+        background-color: #cff4fc;
+        color: #055160;
+    }
+    
+    .event-task {
+        background-color: #d1e7dd;
+        color: #0f5132;
+    }
+    
+    .event-deadline {
+        background-color: #f8d7da;
+        color: #842029;
+    }
+    
+    .chart-container {
+        height: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block header %}Dashboard{% endblock %}
+
+{% block header_actions %}
+<div class="btn-toolbar mb-2 mb-md-0">
+    <div class="btn-group me-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="todayBtn">Today</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="thisWeekBtn">This Week</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="thisMonthBtn">This Month</button>
+    </div>
+    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" id="dateRangeBtn">
+        <i class="bi bi-calendar-range"></i> Date Range
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Alert Example -->
+{{ alert("info", "Welcome back! Here's your dashboard overview for today, May 1, 2025.") }}
+
+<!-- Stats Cards -->
+<div class="dashboard-stats">
+    {{ stats_card(dashboard.total_tasks, "Total Tasks", "bi-list-check", "primary") }}
+    {{ stats_card(dashboard.pending_tasks, "Pending Tasks", "bi-hourglass-split", "warning") }}
+    {{ stats_card(dashboard.completed_tasks, "Completed Tasks", "bi-check-circle", "success") }}
+    {{ stats_card(dashboard.overdue_tasks, "Overdue Tasks", "bi-exclamation-triangle", "danger") }}
+    {{ stats_card(dashboard.active_projects, "Active Projects", "bi-kanban", "info") }}
+</div>
+
+<div class="row">
+    <!-- Task Overview -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Task Overview</h5>
+                <a href="/tasks" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {% if dashboard.recent_tasks %}
+                    {% for task in dashboard.recent_tasks %}
+                    <div class="card mb-2 task-card {% if task.is_overdue %}task-overdue{% elif task.is_due_soon %}task-due-soon{% endif %}">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">{{ task.title }}</h6>
+                                {{ status_badge(task.status) }}
+                            </div>
+                            <div class="text-muted small">{{ task.project_name }}</div>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <div>
+                                    <span class="text-{% if task.is_overdue %}danger{% elif task.is_due_soon %}warning{% else %}muted{% endif %} small">
+                                        <i class="bi bi-calendar"></i> Due: {{ task.due_date }}
+                                    </span>
+                                </div>
+                                <div>
+                                    {{ avatar(task.assignee, "sm") }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    {{ empty_state("No tasks found", "bi-check2-all", "Create Task", "/tasks/new") }}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Project Progress -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Project Progress</h5>
+                <a href="/projects" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {% if dashboard.active_project_data %}
+                    {% for project in dashboard.active_project_data %}
+                    <div class="card project-progress-card">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">{{ project.name }}</h6>
+                                <span class="badge bg-secondary">{{ project.days_remaining }} days left</span>
+                            </div>
+                            <div class="text-muted small mb-2">{{ project.client_name }}</div>
+                            {{ progress_bar(project.progress) }}
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <div class="text-muted small">
+                                    <i class="bi bi-calendar"></i> Due: {{ project.end_date }}
+                                </div>
+                                <div>
+                                    {{ team_members(project.team, 3) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    {{ empty_state("No active projects", "bi-kanban", "Create Project", "/projects/new") }}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Calendar View -->
+    <div class="col-md-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Calendar</h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary me-1" id="prevMonth">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <span id="currentMonth">May 2025</span>
+                    <button class="btn btn-sm btn-outline-secondary ms-1" id="nextMonth">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Sun</th>
+                                <th>Mon</th>
+                                <th>Tue</th>
+                                <th>Wed</th>
+                                <th>Thu</th>
+                                <th>Fri</th>
+                                <th>Sat</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Week 1 -->
+                            <tr>
+                                <td class="calendar-cell text-muted">
+                                    <div class="calendar-date">27</div>
+                                </td>
+                                <td class="calendar-cell text-muted">
+                                    <div class="calendar-date">28</div>
+                                </td>
+                                <td class="calendar-cell text-muted">
+                                    <div class="calendar-date">29</div>
+                                </td>
+                                <td class="calendar-cell text-muted">
+                                    <div class="calendar-date">30</div>
+                                </td>
+                                <td class="calendar-cell bg-light">
+                                    <div class="calendar-date">1</div>
+                                    <div class="calendar-event event-meeting">Team Meeting (10:00 AM)</div>
+                                    <div class="calendar-event event-deadline">Project Proposal Due</div>
+                                </td>
+                                <td class="calendar-cell">
+                                    <div class="calendar-date">2</div>
+                                    <div class="calendar-event event-task">Client Review</div>
+                                </td>
+                                <td class="calendar-cell">
+                                    <div class="calendar-date">3</div>
+                                </td>
+                            </tr>
+                            <!-- Week 2 -->
+                            <tr>
+                                <td class="calendar-cell">
+                                    <div class="calendar-date">4</div>
+                                </td>
+                                <td class="calendar-cell">
+                                    <div class="calendar-date">5</div>
+                                    <div class="calendar-event event-task">Update Documentation</div>
+                                </td>
+                                <td class="calendar-cell">
+                                    <div class="calendar-date">6</div>
+                                </td>
+                                <td class="calendar-cell">
+                                    <div class="calendar-date">7</div>
+                                    <div class="calendar-event event-meeting">Department Sync (2:00 PM)</div>
+                                </td>
+                                <td class="calendar-cell">
+                                    <div class="calendar-date">8</div>
+                                </td>
+                                <td class="calendar-cell">
+                                    <div class="calendar-date">9</div>
+                                </td>
+                                <td class="calendar-cell">
+                                    <div class="calendar-date">10</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Activity Feed -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Activity</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% if dashboard.recent_activities %}
+                        {% for activity in dashboard.recent_activities %}
+                        <div class="list-group-item px-3 py-3">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    {{ avatar(activity.user, "sm") }}
+                                </div>
+                                <div>
+                                    <div>{{ activity.description }}</div>
+                                    <div class="small text-muted">{{ activity.time_ago }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="p-4 text-center text-muted">
+                            <i class="bi bi-activity fs-2 mb-2"></i>
+                            <p>No recent activity</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analytics Section -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Task Completion Rate</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" id="taskCompletionChart"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Project Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" id="projectStatusChart"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/js/common.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Date range picker
+        const dateRangeBtn = document.getElementById('dateRangeBtn');
+        const fp = flatpickr(dateRangeBtn, {
+            mode: 'range',
+            dateFormat: 'Y-m-d',
+            onClose: function(selectedDates) {
+                if (selectedDates.length === 2) {
+                    const startDate = formatDate(selectedDates[0]);
+                    const endDate = formatDate(selectedDates[1]);
+                    showToast(`Date range selected: ${startDate} to ${endDate}`, 'info');
+                    
+                    // Here you would call an API to update the dashboard with the new date range
+                    // updateDashboard(selectedDates[0], selectedDates[1]);
+                }
+            }
+        });
+        
+        // Quick date filter buttons
+        document.getElementById('todayBtn').addEventListener('click', function() {
+            const today = new Date();
+            showToast(`Dashboard updated for: Today (${formatDate(today)})`, 'info');
+            // updateDashboard(today, today);
+        });
+        
+        document.getElementById('thisWeekBtn').addEventListener('click', function() {
+            const today = new Date();
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay());
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6);
+            
+            showToast(`Dashboard updated for: This Week (${formatDate(startOfWeek)} to ${formatDate(endOfWeek)})`, 'info');
+            // updateDashboard(startOfWeek, endOfWeek);
+        });
+        
+        document.getElementById('thisMonthBtn').addEventListener('click', function() {
+            const today = new Date();
+            const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            
+            showToast(`Dashboard updated for: This Month (${formatDate(startOfMonth)} to ${formatDate(endOfMonth)})`, 'info');
+            // updateDashboard(startOfMonth, endOfMonth);
+        });
+        
+        // Calendar navigation
+        document.getElementById('prevMonth').addEventListener('click', function() {
+            showToast('Navigating to previous month...', 'info');
+            // Here you would update the calendar display for the previous month
+        });
+        
+        document.getElementById('nextMonth').addEventListener('click', function() {
+            showToast('Navigating to next month...', 'info');
+            // Here you would update the calendar display for the next month
+        });
+        
+        // Initialize Charts
+        const taskCompletionChart = new Chart(document.getElementById('taskCompletionChart'), {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+                datasets: [{
+                    label: 'Completed Tasks',
+                    data: [65, 78, 52, 91, 85],
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Total Tasks',
+                    data: [89, 105, 72, 108, 110],
+                    borderColor: '#6c757d',
+                    backgroundColor: 'rgba(108, 117, 125, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        const projectStatusChart = new Chart(document.getElementById('projectStatusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Active', 'Completed', 'On Hold', 'Cancelled'],
+                datasets: [{
+                    data: [12, 8, 3, 1],
+                    backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545'],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

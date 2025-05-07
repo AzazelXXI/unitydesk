@@ -9,16 +9,18 @@ from src.models.meeting import MeetingStatus
 # Base schema
 class BaseSchema(BaseModel):
     """Base schema with common fields"""
+
     id: Optional[int] = None
     created_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Meeting schemas
 class MeetingBase(BaseModel):
     """Base schema for meeting information"""
+
     room_name: str
     description: Optional[str] = None
     status: MeetingStatus = MeetingStatus.SCHEDULED
@@ -32,11 +34,13 @@ class MeetingBase(BaseModel):
 
 class MeetingCreate(MeetingBase):
     """Schema for creating a new meeting"""
+
     invited_users: Optional[List[int]] = None  # List of user IDs to invite
 
 
 class MeetingUpdate(BaseModel):
     """Schema for updating meeting information"""
+
     room_name: Optional[str] = None
     description: Optional[str] = None
     status: Optional[MeetingStatus] = None
@@ -50,6 +54,7 @@ class MeetingUpdate(BaseModel):
 
 class MeetingRead(MeetingBase, BaseSchema):
     """Schema for reading meeting information"""
+
     participant_count: Optional[int] = None
     host: Optional[Dict[str, Any]] = None  # Simplified host info
     is_active: bool = False  # Derived field based on status
@@ -58,6 +63,7 @@ class MeetingRead(MeetingBase, BaseSchema):
 # Participant schemas
 class ParticipantBase(BaseModel):
     """Base schema for participant information"""
+
     client_id: str
     meeting_id: int
     user_id: Optional[int] = None  # Optional link to user account
@@ -69,11 +75,13 @@ class ParticipantBase(BaseModel):
 
 class ParticipantCreate(ParticipantBase):
     """Schema for creating a participant record"""
+
     pass
 
 
 class ParticipantUpdate(BaseModel):
     """Schema for updating participant information"""
+
     name: Optional[str] = None
     is_camera_on: Optional[bool] = None
     is_mic_on: Optional[bool] = None
@@ -83,6 +91,7 @@ class ParticipantUpdate(BaseModel):
 
 class ParticipantRead(ParticipantBase, BaseSchema):
     """Schema for reading participant information"""
+
     joined_at: datetime
     left_at: Optional[datetime] = None
     user: Optional[Dict[str, Any]] = None  # Simplified user info if linked
@@ -92,6 +101,7 @@ class ParticipantRead(ParticipantBase, BaseSchema):
 # Meeting invitation schemas
 class MeetingInviteCreate(BaseModel):
     """Schema for creating a meeting invitation"""
+
     meeting_id: int
     user_id: Optional[int] = None
     email: Optional[str] = None  # For external participants

@@ -3,7 +3,11 @@ from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 from enum import Enum
 
-from src.models.notification import NotificationType, NotificationChannel, NotificationPriority
+from src.models.notification import (
+    NotificationType,
+    NotificationChannel,
+    NotificationPriority,
+)
 
 
 # Request schemas
@@ -93,9 +97,9 @@ class NotificationResponse(BaseModel):
     email_delivered: bool
     push_delivered: bool
     sms_delivered: bool
-    
+
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class NotificationCountResponse(BaseModel):
@@ -113,9 +117,9 @@ class NotificationSettingResponse(BaseModel):
     push_enabled: bool
     sms_enabled: bool
     min_priority: NotificationPriority
-    
+
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class NotificationTemplateResponse(BaseModel):
@@ -131,6 +135,6 @@ class NotificationTemplateResponse(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
-        orm_mode = True
+        from_attributes = True

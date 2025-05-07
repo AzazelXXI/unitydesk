@@ -55,34 +55,27 @@ class User(Base, RootModel):
     position = relationship("Position", back_populates="users")
     manager = relationship(
         "User",
-        primaryjoin="User.manager_id == User.id",
-        remote_side="[User.id]",
-        foreign_keys=[manager_id],
-        back_populates="direct_reports",
+        foreign_keys="[User.manager_id]",
+        backref=backref("direct_reports", remote_side=[id]),
     )
-
-    direct_reports = relationship(  # Thêm định nghĩa mới
-        "User",
-        back_populates="manager",
-        foreign_keys="[User.manager_id]",  # Không cần remote_side ở phía này
-    )
-
     department_memberships = relationship(
         "DepartmentMembership", back_populates="user", cascade="all, delete-orphan"
     )
-    owned_chats = relationship("Chat", back_populates="owner")
-    messages = relationship("Message", back_populates="sender")
-    chat_memberships = relationship("ChatMember", back_populates="user")
-    calendars = relationship("Calendar", back_populates="owner")
-    events = relationship("Event", back_populates="organizer")
-    event_participations = relationship("EventParticipant", back_populates="user")
-    documents = relationship("Document", back_populates="owner")
-    folders = relationship("Folder", back_populates="owner")
-    tasks_created = relationship(
-        "Task", foreign_keys="Task.creator_id", back_populates="creator"
-    )
-    task_assignments = relationship("TaskAssignee", back_populates="user")
-    projects_owned = relationship("Project", back_populates="owner")
+
+
+# After all model classes are defined:
+User.owned_chats = relationship("Chat", back_populates="owner")
+User.messages = relationship("Message", back_populates="sender")
+User.chat_memberships = relationship("ChatMember", back_populates="user")
+User.calendars = relationship("Calendar", back_populates="owner")
+User.events = relationship("Event", back_populates="organizer")
+User.event_participations = relationship("EventParticipant", back_populates="user")
+User.documents = relationship("Document", back_populates="owner")
+User.tasks_created = relationship(
+    "Task", foreign_keys="Task.creator_id", back_populates="creator"
+)
+User.task_assignments = relationship("TaskAssignee", back_populates="user")
+User.projects_owned = relationship("Project", back_populates="owner")
 
 
 class UserProfile(Base, RootModel):
@@ -113,26 +106,17 @@ class Department(Base, RootModel):
     description = Column(Text, nullable=True)
     parent_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
     head_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    is_active = Column(Boolean, default=True)
+    is_active = Column(Boolean, default=True, nullable=False)
     order_index = Column(Integer, default=0)
     path = Column(
         String(255), nullable=True
-    )  # Materialized path for efficient hierarchy queries
-    level = Column(Integer, default=0)  # Hierarchy level (0=root, 1=division, etc.)
+    )  # Materialized path for efficient hierarchy queries    level = Column(Integer, default=0)  # Hierarchy level (0=root, 1=division, etc.)
 
     # Relationships
     parent = relationship(
         "Department",
-        primaryjoin="Department.parent_id == Department.id",
-        remote_side="[Department.id]",
-        foreign_keys=[parent_id],
-        back_populates="subdepartments",  # Thay backref bằng back_populates
-    )
-
-    subdepartments = relationship(  # Thêm định nghĩa mới
-        "Department",
-        back_populates="parent",
-        foreign_keys="[Department.parent_id]",
+        backref=backref("subdepartments", cascade="all, delete-orphan"),
+        remote_side=[id],
     )
     head = relationship("User", foreign_keys=[head_user_id])
     primary_members = relationship(
@@ -158,21 +142,22 @@ class Position(Base, RootModel):
     required_skills = Column(Text, nullable=True)
     grade_level = Column(Integer, default=0)  # Hierarchical positioning
     is_managerial = Column(Boolean, default=False)
-    reports_to_position_id = Column(Integer, ForeignKey("positions.id"), nullable=True)
-    # Relationships
+    reports_to_position_id = Column(
+        Integer, ForeignKey("positions.id"), nullable=True
+    )  # Relationships
     department = relationship("Department", back_populates="positions")
     reports_to = relationship(
         "Position",
         primaryjoin="Position.reports_to_position_id == Position.id",
-        remote_side="[Position.id]",
-        foreign_keys=[reports_to_position_id],
-        back_populates="subordinate_positions",  # Thay backref bằng back_populates
+        back_populates="subordinate_positions",
+        remote_side=[id],  # Remove quotes here too
     )
 
-    subordinate_positions = relationship(  # Thêm định nghĩa mới
+    subordinate_positions = relationship(
         "Position",
+        primaryjoin="Position.id == Position.reports_to_position_id",
         back_populates="reports_to",
-        foreign_keys="[Position.reports_to_position_id]",
+        cascade="all, delete-orphan",
     )
     users = relationship("User", back_populates="position")
 

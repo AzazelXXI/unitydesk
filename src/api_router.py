@@ -9,18 +9,18 @@ API routes are versioned for better compatibility management.
 from fastapi import APIRouter
 
 # Import all API routers
-from src.views.core_views import router as core_router
-from src.views.meeting_views import router as meeting_router
-from src.views.notification_views import router as notification_router
-from src.views.notification_views import ws_router as notification_ws_router
-from src.views.task_views import router as task_router
-from src.views.project_views import router as project_router
-from src.views.asset_views import router as asset_router
-from src.views.client_views import router as client_router
-from src.views.customer_service_views import router as customer_service_router
-from src.views.department_views import router as department_router
-from src.views.position_views import router as position_router
-from src.views.user_views import router as user_router
+from src.apis.core_views import router as core_router
+from src.apis.meeting_views import router as meeting_router
+from src.apis.notification_views import router as notification_router
+from src.apis.notification_views import ws_router as notification_ws_router
+from src.apis.task_views import router as task_router
+from src.apis.project_views import router as project_router
+from src.apis.asset_views import router as asset_router
+from src.apis.client_views import router as client_router
+from src.apis.customer_service_views import router as customer_service_router
+from src.apis.department_views import router as department_router
+from src.apis.position_views import router as position_router
+from src.apis.user_views import router as user_router
 
 # Create API v1 router that includes all v1 API endpoints
 api_router_v1 = APIRouter(prefix="/api/v1")
