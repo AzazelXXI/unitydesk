@@ -48,7 +48,7 @@ class User(Base, RootModel):
         uselist=False,
         back_populates="user",
         cascade="all, delete-orphan",
-    )
+    )    
     primary_department = relationship(
         "Department", foreign_keys=[department_id], back_populates="primary_members"
     )
@@ -56,7 +56,8 @@ class User(Base, RootModel):
     manager = relationship(
         "User",
         foreign_keys="[User.manager_id]",
-        backref=backref("direct_reports", remote_side=[id]),
+        backref=backref("direct_reports"),
+        remote_side="User.id"
     )
     department_memberships = relationship(
         "DepartmentMembership", back_populates="user", cascade="all, delete-orphan"
@@ -109,14 +110,13 @@ class Department(Base, RootModel):
     is_active = Column(Boolean, default=True, nullable=False)
     order_index = Column(Integer, default=0)
     path = Column(
-        String(255), nullable=True
-    )  # Materialized path for efficient hierarchy queries    level = Column(Integer, default=0)  # Hierarchy level (0=root, 1=division, etc.)
-
-    # Relationships
+        String(255), 
+        nullable=True
+    )  # Materialized path for efficient hierarchy queries    level = Column(Integer, default=0)  # Hierarchy level (0=root, 1=division, etc.)    # Relationships
     parent = relationship(
         "Department",
         backref=backref("subdepartments", cascade="all, delete-orphan"),
-        remote_side=[id],
+        remote_side="Department.id",
     )
     head = relationship("User", foreign_keys=[head_user_id])
     primary_members = relationship(
@@ -145,12 +145,12 @@ class Position(Base, RootModel):
     reports_to_position_id = Column(
         Integer, ForeignKey("positions.id"), nullable=True
     )  # Relationships
-    department = relationship("Department", back_populates="positions")
+    department = relationship("Department", back_populates="positions")    
     reports_to = relationship(
         "Position",
         primaryjoin="Position.reports_to_position_id == Position.id",
         back_populates="subordinate_positions",
-        remote_side=[id],  # Remove quotes here too
+        remote_side="Position.id",  # Fixed id reference
     )
 
     subordinate_positions = relationship(

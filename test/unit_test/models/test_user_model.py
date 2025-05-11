@@ -192,8 +192,33 @@ class TestUserProfileModel:
     )
     def test_user_profile_relationship_with_user(self):
         """Test UserProfile relationship with User model"""
-        # This test is skipped until the remote_side parameter issue is fixed
-        pass
+        # Test the relationship without direct access to mapper
+        assert hasattr(UserProfile, "user")
+        
+        # Use SQLAlchemy's inspect to safely examine the relationship
+        from sqlalchemy import inspect
+        
+        # Get the relationship properties
+        mapper = inspect(UserProfile)
+        if mapper.relationships:
+            # Check if the 'user' relationship exists
+            assert "user" in mapper.relationships
+            
+            # Check properties of the relationship
+            user_rel = mapper.relationships["user"]
+            assert user_rel.direction.name == "MANYTOONE"  # Should be many-to-one
+            assert user_rel.mapper.class_ == User  # Target class should be User
+            
+            # Check foreign key
+            primary_join_str = str(user_rel.primaryjoin)
+            assert "user_profiles.user_id" in primary_join_str
+            assert "users.id" in primary_join_str
+            
+            # Check relationship arguments without directly accessing remote_side
+            # Just verify that this is a proper foreign key relationship
+            for local, remote in user_rel.local_remote_pairs:
+                assert "user_id" in str(local)
+                assert "id" in str(remote)
 
     def test_user_profile_relationship_exists(self):
         """Test that UserProfile has a relationship with User without deep inspection"""

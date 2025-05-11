@@ -58,7 +58,7 @@ class Folder(Base, RootModel):
     
     # Relationships
     owner = relationship("User", back_populates="folders")
-    parent_folder = relationship("Folder", remote_side=[id], backref="subfolders")
+    parent_folder = relationship("Folder", remote_side="Folder.id", backref="subfolders")
     files = relationship("File", back_populates="parent_folder")
     documents = relationship("Document", back_populates="parent_folder")
 

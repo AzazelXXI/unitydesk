@@ -7,6 +7,11 @@ from src.database import Base
 from src.models.base import RootModel
 
 
+# Forward declaration for ServiceTicket to avoid circular imports
+# This will be resolved at SQLAlchemy mapper initialization time
+ServiceTicket = None
+
+
 class ProjectStatus(str, enum.Enum):
     """Status of a marketing project"""
     DRAFT = "draft"               # Initial planning stage
@@ -154,8 +159,7 @@ class Client(Base, RootModel):
     contact_name = Column(String(255), nullable=True)
     contact_email = Column(String(255), nullable=True, index=True)  # Index for email searches
     contact_phone = Column(String(50), nullable=True)
-    
-    # Relationships with optimized loading
+      # Relationships with optimized loading
     projects = relationship(
         "MarketingProject", 
         back_populates="client",
@@ -166,6 +170,11 @@ class Client(Base, RootModel):
         "ClientContact", 
         back_populates="client", 
         cascade="all, delete-orphan",
+        lazy="selectin"  # Efficient loading for collections
+    )
+    service_tickets = relationship(
+        "ServiceTicket",
+        back_populates="client",
         lazy="selectin"  # Efficient loading for collections
     )
 
@@ -250,21 +259,19 @@ class MarketingTask(Base, RootModel):
     
     # Completion tracking
     completion_percentage = Column(Integer, default=0)
-    
-    # Relationships
+      # Relationships
     project = relationship("MarketingProject", back_populates="tasks")
     workflow_step = relationship("WorkflowStep", back_populates="tasks")
     creator = relationship("User", foreign_keys=[creator_id])
     assignee = relationship("User", foreign_keys=[assignee_id])
-    parent_task = relationship("MarketingTask", remote_side=[id], backref="subtasks")
-    comments = relationship("TaskComment", back_populates="task", cascade="all, delete-orphan")
+    parent_task = relationship("MarketingTask", remote_side="MarketingTask.id", backref="subtasks")
+    comments = relationship("MarketingTaskComment", back_populates="task", cascade="all, delete-orphan")
     assets = relationship("MarketingAsset", back_populates="related_task")
 
 
-class TaskComment(Base, RootModel):
+class MarketingTaskComment(Base, RootModel):
     """Comments on marketing tasks"""
-    __tablename__ = "task_comments"
-    __table_args__ = {'extend_existing': True}
+    __tablename__ = "marketing_task_comments"
     
     task_id = Column(Integer, ForeignKey("marketing_tasks.id", ondelete="CASCADE"))
     user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)

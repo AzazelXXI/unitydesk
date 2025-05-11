@@ -143,10 +143,6 @@
 
 #### Project Managers
 
-**Role:** Responsible for planning, executing, and completing projects according to objectives, timelines, and budgets.
-
-**Key Functions:**
-
 -   **Project Management:** Create, edit, delete projects and define scope
 -   **Planning:** Build timelines, set milestones and deadlines
 -   **Task Assignment:** Create and assign tasks to appropriate team members
@@ -165,10 +161,6 @@
 
 #### Team Members
 
-**Role:** Execute specific tasks within projects, responsible for completing assigned tasks on time and meeting requirements.
-
-**Key Functions:**
-
 -   **Task Management:** View, accept, and update status of assigned tasks
 -   **Time Tracking:** Record and report time spent on each task
 -   **Collaboration:** Add comments, share documents, and provide feedback on tasks
@@ -184,10 +176,6 @@
 -   Receive notifications when tasks or projects are updated
 
 #### Clients/Members
-
-**Role:** End users or customers of projects managed in the system.
-
-**Key Functions:**
 
 -   **Progress Tracking:** View reports and updates about their projects
 -   **Approval:** Review and approve deliverables or milestones
