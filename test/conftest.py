@@ -1,6 +1,7 @@
 import sys
 import os
 from typing import Generator, AsyncGenerator
+import urllib.parse
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
     AsyncSession,
@@ -13,21 +14,28 @@ from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from sqlalchemy.sql import text
 from sqlalchemy.orm import sessionmaker
 from asyncio import current_task
-from urllib.parse import quote_plus
+
+# Extract credentials as separate variables for better handling of special characters
+DB_USER = "postgres"
+DB_PASSWORD = "KiroHoang1124@hutech.dev"  # Mật khẩu của bạn
+DB_HOST = "localhost"
+DB_PORT = "5432"
+DB_NAME = "testdb"
+
+# URL encode the password to handle special characters
+ENCODED_PASSWORD = urllib.parse.quote_plus(DB_PASSWORD)
 
 
 @pytest.fixture()
 def test_engine() -> Generator[AsyncEngine, None, None]:
-    # Mã hóa URL cho mật khẩu có ký tự đặc biệt
-    password = quote_plus('KiroHoang1124@hutech.dev')
+    # Create connection URL with properly encoded password
+    connection_url = f"postgresql+asyncpg://{DB_USER}:{ENCODED_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     engine = create_async_engine(
-        f"postgresql+asyncpg://postgres:{password}@localhost:5432/testdb",
+        connection_url,
         echo=True,
         # pool_size=20, max_overflow=0
     )
     yield engine
-
-
 
 
 @pytest.fixture()
@@ -43,8 +51,6 @@ async def test_session(test_engine: AsyncEngine) -> AsyncGenerator[AsyncSession,
         yield session
 
 
-
-
 @pytest.fixture(autouse=True)
 async def clean_db_after_test(test_engine):
     """
@@ -57,18 +63,15 @@ async def clean_db_after_test(test_engine):
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    yield    # Teardown - Clean specific tables after tests instead of dropping all
+    yield
+
+    # Teardown - Clean specific tables after tests instead of dropping all
     # This avoids circular dependency issues when dropping tables
-    async with test_engine.begin() as conn:        # To prevent circular dependency issues, we'll clean tables individually
+    async with test_engine.begin() as conn:
+        # To prevent circular dependency issues, we'll clean tables individually
         # rather than using drop_all
         await conn.execute(
-            text("TRUNCATE users, user_profiles, calendars, events, event_participants RESTART IDENTITY CASCADE")
-        )
-        # Clean marketing project related tables
-        await conn.execute(
-            text("TRUNCATE marketing_projects, clients, client_contacts, workflow_steps, marketing_tasks, " +
-                 "marketing_task_comments, marketing_assets, analytics_reports, project_team_association " +
-                 "RESTART IDENTITY CASCADE")
+            text("TRUNCATE users, user_profiles RESTART IDENTITY CASCADE")
         )
         # Add other tables as needed
 
