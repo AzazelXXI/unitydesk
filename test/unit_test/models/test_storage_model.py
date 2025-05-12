@@ -3,6 +3,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
 from datetime import datetime, timedelta
 import uuid
+from sqlalchemy import or_, func
 
 from src.models.storage import File, Folder, FilePermission, StoragePermissionLevel
 from src.models.user import User
@@ -624,4 +625,509 @@ async def test_user_file_ownership(test_session):
     for file in [file1, file2, file3]:
         await test_session.delete(file)
     await test_session.delete(user)
+    await test_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_folder_permission(test_session):
+    """Test folder permission assignments"""
+    # Create users
+    owner = User(
+        email="folder_owner@example.com",
+        username="folder_owner",
+        hashed_password="hashedpassword123",
+        is_active=True
+    )
+    
+    collaborator = User(
+        email="folder_collab@example.com",
+        username="folder_collab",
+        hashed_password="hashedpassword456",
+        is_active=True
+    )
+    
+    test_session.add_all([owner, collaborator])
+    await test_session.flush()
+    
+    # Create a folder
+    folder = Folder(
+        name="Shared Folder",
+        description="Folder for testing permissions",
+        owner_id=owner.id
+    )
+    
+    test_session.add(folder)
+    await test_session.flush()
+    
+    # Create a file in the folder
+    file = File(
+        name="shared_doc.pdf",
+        description="File in shared folder",
+        mime_type="application/pdf",
+        size_bytes=12345,
+        storage_path="/storage/shared_doc.pdf",
+        owner_id=owner.id,
+        parent_folder_id=folder.id
+    )
+    
+    test_session.add(file)
+    await test_session.flush()
+    
+    # Create permission for collaborator on the file
+    file_perm = FilePermission(
+        file_id=file.id,
+        user_id=collaborator.id,
+        permission_level=StoragePermissionLevel.EDIT
+    )
+    
+    test_session.add(file_perm)
+    await test_session.commit()
+    
+    # Query the file with permissions
+    stmt = select(File).options(
+        joinedload(File.permissions)
+    ).where(File.id == file.id)
+    result = await test_session.execute(stmt)
+    fetched_file = result.scalars().first()
+    
+    # Check if permission was created correctly
+    assert fetched_file is not None
+    assert len(fetched_file.permissions) == 1
+    assert fetched_file.permissions[0].user_id == collaborator.id
+    
+    # Clean up
+    await test_session.delete(file_perm)
+    await test_session.delete(file)
+    await test_session.delete(folder)
+    await test_session.delete(owner)
+    await test_session.delete(collaborator)
+    await test_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_restore_from_trash(test_session):
+    """Test restoring files and folders from trash"""
+    # Create a user
+    user = User(
+        email="trash_user@example.com",
+        username="trash_user",
+        hashed_password="hashedpassword123",
+        is_active=True
+    )
+    
+    test_session.add(user)
+    await test_session.flush()
+    
+    # Create a file
+    file = File(
+        name="trashable.txt",
+        description="File to be trashed and restored",
+        mime_type="text/plain",
+        size_bytes=5000,
+        storage_path="/storage/trashable.txt",
+        owner_id=user.id
+    )
+    
+    # Create a folder
+    folder = Folder(
+        name="Trashable Folder",
+        description="Folder to be trashed and restored",
+        owner_id=user.id
+    )
+    
+    test_session.add_all([file, folder])
+    await test_session.commit()
+    
+    # Move to trash
+    trash_time = datetime.utcnow()
+    file.is_trashed = True
+    file.trashed_at = trash_time
+    folder.is_trashed = True
+    folder.trashed_at = trash_time
+    await test_session.commit()
+    
+    # Verify trashed status
+    stmt = select(File).where(File.id == file.id)
+    result = await test_session.execute(stmt)
+    trashed_file = result.scalars().first()
+    assert trashed_file.is_trashed == True
+    assert trashed_file.trashed_at is not None
+    
+    stmt = select(Folder).where(Folder.id == folder.id)
+    result = await test_session.execute(stmt)
+    trashed_folder = result.scalars().first()
+    assert trashed_folder.is_trashed == True
+    assert trashed_folder.trashed_at is not None
+    
+    # Restore from trash
+    file.is_trashed = False
+    file.trashed_at = None
+    folder.is_trashed = False
+    folder.trashed_at = None
+    await test_session.commit()
+    
+    # Verify restored status
+    stmt = select(File).where(File.id == file.id)
+    result = await test_session.execute(stmt)
+    restored_file = result.scalars().first()
+    assert restored_file.is_trashed == False
+    assert restored_file.trashed_at is None
+    
+    stmt = select(Folder).where(Folder.id == folder.id)
+    result = await test_session.execute(stmt)
+    restored_folder = result.scalars().first()
+    assert restored_folder.is_trashed == False
+    assert restored_folder.trashed_at is None
+    
+    # Clean up
+    await test_session.delete(file)
+    await test_session.delete(folder)
+    await test_session.delete(user)
+    await test_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_search_files_and_folders(test_session):
+    """Test searching for files and folders by name or description"""
+    # Create a user
+    user = User(
+        email="search_user@example.com",
+        username="search_user",
+        hashed_password="hashedpassword123",
+        is_active=True
+    )
+    
+    test_session.add(user)
+    await test_session.flush()
+    
+    # Create files with searchable names and descriptions
+    project_file = File(
+        name="project_report.docx",
+        description="Annual project report for 2023",
+        mime_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        size_bytes=50000,
+        storage_path="/storage/project_report.docx",
+        owner_id=user.id
+    )
+    
+    budget_file = File(
+        name="budget_2023.xlsx",
+        description="Project budget spreadsheet",
+        mime_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        size_bytes=30000,
+        storage_path="/storage/budget_2023.xlsx",
+        owner_id=user.id
+    )
+    
+    # Create folders with searchable names and descriptions
+    project_folder = Folder(
+        name="Project Materials",
+        description="Materials related to the 2023 project",
+        owner_id=user.id
+    )
+    
+    archive_folder = Folder(
+        name="Archive",
+        description="Archive of old documents",  # Changed from "Archive of old projects"
+        owner_id=user.id
+    )
+    
+    test_session.add_all([project_file, budget_file, project_folder, archive_folder])
+    await test_session.commit()
+    
+    # Search by filename pattern
+    stmt = select(File).where(
+        File.owner_id == user.id,
+        File.name.ilike("%report%")
+    )
+    result = await test_session.execute(stmt)
+    report_files = result.scalars().all()
+    assert len(report_files) == 1
+    assert report_files[0].name == "project_report.docx"
+    
+    # Search by description keyword
+    stmt = select(File).where(
+        File.owner_id == user.id,
+        File.description.ilike("%budget%")
+    )
+    result = await test_session.execute(stmt)
+    budget_desc_files = result.scalars().all()
+    assert len(budget_desc_files) == 1
+    assert budget_desc_files[0].name == "budget_2023.xlsx"
+    
+    # Search folders by keyword in name or description
+    stmt = select(Folder).where(
+        Folder.owner_id == user.id,
+        or_(
+            Folder.name.ilike("%project%"), 
+            Folder.description.ilike("%project%")
+        )
+    )
+    result = await test_session.execute(stmt)
+    project_folders = result.scalars().all()
+    assert len(project_folders) == 1
+    assert project_folders[0].name == "Project Materials"
+    
+    # Search for 2023 in both files and folders
+    file_stmt = select(File).where(
+        File.owner_id == user.id,
+        or_(
+            File.name.ilike("%2023%"), 
+            File.description.ilike("%2023%")
+        )
+    )
+    folder_stmt = select(Folder).where(
+        Folder.owner_id == user.id,
+        or_(
+            Folder.name.ilike("%2023%"), 
+            Folder.description.ilike("%2023%")
+        )
+    )
+    
+    file_result = await test_session.execute(file_stmt)
+    folder_result = await test_session.execute(folder_stmt)
+    
+    year_files = file_result.scalars().all()
+    year_folders = folder_result.scalars().all()
+    
+    assert len(year_files) == 2  # Both files have 2023
+    assert len(year_folders) == 1  # Only project folder has 2023
+    
+    # Clean up
+    await test_session.delete(project_file)
+    await test_session.delete(budget_file)
+    await test_session.delete(project_folder)
+    await test_session.delete(archive_folder)
+    await test_session.delete(user)
+    await test_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_user_storage_usage(test_session):
+    """Test calculating total storage used by a user"""
+    # Create a user
+    user = User(
+        email="storage_user@example.com",
+        username="storage_user",
+        hashed_password="hashedpassword123",
+        is_active=True
+    )
+    
+    test_session.add(user)
+    await test_session.flush()
+    
+    # Create multiple files with different sizes
+    files = [
+        File(
+            name=f"file{i}.txt",
+            description=f"Test file {i}",
+            mime_type="text/plain",
+            size_bytes=i * 1000,  # Different sizes
+            storage_path=f"/storage/file{i}.txt",
+            owner_id=user.id
+        ) for i in range(1, 6)  # 5 files with sizes 1000, 2000, 3000, 4000, 5000
+    ]
+    
+    test_session.add_all(files)
+    await test_session.commit()
+    
+    # Calculate total storage using SQL aggregation
+    stmt = select(func.sum(File.size_bytes).label("total_size")).where(
+        File.owner_id == user.id,
+        File.is_trashed == False
+    )
+    result = await test_session.execute(stmt)
+    total_size = result.scalar()
+    
+    # Expected total: 1000 + 2000 + 3000 + 4000 + 5000 = 15000
+    assert total_size == 15000
+    
+    # Move some files to trash and recalculate active storage
+    files[0].is_trashed = True
+    files[1].is_trashed = True
+    await test_session.commit()
+    
+    # Calculate active storage (excluding trashed files)
+    stmt = select(func.sum(File.size_bytes).label("active_size")).where(
+        File.owner_id == user.id,
+        File.is_trashed == False
+    )
+    result = await test_session.execute(stmt)
+    active_size = result.scalar()
+    
+    # Expected active size: 3000 + 4000 + 5000 = 12000
+    assert active_size == 12000
+    
+    # Clean up
+    for file in files:
+        await test_session.delete(file)
+    await test_session.delete(user)
+    await test_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_unique_name_constraint(test_session):
+    """Test uniqueness constraint for file/folder names within the same folder"""
+    # Create a user
+    user = User(
+        email="constraint@example.com",
+        username="constraint_user",
+        hashed_password="hashedpassword123",
+        is_active=True
+    )
+    
+    test_session.add(user)
+    await test_session.flush()
+    
+    # Create a folder
+    folder = Folder(
+        name="Test Folder",
+        description="Folder for testing uniqueness constraints",
+        owner_id=user.id
+    )
+    
+    test_session.add(folder)
+    await test_session.flush()
+    
+    # Create a file with a specific name
+    file1 = File(
+        name="duplicate_name.txt",
+        description="First file with this name",
+        mime_type="text/plain",
+        size_bytes=1000,
+        storage_path="/storage/duplicate_name.txt",
+        owner_id=user.id,
+        parent_folder_id=folder.id
+    )
+    
+    test_session.add(file1)
+    await test_session.commit()
+    
+    # Try to create another file with the same name in the same folder
+    file2 = File(
+        name="duplicate_name.txt",  # Same name
+        description="Second file with same name",
+        mime_type="text/plain",
+        size_bytes=2000,
+        storage_path="/storage/duplicate_name2.txt",
+        owner_id=user.id,
+        parent_folder_id=folder.id  # Same folder
+    )
+    
+    test_session.add(file2)
+    
+    # Should raise exception due to uniqueness constraint
+    try:
+        await test_session.commit()
+        # If we reach here, the constraint is not working
+        assert False, "Uniqueness constraint not enforced for file names in the same folder"
+    except Exception as e:
+        # Expected to fail with a constraint violation
+        await test_session.rollback()
+        assert "constraint" in str(e).lower() or "unique" in str(e).lower() or "duplicate" in str(e).lower()
+    
+    # The same name should be allowed in a different folder
+    # Create another folder
+    folder2 = Folder(
+        name="Another Folder",
+        description="Second folder for testing",
+        owner_id=user.id
+    )
+    
+    test_session.add(folder2)
+    await test_session.flush()
+    
+    # Create file with same name but in different folder
+    file3 = File(
+        name="duplicate_name.txt",  # Same name as file1
+        description="File in different folder",
+        mime_type="text/plain",
+        size_bytes=3000,
+        storage_path="/storage/duplicate_name3.txt",
+        owner_id=user.id,
+        parent_folder_id=folder2.id  # Different folder
+    )
+    
+    test_session.add(file3)
+    
+    # This should succeed
+    try:
+        await test_session.commit()
+    except Exception:
+        assert False, "Same filename should be allowed in different folders"
+    
+    # Clean up
+    await test_session.delete(file1)
+    await test_session.delete(file3)
+    await test_session.delete(folder)
+    await test_session.delete(folder2)
+    await test_session.delete(user)
+    await test_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_transfer_file_ownership(test_session):
+    """Test transferring ownership of a file from one user to another"""
+    # Create two users
+    user1 = User(
+        email="original@example.com",
+        username="original_owner",
+        hashed_password="hashedpassword123",
+        is_active=True
+    )
+    
+    user2 = User(
+        email="new@example.com",
+        username="new_owner",
+        hashed_password="hashedpassword456",
+        is_active=True
+    )
+    
+    test_session.add_all([user1, user2])
+    await test_session.flush()
+    
+    # Create a file owned by user1
+    file = File(
+        name="transferable.docx",
+        description="File to transfer ownership",
+        mime_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        size_bytes=25000,
+        storage_path="/storage/transferable.docx",
+        owner_id=user1.id
+    )
+    
+    test_session.add(file)
+    await test_session.commit()
+    
+    # Verify initial ownership
+    stmt = select(File).options(joinedload(File.owner)).where(File.id == file.id)
+    result = await test_session.execute(stmt)
+    fetched_file = result.scalars().first()
+    
+    assert fetched_file.owner_id == user1.id
+    assert fetched_file.owner.username == "original_owner"
+    
+    # Transfer ownership to user2
+    file.owner_id = user2.id
+    await test_session.commit()
+    
+    # Store file ID before expiring all objects
+    file_id = file.id
+    
+    # Expire all objects to ensure fresh data is loaded
+    test_session.expire_all()
+    
+    # Query again with a fresh query using the stored file_id
+    fresh_stmt = select(File).options(joinedload(File.owner)).where(File.id == file_id)
+    fresh_result = await test_session.execute(fresh_stmt)
+    fresh_file = fresh_result.scalars().first()
+    
+    # Check new ownership
+    assert fresh_file.owner_id == user2.id
+    assert fresh_file.owner.username == "new_owner"
+    
+    # Clean up
+    await test_session.delete(fresh_file)
+    await test_session.delete(user1)
+    await test_session.delete(user2)
     await test_session.commit()

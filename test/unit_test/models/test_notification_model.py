@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 
 from src.models.notification import (
@@ -589,3 +589,306 @@ async def test_notification_cascade_delete(test_session):
     
     # Assert that notifications were cascaded deleted
     assert len(remaining_notifications) == 0
+
+
+@pytest.mark.asyncio
+async def test_unread_notifications_query(test_session):
+    """Test querying unread notifications for a user"""
+    # Create a user
+    user = User(
+        email="unread_test@example.com",
+        username="unread_test_user",
+        hashed_password="hashedpassword123",
+        is_active=True,
+        is_verified=True
+    )
+    
+    test_session.add(user)
+    await test_session.flush()
+    
+    # Create multiple notifications with different read status
+    notification1 = Notification(
+        user_id=user.id,
+        title="Unread Notification",
+        content="This notification is unread",
+        notification_type=NotificationType.SYSTEM,
+        priority=NotificationPriority.NORMAL
+    )
+    
+    notification2 = Notification(
+        user_id=user.id,
+        title="Read Notification",
+        content="This notification is read",
+        notification_type=NotificationType.MESSAGE,
+        priority=NotificationPriority.NORMAL,
+        read_at=datetime.utcnow()
+    )
+    
+    notification3 = Notification(
+        user_id=user.id,
+        title="Another Unread",
+        content="Another unread notification",
+        notification_type=NotificationType.TASK,
+        priority=NotificationPriority.HIGH
+    )
+    
+    test_session.add_all([notification1, notification2, notification3])
+    await test_session.commit()
+    
+    # Query all unread notifications
+    stmt = select(Notification).where(
+        Notification.user_id == user.id,
+        Notification.read_at == None
+    ).order_by(Notification.created_at.desc())
+    
+    result = await test_session.execute(stmt)
+    unread_notifications = result.scalars().all()
+    
+    # Should find only the unread notifications
+    assert len(unread_notifications) == 2
+    
+    unread_titles = [n.title for n in unread_notifications]
+    assert "Unread Notification" in unread_titles
+    assert "Another Unread" in unread_titles
+    assert "Read Notification" not in unread_titles
+    
+    # Query with priority filter
+    stmt = select(Notification).where(
+        Notification.user_id == user.id,
+        Notification.read_at == None,
+        Notification.priority == NotificationPriority.HIGH
+    )
+    
+    result = await test_session.execute(stmt)
+    high_priority_unread = result.scalars().all()
+    
+    # Should find only high priority unread notification
+    assert len(high_priority_unread) == 1
+    assert high_priority_unread[0].title == "Another Unread"
+    
+    # Clean up
+    await test_session.delete(notification1)
+    await test_session.delete(notification2)
+    await test_session.delete(notification3)
+    await test_session.delete(user)
+    await test_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_mark_all_notifications_as_read(test_session):
+    """Test marking all notifications as read for a user"""
+    # Create a user
+    user = User(
+        email="markall_test@example.com",
+        username="markall_test_user",
+        hashed_password="hashedpassword123",
+        is_active=True,
+        is_verified=True
+    )
+    
+    test_session.add(user)
+    await test_session.flush()
+    
+    # Create multiple notifications
+    notifications = []
+    for i in range(5):
+        notification = Notification(
+            user_id=user.id,
+            title=f"Notification {i+1}",
+            content=f"Content for notification {i+1}",
+            notification_type=NotificationType.SYSTEM,
+            priority=NotificationPriority.NORMAL
+        )
+        notifications.append(notification)
+    
+    test_session.add_all(notifications)
+    await test_session.commit()
+    
+    # Verify all are unread
+    stmt = select(Notification).where(
+        Notification.user_id == user.id,
+        Notification.read_at == None
+    )
+    result = await test_session.execute(stmt)
+    unread_before = result.scalars().all()
+    assert len(unread_before) == 5
+    
+    # Mark all as read
+    now = datetime.utcnow()
+    update_stmt = (
+        Notification.__table__.update()
+        .where(Notification.user_id == user.id, Notification.read_at == None)
+        .values(read_at=now)
+    )
+    await test_session.execute(update_stmt)
+    await test_session.commit()
+    
+    # Verify all are now read
+    stmt = select(Notification).where(
+        Notification.user_id == user.id,
+        Notification.read_at == None
+    )
+    result = await test_session.execute(stmt)
+    unread_after = result.scalars().all()
+    assert len(unread_after) == 0
+    
+    # Verify read_at was set
+    stmt = select(Notification).where(
+        Notification.user_id == user.id,
+        Notification.read_at != None
+    )
+    result = await test_session.execute(stmt)
+    read_notifications = result.scalars().all()
+    assert len(read_notifications) == 5
+    
+    # Clean up
+    for notification in notifications:
+        await test_session.delete(notification)
+    await test_session.delete(user)
+    await test_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_notification_time_range_and_pagination(test_session):
+    """Test querying notifications by time range with pagination"""
+    # Create a user
+    user = User(
+        email="paginate_test@example.com",
+        username="paginate_test_user",
+        hashed_password="hashedpassword123",
+        is_active=True,
+        is_verified=True
+    )
+    
+    test_session.add(user)
+    await test_session.flush()
+    
+    # Create notifications with different timestamps
+    now = datetime.utcnow()
+    
+    notifications = []
+    for i in range(10):
+        # Create notifications with timestamps spread over the last 10 days
+        time_offset = timedelta(days=i)
+        notification = Notification(
+            user_id=user.id,
+            title=f"Notification from {i} days ago",
+            content=f"Content {i}",
+            notification_type=NotificationType.SYSTEM,
+            priority=NotificationPriority.NORMAL,
+            created_at=now - time_offset
+        )
+        notifications.append(notification)
+    
+    test_session.add_all(notifications)
+    await test_session.commit()
+    
+    # Query notifications from the last 5 days
+    five_days_ago = now - timedelta(days=5)
+    stmt = select(Notification).where(
+        Notification.user_id == user.id,
+        Notification.created_at >= five_days_ago
+    ).order_by(Notification.created_at.desc())
+    
+    result = await test_session.execute(stmt)
+    recent_notifications = result.scalars().all()
+    
+    # Should find 6 notifications (days 0-5)
+    assert len(recent_notifications) == 6
+    
+    # Test pagination - first page (3 items per page)
+    stmt = select(Notification).where(
+        Notification.user_id == user.id
+    ).order_by(Notification.created_at.desc()).limit(3)
+    
+    result = await test_session.execute(stmt)
+    page1 = result.scalars().all()
+    
+    # Should get 3 items in first page (newest first)
+    assert len(page1) == 3
+    assert "Notification from 0 days ago" in page1[0].title
+    
+    # Second page
+    stmt = select(Notification).where(
+        Notification.user_id == user.id
+    ).order_by(Notification.created_at.desc()).limit(3).offset(3)
+    
+    result = await test_session.execute(stmt)
+    page2 = result.scalars().all()
+    
+    # Should get 3 items in second page
+    assert len(page2) == 3
+    assert page1[0].id != page2[0].id  # Different notifications
+    
+    # Clean up
+    for notification in notifications:
+        await test_session.delete(notification)
+    await test_session.delete(user)
+    await test_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_create_notification_from_template(test_session):
+    """Test creating notifications from a template"""
+    # Create a user
+    user = User(
+        email="template_use@example.com",
+        username="template_use_user",
+        hashed_password="hashedpassword123",
+        is_active=True,
+        is_verified=True
+    )
+    
+    test_session.add(user)
+    await test_session.flush()
+    
+    # Create a notification template
+    template = NotificationTemplate(
+        name="welcome_template",
+        notification_type=NotificationType.SYSTEM,
+        title_template="Welcome, {user_name}!",
+        content_template="Welcome to our platform, {user_name}. Your account was created on {join_date}.",
+        email_subject_template="Welcome to Our Platform",
+        email_body_template="<h1>Welcome, {user_name}!</h1><p>Your account was created on {join_date}.</p>",
+        default_icon="welcome-icon",
+        is_active=True
+    )
+    
+    test_session.add(template)
+    await test_session.flush()
+    
+    # Simulate creating notifications from template for different users
+    template_data = {
+        "user_name": user.username,
+        "join_date": datetime.utcnow().strftime("%Y-%m-%d")
+    }
+    
+    # Create notification from template
+    notification = Notification(
+        user_id=user.id,
+        title=template.title_template.format(**template_data),
+        content=template.content_template.format(**template_data),
+        notification_type=template.notification_type,
+        priority=NotificationPriority.NORMAL,
+        icon=template.default_icon
+    )
+    
+    test_session.add(notification)
+    await test_session.commit()
+    
+    # Query the notification
+    stmt = select(Notification).where(Notification.id == notification.id)
+    result = await test_session.execute(stmt)
+    created_notification = result.scalars().first()
+    
+    # Verify notification was created from template correctly
+    assert created_notification is not None
+    assert created_notification.title == f"Welcome, {user.username}!"
+    assert f"Welcome to our platform, {user.username}" in created_notification.content
+    assert created_notification.icon == "welcome-icon"
+    
+    # Clean up
+    await test_session.delete(notification)
+    await test_session.delete(template)
+    await test_session.delete(user)
+    await test_session.commit()

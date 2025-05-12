@@ -14,7 +14,7 @@
 -   Set task dependencies (blocking/blocked by)
 -   Support recurring tasks
 
-### User Experience Requirements
+### Non-functional Requirements
 
 -   Intuitive task creation interface
 -   Drag-and-drop prioritization
@@ -44,7 +44,7 @@
 -   Resource scheduling capabilities
 -   Export/import calendar data (iCal format)
 
-### User Experience Requirements
+### Non-functional Requirements
 
 -   Clean, intuitive calendar interface
 -   Easy event creation with quick-add functionality
@@ -74,7 +74,7 @@
 -   Budget and resource allocation tracking
 -   Risk management capabilities
 
-### User Experience Requirements
+### Non-functional Requirements
 
 -   Dashboard overview of project status
 -   Gantt chart visualization option
@@ -138,8 +138,6 @@
 -   Comprehensive logging and error handling
 
 ## Stakeholder Analysis
-
-### Business Stakeholders
 
 #### Project Managers
 

@@ -584,3 +584,302 @@ async def test_project_team_association(test_session):
     await test_session.delete(designer)
     await test_session.delete(copywriter)
     await test_session.commit()
+
+@pytest.mark.asyncio
+async def test_update_marketing_project(test_session):
+    """Test updating a marketing project"""
+    # Create owner user
+    owner = User(
+        email="update_owner@example.com",
+        username="update_user",
+        hashed_password="hashedpassword999",
+        is_active=True
+    )
+    
+    test_session.add(owner)
+    await test_session.flush()
+    
+    # Create a client
+    client = Client(
+        company_name="Update Test Co",
+        industry="Technology",
+        contact_email="contact@updatetest.com"
+    )
+    
+    test_session.add(client)
+    await test_session.flush()
+    
+    # Create a marketing project
+    project = MarketingProject(
+        name="Original Project",
+        description="Original description",
+        project_type=ProjectType.SOCIAL_MEDIA,
+        status=ProjectStatus.DRAFT,
+        current_stage=WorkflowStage.INITIATION,
+        client_id=client.id,
+        owner_id=owner.id,
+        estimated_budget=10000.0
+    )
+    
+    test_session.add(project)
+    await test_session.commit()
+    
+    # Update the project
+    project.name = "Updated Project Name"
+    project.description = "Updated project description"
+    project.status = ProjectStatus.IN_PROGRESS
+    project.current_stage = WorkflowStage.PLANNING
+    project.estimated_budget = 15000.0
+    
+    await test_session.commit()
+    
+    # Query to verify updates
+    stmt = select(MarketingProject).where(MarketingProject.id == project.id)
+    result = await test_session.execute(stmt)
+    updated_project = result.scalars().first()
+    
+    # Assert changes were saved
+    assert updated_project.name == "Updated Project Name"
+    assert updated_project.description == "Updated project description" 
+    assert updated_project.status == ProjectStatus.IN_PROGRESS
+    assert updated_project.current_stage == WorkflowStage.PLANNING
+    assert updated_project.estimated_budget == 15000.0
+    
+    # Clean up
+    await test_session.delete(project)
+    await test_session.delete(client)
+    await test_session.delete(owner)
+    await test_session.commit()
+
+@pytest.mark.asyncio
+async def test_project_cascade_delete(test_session):
+    """Test deleting a project with cascade delete verification"""
+    # Create users
+    owner = User(
+        email="cascade_owner@example.com",
+        username="cascade_user",
+        hashed_password="hashedpassword123",
+        is_active=True
+    )
+    
+    test_session.add(owner)
+    await test_session.flush()
+    
+    # Create client
+    client = Client(
+        company_name="Cascade Test Co",
+        industry="Testing",
+        contact_email="contact@cascadetest.com"
+    )
+    
+    test_session.add(client)
+    await test_session.flush()
+    
+    # Create project
+    project = MarketingProject(
+        name="Project to Delete",
+        description="This project will be deleted",
+        project_type=ProjectType.ADVERTISING,  # Thay thế CONTENT_MARKETING bằng ADVERTISING
+        status=ProjectStatus.DRAFT,
+        client_id=client.id,
+        owner_id=owner.id
+    )
+    
+    test_session.add(project)
+    await test_session.flush()
+    
+    # Add workflow step
+    step = WorkflowStep(
+        project_id=project.id,
+        name="Step to Delete",
+        step_number=1,
+        stage=WorkflowStage.INITIATION,
+        status="not_started"
+    )
+    
+    test_session.add(step)
+    await test_session.flush()
+    
+    # Add task
+    task = MarketingTask(
+        project_id=project.id,
+        workflow_step_id=step.id,
+        title="Task to Delete",
+        status=TaskStatus.TODO,
+        creator_id=owner.id,
+        assignee_id=owner.id
+    )
+    
+    test_session.add(task)
+    await test_session.flush()
+    
+    # Add report
+    report = AnalyticsReport(
+        project_id=project.id,
+        report_type=ReportType.SOCIAL_MEDIA,
+        title="Report to Delete",
+        creator_id=owner.id
+    )
+    
+    test_session.add(report)
+    await test_session.commit()
+    
+    # Store IDs for checking after deletion
+    project_id = project.id
+    step_id = step.id
+    task_id = task.id
+    report_id = report.id
+    
+    # Delete the project
+    await test_session.delete(project)
+    await test_session.commit()
+    
+    # Check if project is deleted
+    stmt = select(MarketingProject).where(MarketingProject.id == project_id)
+    result = await test_session.execute(stmt)
+    deleted_project = result.scalars().first()
+    assert deleted_project is None
+    
+    # Check if workflow step is cascade deleted
+    stmt = select(WorkflowStep).where(WorkflowStep.id == step_id)
+    result = await test_session.execute(stmt)
+    deleted_step = result.scalars().first()
+    assert deleted_step is None
+    
+    # Check if task is cascade deleted
+    stmt = select(MarketingTask).where(MarketingTask.id == task_id)
+    result = await test_session.execute(stmt)
+    deleted_task = result.scalars().first()
+    assert deleted_task is None
+    
+    # Check if report is cascade deleted
+    stmt = select(AnalyticsReport).where(AnalyticsReport.id == report_id)
+    result = await test_session.execute(stmt)
+    deleted_report = result.scalars().first()
+    assert deleted_report is None
+    
+    # Clean up
+    await test_session.delete(client)
+    await test_session.delete(owner)
+    await test_session.commit()
+
+@pytest.mark.asyncio
+async def test_foreign_key_constraints(test_session):
+    """Test foreign key constraints in marketing project models"""
+    # Attempt to create a project with non-existent client_id
+    invalid_project = MarketingProject(
+        name="Invalid Project",
+        description="Project with invalid client_id",
+        project_type=ProjectType.ADVERTISING,
+        status=ProjectStatus.DRAFT,
+        client_id=99999,  # ID không tồn tại
+        owner_id=88888    # ID không tồn tại
+    )
+    
+    test_session.add(invalid_project)
+    
+    # Should raise exception due to foreign key constraint
+    with pytest.raises(Exception) as excinfo:
+        await test_session.commit()
+    
+    # Check if error relates to foreign key constraint
+    assert "foreign key constraint" in str(excinfo.value).lower() or "violates foreign key constraint" in str(excinfo.value).lower()
+    
+    # Rollback to clean session
+    await test_session.rollback()
+    
+    # Create valid user but try to create task with invalid project_id
+    user = User(
+        email="fk_test@example.com",
+        username="fk_tester",
+        hashed_password="hashedpassword123",
+        is_active=True
+    )
+    
+    test_session.add(user)
+    await test_session.commit()
+    
+    # Try creating task with invalid project_id
+    invalid_task = MarketingTask(
+        project_id=99999,  # ID không tồn tại
+        title="Invalid Task",
+        status=TaskStatus.TODO,
+        creator_id=user.id,
+        assignee_id=user.id
+    )
+    
+    test_session.add(invalid_task)
+    
+    # Should raise exception due to foreign key constraint
+    with pytest.raises(Exception) as excinfo:
+        await test_session.commit()
+    
+    # Check if error relates to foreign key constraint
+    assert "foreign key constraint" in str(excinfo.value).lower() or "violates foreign key constraint" in str(excinfo.value).lower()
+    
+    # Clean up
+    await test_session.rollback()
+    await test_session.delete(user)
+    await test_session.commit()
+
+@pytest.mark.asyncio
+async def test_project_status_workflow(test_session):
+    """Test project status and stage transitions"""
+    # Create owner
+    owner = User(
+        email="status_test@example.com",
+        username="status_user",
+        hashed_password="hashedpassword123",
+        is_active=True
+    )
+    
+    test_session.add(owner)
+    await test_session.flush()
+    
+    # Create a client
+    client = Client(
+        company_name="Status Test Co",
+        industry="Testing",
+        contact_email="contact@statustest.com"
+    )
+    
+    test_session.add(client)
+    await test_session.flush()
+    
+    # Create a marketing project
+    project = MarketingProject(
+        name="Status Workflow Project",
+        description="Project to test status and workflow",
+        project_type=ProjectType.ADVERTISING,  # Thay thế CONTENT_MARKETING bằng ADVERTISING
+        status=ProjectStatus.DRAFT,
+        client_id=client.id,
+        owner_id=owner.id
+    )
+    
+    test_session.add(project)
+    await test_session.commit()
+    
+    # Assert initial status and stage
+    assert project.status == ProjectStatus.DRAFT
+    assert project.current_stage == WorkflowStage.INITIATION
+    
+    # Update project to in_progress
+    project.status = ProjectStatus.IN_PROGRESS
+    project.current_stage = WorkflowStage.EXECUTION
+    
+    await test_session.commit()
+    
+    # Query to verify updates
+    stmt = select(MarketingProject).where(MarketingProject.id == project.id)
+    result = await test_session.execute(stmt)
+    updated_project = result.scalars().first()
+    
+    # Assert changes were saved
+    assert updated_project.status == ProjectStatus.IN_PROGRESS
+    assert updated_project.current_stage == WorkflowStage.EXECUTION
+    
+    # Clean up
+    await test_session.delete(project)
+    await test_session.delete(client)
+    await test_session.delete(owner)
+    await test_session.commit()

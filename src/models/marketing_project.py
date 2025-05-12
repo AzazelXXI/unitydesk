@@ -5,6 +5,7 @@ from datetime import datetime
 
 from src.database import Base
 from src.models.base import RootModel
+from src.models.customer_service import ServiceTicket
 
 
 # Forward declaration for ServiceTicket to avoid circular imports

@@ -293,3 +293,259 @@ async def test_document_permissions(test_session):
     await test_session.delete(owner)
     await test_session.delete(collaborator)
     await test_session.commit()
+
+@pytest.mark.asyncio
+async def test_update_document(test_session):
+    """Test updating a document's attributes"""
+    # Create a user
+    user = User(
+        email="update_doc@example.com",
+        username="update_doc_user",
+        hashed_password="hashedpassword555",
+        is_active=True,
+        is_verified=True
+    )
+    
+    test_session.add(user)
+    await test_session.flush()
+    
+    # Create a document
+    document = Document(
+        title="Original Title",
+        description="Original description",
+        document_type=DocumentType.DOCUMENT,
+        owner_id=user.id,
+        content="Original content",
+        is_starred=False,
+        is_public=False
+    )
+    
+    test_session.add(document)
+    await test_session.commit()
+    
+    # Update document attributes
+    document.title = "Updated Title"
+    document.description = "Updated description"
+    document.content = "Updated content"
+    document.is_starred = True
+    document.is_public = True
+    
+    await test_session.commit()
+    
+    # Query the updated document
+    stmt = select(Document).where(Document.id == document.id)
+    result = await test_session.execute(stmt)
+    updated_doc = result.scalars().first()
+    
+    # Assert updates were saved correctly
+    assert updated_doc.title == "Updated Title"
+    assert updated_doc.description == "Updated description"
+    assert updated_doc.content == "Updated content"
+    assert updated_doc.is_starred == True
+    assert updated_doc.is_public == True
+    
+    # Clean up
+    await test_session.delete(document)
+    await test_session.delete(user)
+    await test_session.commit()
+
+@pytest.mark.asyncio
+async def test_delete_document_cascade(test_session):
+    """Test deleting a document and verify cascade deletion"""
+    # Create a user
+    user = User(
+        email="delete_doc@example.com",
+        username="delete_user",
+        hashed_password="hashedpassword666",
+        is_active=True,
+        is_verified=True
+    )
+    
+    test_session.add(user)
+    await test_session.flush()
+    
+    # Create a document
+    document = Document(
+        title="Document To Delete",
+        description="This document will be deleted",
+        document_type=DocumentType.DOCUMENT,
+        owner_id=user.id
+    )
+    
+    test_session.add(document)
+    await test_session.flush()
+    
+    # Add a version
+    version = DocumentVersion(
+        document_id=document.id,
+        version_number=1,
+        content="Version content",
+        created_by_id=user.id,
+        change_summary="Test version"
+    )
+    
+    # Add permission
+    permission = DocumentPermission(
+        document_id=document.id,
+        user_id=user.id,
+        permission_level=DocumentPermissionLevel.OWNER
+    )
+    
+    test_session.add_all([version, permission])
+    await test_session.commit()
+    
+    document_id = document.id
+    version_id = version.id
+    permission_id = permission.id
+    
+    # Delete document
+    await test_session.delete(document)
+    await test_session.commit()
+    
+    # Verify document is deleted
+    doc_stmt = select(Document).where(Document.id == document_id)
+    doc_result = await test_session.execute(doc_stmt)
+    assert doc_result.scalars().first() is None
+    
+    # Verify cascading delete to versions
+    ver_stmt = select(DocumentVersion).where(DocumentVersion.id == version_id)
+    ver_result = await test_session.execute(ver_stmt)
+    assert ver_result.scalars().first() is None
+    
+    # Verify cascading delete to permissions
+    perm_stmt = select(DocumentPermission).where(DocumentPermission.id == permission_id)
+    perm_result = await test_session.execute(perm_stmt)
+    assert perm_result.scalars().first() is None
+    
+    # Clean up
+    await test_session.delete(user)
+    await test_session.commit()
+
+@pytest.mark.asyncio
+async def test_document_trash_functionality(test_session):
+    """Test document trashing functionality"""
+    # Create a user
+    user = User(
+        email="trash_test@example.com",
+        username="trash_user",
+        hashed_password="hashedpassword777",
+        is_active=True,
+        is_verified=True
+    )
+    
+    test_session.add(user)
+    await test_session.flush()
+    
+    # Create a document
+    document = Document(
+        title="Document For Trash",
+        description="Testing trash functionality",
+        document_type=DocumentType.DOCUMENT,
+        owner_id=user.id,
+        is_trashed=False
+    )
+    
+    test_session.add(document)
+    await test_session.commit()
+    
+    # Trash the document
+    document.is_trashed = True
+    await test_session.commit()
+    
+    # Query the trashed document
+    stmt = select(Document).where(Document.id == document.id)
+    result = await test_session.execute(stmt)
+    trashed_document = result.scalars().first()
+    
+    # Assert document is marked as trashed
+    assert trashed_document is not None
+    assert trashed_document.is_trashed == True
+    
+    # Clean up
+    await test_session.delete(document)
+    await test_session.delete(user)
+    await test_session.commit()
+
+@pytest.mark.asyncio
+async def test_document_foreign_key_constraints(test_session):
+    """Test foreign key constraints for Document model"""
+    # Thử tạo document với owner_id không tồn tại
+    invalid_document = Document(
+        title="Invalid Document",
+        description="Document with invalid owner",
+        document_type=DocumentType.DOCUMENT,
+        owner_id=99999  # ID không tồn tại
+    )
+    
+    test_session.add(invalid_document)
+    
+    # Kỳ vọng sẽ ném ra exception khi commit
+    with pytest.raises(Exception) as excinfo:
+        await test_session.commit()
+    
+    # Kiểm tra lỗi có liên quan đến foreign key
+    assert "foreign key constraint" in str(excinfo.value).lower() or "fk" in str(excinfo.value).lower()
+    
+    # Reset session
+    await test_session.rollback()
+    
+    # Tương tự, thử tạo document với parent_folder_id không tồn tại
+    invalid_folder_document = Document(
+        title="Invalid Folder Document",
+        description="Document with invalid folder",
+        document_type=DocumentType.DOCUMENT,
+        owner_id=1,  # Giả sử đã có user với ID=1
+        parent_folder_id=88888  # ID folder không tồn tại
+    )
+    
+    test_session.add(invalid_folder_document)
+    
+    with pytest.raises(Exception) as excinfo:
+        await test_session.commit()
+    
+    assert "foreign key constraint" in str(excinfo.value).lower() or "fk" in str(excinfo.value).lower()
+    
+    await test_session.rollback()
+
+@pytest.mark.asyncio
+async def test_document_restore_from_trash(test_session):
+    """Test restoring document from trash"""
+    # Create a user
+    user = User(
+        email="restore_test@example.com",
+        username="restore_user",
+        hashed_password="hashedpassword888",
+        is_active=True
+    )
+    
+    test_session.add(user)
+    await test_session.flush()
+    
+    # Create a document that is already trashed
+    document = Document(
+        title="Trashed Document",
+        description="Document to restore",
+        document_type=DocumentType.DOCUMENT,
+        owner_id=user.id,
+        is_trashed=True
+    )
+    
+    test_session.add(document)
+    await test_session.commit()
+    
+    # Restore from trash
+    document.is_trashed = False
+    await test_session.commit()
+    
+    # Verify restoration
+    stmt = select(Document).where(Document.id == document.id)
+    result = await test_session.execute(stmt)
+    restored_doc = result.scalars().first()
+    
+    assert restored_doc is not None
+    assert restored_doc.is_trashed == False
+    
+    # Clean up
+    await test_session.delete(document)
+    await test_session.delete(user)
+    await test_session.commit()

@@ -595,3 +595,397 @@ async def test_task_comments(test_session):
     await test_session.delete(task)
     await test_session.delete(user)
     await test_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_task_hierarchy(test_session):
+    """Test parent-child task relationships (subtasks)"""
+    # Create a user
+    user = User(
+        email="hierarchy@example.com",
+        username="hierarchy_user",
+        hashed_password="hashedpassword123",
+        is_active=True,
+        is_verified=True
+    )
+    
+    test_session.add(user)
+    await test_session.flush()
+    
+    # Create parent task
+    parent_task = Task(
+        title="Parent Task",
+        description="Main task that has subtasks",
+        status=TaskStatus.TODO,
+        priority=TaskPriority.HIGH,
+        creator_id=user.id
+    )
+    
+    test_session.add(parent_task)
+    await test_session.flush()
+    
+    # Create child tasks
+    child_task1 = Task(
+        title="Child Task 1",
+        description="First subtask",
+        status=TaskStatus.TODO,
+        priority=TaskPriority.MEDIUM,
+        creator_id=user.id,
+        parent_task_id=parent_task.id
+    )
+    
+    child_task2 = Task(
+        title="Child Task 2",
+        description="Second subtask",
+        status=TaskStatus.IN_PROGRESS,
+        priority=TaskPriority.LOW,
+        creator_id=user.id,
+        parent_task_id=parent_task.id
+    )
+    
+    test_session.add_all([child_task1, child_task2])
+    await test_session.commit()
+    
+    # Query the parent task with eager loading of subtasks
+    stmt = select(Task).options(
+        joinedload(Task.subtasks)
+    ).where(Task.id == parent_task.id)
+    result = await test_session.execute(stmt)
+    fetched_parent = result.scalars().first()
+    
+    # Check parent-child relationship
+    assert fetched_parent is not None
+    assert len(fetched_parent.subtasks) == 2
+    
+    # Get subtask titles for easier assertion
+    subtask_titles = [task.title for task in fetched_parent.subtasks]
+    assert "Child Task 1" in subtask_titles
+    assert "Child Task 2" in subtask_titles
+    
+    # Check that child tasks reference the parent task correctly
+    stmt = select(Task).where(Task.id == child_task1.id)
+    result = await test_session.execute(stmt)
+    fetched_child = result.scalars().first()
+    
+    assert fetched_child.parent_task_id == parent_task.id
+    
+    # Clean up
+    await test_session.delete(child_task1)
+    await test_session.delete(child_task2)
+    await test_session.delete(parent_task)
+    await test_session.delete(user)
+    await test_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_project_tasks(test_session):
+    """Test creating tasks associated with a project"""
+    # Import Project model
+    try:
+        from src.models.task import Project
+    except ImportError:
+        pytest.skip("Project model not found")
+    
+    # Create a user as the owner
+    owner = User(
+        email="project_owner@example.com",
+        username="project_owner",
+        hashed_password="hashedpassword123",
+        is_active=True,
+        is_verified=True
+    )
+    
+    test_session.add(owner)
+    await test_session.flush()
+    
+    # Create a project
+    project = Project(
+        name="Test Project",
+        description="A project for testing",
+        owner_id=owner.id,
+        start_date=datetime.utcnow(),
+        end_date=datetime.utcnow() + timedelta(days=30),
+        status="active"
+    )
+    
+    test_session.add(project)
+    await test_session.flush()
+    
+    # Create tasks associated with the project
+    task1 = Task(
+        title="Project Task 1",
+        description="First task in the project",
+        status=TaskStatus.TODO,
+        priority=TaskPriority.HIGH,
+        creator_id=owner.id,
+        project_id=project.id
+    )
+    
+    task2 = Task(
+        title="Project Task 2",
+        description="Second task in the project",
+        status=TaskStatus.IN_PROGRESS,
+        priority=TaskPriority.MEDIUM,
+        creator_id=owner.id,
+        project_id=project.id
+    )
+    
+    test_session.add_all([task1, task2])
+    await test_session.commit()
+    
+    # Query the project with eager loading of tasks
+    stmt = select(Project).options(
+        joinedload(Project.tasks)
+    ).where(Project.id == project.id)
+    result = await test_session.execute(stmt)
+    fetched_project = result.scalars().first()
+    
+    # Check project-task relationship
+    assert fetched_project is not None
+    assert len(fetched_project.tasks) == 2
+    
+    # Get task titles for easier assertion
+    task_titles = [task.title for task in fetched_project.tasks]
+    assert "Project Task 1" in task_titles
+    assert "Project Task 2" in task_titles
+    
+    # Query tasks directly to check project association
+    stmt = select(Task).where(Task.project_id == project.id)
+    result = await test_session.execute(stmt)
+    project_tasks = result.scalars().all()
+    
+    assert len(project_tasks) == 2
+    
+    # Clean up
+    await test_session.delete(task1)
+    await test_session.delete(task2)
+    await test_session.delete(project)
+    await test_session.delete(owner)
+    await test_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_task_assignees(test_session):
+    """Test task with multiple assignees using TaskAssignee association"""
+    # Import TaskAssignee model
+    try:
+        from src.models.task import TaskAssignee
+    except ImportError:
+        pytest.skip("TaskAssignee model not found")
+    
+    # Create multiple users
+    creator = User(
+        email="task_creator2@example.com",
+        username="task_creator2",
+        hashed_password="hashedpassword123",
+        is_active=True,
+        is_verified=True
+    )
+    
+    assignee1 = User(
+        email="assignee1@example.com",
+        username="assignee1",
+        hashed_password="hashedpassword456",
+        is_active=True,
+        is_verified=True
+    )
+    
+    assignee2 = User(
+        email="assignee2@example.com",
+        username="assignee2",
+        hashed_password="hashedpassword789",
+        is_active=True,
+        is_verified=True
+    )
+    
+    test_session.add_all([creator, assignee1, assignee2])
+    await test_session.flush()
+    
+    # Create a task
+    task = Task(
+        title="Multi-assignee Task",
+        description="Task assigned to multiple users",
+        status=TaskStatus.TODO,
+        priority=TaskPriority.HIGH,
+        creator_id=creator.id
+    )
+    
+    test_session.add(task)
+    await test_session.flush()
+    
+    # Create task assignee records
+    task_assignee1 = TaskAssignee(
+        task_id=task.id,
+        user_id=assignee1.id,
+        is_responsible=True  # Main assignee
+    )
+    
+    task_assignee2 = TaskAssignee(
+        task_id=task.id,
+        user_id=assignee2.id,
+        is_responsible=False  # Helper
+    )
+    
+    test_session.add_all([task_assignee1, task_assignee2])
+    await test_session.commit()
+    
+    # Query the task with eager loading of assignees
+    stmt = select(Task).options(
+        joinedload(Task.assignees).joinedload(TaskAssignee.user)
+    ).where(Task.id == task.id)
+    result = await test_session.execute(stmt)
+    fetched_task = result.scalars().first()
+    
+    # Check task-assignee relationship
+    assert fetched_task is not None
+    assert len(fetched_task.assignees) == 2
+    
+    # Check assignee details
+    assignee_users = [
+        (assignment.user.username, assignment.is_responsible) 
+        for assignment in fetched_task.assignees
+    ]
+    assert ("assignee1", True) in assignee_users
+    assert ("assignee2", False) in assignee_users
+    
+    # Query from user perspective to see assigned tasks
+    stmt = select(User).options(
+        joinedload(User.task_assignments).joinedload(TaskAssignee.task)
+    ).where(User.id == assignee1.id)
+    result = await test_session.execute(stmt)
+    fetched_user = result.scalars().first()
+    
+    assert fetched_user is not None
+    assert len(fetched_user.task_assignments) == 1
+    assert fetched_user.task_assignments[0].task.title == "Multi-assignee Task"
+    
+    # Clean up
+    await test_session.delete(task_assignee1)
+    await test_session.delete(task_assignee2)
+    await test_session.delete(task)
+    await test_session.delete(creator)
+    await test_session.delete(assignee1)
+    await test_session.delete(assignee2)
+    await test_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_task_completion_percentage(test_session):
+    """Test updating task completion percentage"""
+    # Create a user
+    user = User(
+        email="progress_user@example.com",
+        username="progress_user",
+        hashed_password="hashedpassword123",
+        is_active=True,
+        is_verified=True
+    )
+    
+    test_session.add(user)
+    await test_session.flush()
+    
+    # Create a task
+    task = Task(
+        title="Progress Task",
+        description="Task with progress tracking",
+        status=TaskStatus.IN_PROGRESS,
+        priority=TaskPriority.MEDIUM,
+        creator_id=user.id,
+        completion_percentage=0  # Start at 0%
+    )
+    
+    test_session.add(task)
+    await test_session.commit()
+    
+    # Update progress steps
+    task.completion_percentage = 25  # 25% complete
+    await test_session.commit()
+    
+    stmt = select(Task).where(Task.id == task.id)
+    result = await test_session.execute(stmt)
+    fetched_task = result.scalars().first()
+    assert fetched_task.completion_percentage == 25
+    
+    # Update to 50%
+    fetched_task.completion_percentage = 50
+    await test_session.commit()
+    
+    result = await test_session.execute(stmt)
+    fetched_task = result.scalars().first()
+    assert fetched_task.completion_percentage == 50
+    
+    # Complete the task
+    fetched_task.completion_percentage = 100
+    fetched_task.status = TaskStatus.DONE
+    await test_session.commit()
+    
+    result = await test_session.execute(stmt)
+    completed_task = result.scalars().first()
+    assert completed_task.completion_percentage == 100
+    assert completed_task.status == TaskStatus.DONE
+    
+    # Clean up
+    await test_session.delete(task)
+    await test_session.delete(user)
+    await test_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_task_time_tracking(test_session):
+    """Test estimated vs actual hours tracking on a task"""
+    # Create a user
+    user = User(
+        email="timetracker@example.com",
+        username="time_tracker",
+        hashed_password="hashedpassword123",
+        is_active=True,
+        is_verified=True
+    )
+    
+    test_session.add(user)
+    await test_session.flush()
+    
+    # Create a task with estimated hours
+    task = Task(
+        title="Time Tracked Task",
+        description="Task for tracking time",
+        status=TaskStatus.TODO,
+        priority=TaskPriority.MEDIUM,
+        creator_id=user.id,
+        estimated_hours=10  # Estimate 10 hours
+    )
+    
+    test_session.add(task)
+    await test_session.commit()
+    
+    # Check estimated hours
+    stmt = select(Task).where(Task.id == task.id)
+    result = await test_session.execute(stmt)
+    fetched_task = result.scalars().first()
+    assert fetched_task.estimated_hours == 10
+    
+    # Start the task and log some actual hours
+    fetched_task.status = TaskStatus.IN_PROGRESS
+    fetched_task.actual_hours = 4  # 4 hours spent so far
+    await test_session.commit()
+    
+    result = await test_session.execute(stmt)
+    in_progress_task = result.scalars().first()
+    assert in_progress_task.actual_hours == 4
+    
+    # Complete the task with final hours
+    in_progress_task.actual_hours = 12  # Ended up taking 12 hours
+    in_progress_task.status = TaskStatus.DONE
+    in_progress_task.completion_percentage = 100
+    await test_session.commit()
+    
+    result = await test_session.execute(stmt)
+    completed_task = result.scalars().first()
+    assert completed_task.actual_hours == 12
+    assert completed_task.estimated_hours == 10
+    assert completed_task.status == TaskStatus.DONE
+    
+    # Clean up
+    await test_session.delete(task)
+    await test_session.delete(user)
+    await test_session.commit()

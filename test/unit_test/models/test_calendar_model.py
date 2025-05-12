@@ -9,7 +9,7 @@ from sqlalchemy.orm import joinedload
 @pytest.mark.asyncio
 async def test_create_calendar(test_session):
     """Test creating a new calendar"""
-    # First create a user that will own the calendar
+    # First create a user that will owner the calendar
     user = User(
         email="test@example.com",
         username="testuser",
@@ -121,3 +121,121 @@ async def test_calendar_event_relationship(test_session):
     await test_session.delete(calendar)
     await test_session.delete(user)
     await test_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_update_calendar(test_session):
+    """Test updating a calendar"""
+    # Tạo user
+    user = User(
+        email="update_test@example.com",
+        username="update_user",
+        hashed_password="hashedpassword789",
+        is_active=True,
+        is_verified=True
+    )
+    test_session.add(user)
+    await test_session.flush()
+    
+    # Tạo calendar
+    calendar = Calendar(
+        name="Old Name",
+        description="Old description",
+        color="#000000",
+        is_primary=False,
+        is_public=False,
+        owner_id=user.id
+    )
+    
+    test_session.add(calendar)
+    await test_session.commit()
+    
+    # Cập nhật calendar
+    calendar.name = "Updated Name"
+    calendar.description = "Updated description"
+    calendar.color = "#FFFFFF"
+    calendar.is_public = True
+    
+    await test_session.commit()
+    
+    # Kiểm tra đã cập nhật chưa
+    stmt = select(Calendar).where(Calendar.id == calendar.id)
+    result = await test_session.execute(stmt)
+    updated_calendar = result.scalars().first()
+    
+    assert updated_calendar.name == "Updated Name"
+    assert updated_calendar.description == "Updated description"
+    assert updated_calendar.color == "#FFFFFF"
+    assert updated_calendar.is_public == True
+    
+    # Clean up
+    await test_session.delete(calendar)
+    await test_session.delete(user)
+    await test_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_delete_calendar(test_session):
+    """Test deleting a calendar"""
+    # Tạo user
+    user = User(
+        email="delete_test@example.com",
+        username="delete_user",
+        hashed_password="hashedpassword789",
+        is_active=True,
+        is_verified=True
+    )
+    test_session.add(user)
+    await test_session.flush()
+    
+    # Tạo calendar
+    calendar = Calendar(
+        name="Calendar To Delete",
+        description="This calendar will be deleted",
+        color="#FF0000",
+        owner_id=user.id
+    )
+    
+    test_session.add(calendar)
+    await test_session.commit()
+    
+    calendar_id = calendar.id
+    
+    # Xóa calendar
+    await test_session.delete(calendar)
+    await test_session.commit()
+    
+    # Kiểm tra calendar đã bị xóa chưa
+    stmt = select(Calendar).where(Calendar.id == calendar_id)
+    result = await test_session.execute(stmt)
+    deleted_calendar = result.scalars().first()
+    
+    assert deleted_calendar is None
+    
+    # Clean up
+    await test_session.delete(user)
+    await test_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_calendar_user_constraint(test_session):
+    """Test foreign key constraint between Calendar and User"""
+    # Tạo calendar với owner_id không tồn tại
+    invalid_calendar = Calendar(
+        name="Invalid Calendar",
+        description="Calendar with invalid owner_id",
+        color="#FF0000",
+        owner_id=99999  # ID không tồn tại
+    )
+    
+    test_session.add(invalid_calendar)
+    
+    # Kỳ vọng sẽ ném ra lỗi IntegrityError
+    with pytest.raises(Exception) as excinfo:
+        await test_session.commit()
+    
+    # Kiểm tra message lỗi có liên quan đến foreign key constraint
+    assert "foreign key constraint" in str(excinfo.value).lower() or "fk" in str(excinfo.value).lower()
+    
+    # Reset session
+    await test_session.rollback()
