@@ -5,15 +5,6 @@ from src.apis.client_views import router as client_router
 from src.apis.project_views import router as project_router
 from src.apis.task_views import router as task_router
 from src.apis.task_views import task_router
-from fastapi import APIRouter
-
-# Create a main router for web routes
-web_routers = [APIRouter()]
-
-# Add a simple health check endpoint
-@web_routers[0].get("/health")
-async def health_check():
-    return {"status": "healthy"}
 
 # List of all routers to include in the application
 routers = [
