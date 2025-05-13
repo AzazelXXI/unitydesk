@@ -21,6 +21,7 @@ from src.apis.customer_service_views import router as customer_service_router
 from src.apis.department_views import router as department_router
 from src.apis.position_views import router as position_router
 from src.apis.user_views import router as user_router
+from src.apis.calendar_views import router as calendar_router
 
 # Create API v1 router that includes all v1 API endpoints
 api_router_v1 = APIRouter(prefix="/api/v1")
@@ -40,6 +41,7 @@ api_router_v1.include_router(customer_service_router, prefix="/customer-service"
 api_router_v1.include_router(department_router, prefix="/departments")
 api_router_v1.include_router(position_router, prefix="/positions")
 api_router_v1.include_router(user_router)
+api_router_v1.include_router(calendar_router)
 
 # Include the v1 router in the main API router
 api_router.include_router(api_router_v1)

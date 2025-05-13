@@ -4,3 +4,4 @@ myVC
 **/__pycache__/
 **.log
 .refer/
+**/pytest_cache/

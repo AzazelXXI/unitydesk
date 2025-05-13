@@ -1,6 +1,7 @@
 import sys
 import os
 from typing import Generator, AsyncGenerator
+import urllib.parse
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
     AsyncSession,
@@ -14,17 +15,27 @@ from sqlalchemy.sql import text
 from sqlalchemy.orm import sessionmaker
 from asyncio import current_task
 
+# Extract credentials as separate variables for better handling of special characters
+DB_USER = "postgres"
+DB_PASSWORD = "KiroHoang1124@hutech.dev"  # Mật khẩu của bạn
+DB_HOST = "localhost"
+DB_PORT = "5432"
+DB_NAME = "testdb"
+
+# URL encode the password to handle special characters
+ENCODED_PASSWORD = urllib.parse.quote_plus(DB_PASSWORD)
+
 
 @pytest.fixture()
 def test_engine() -> Generator[AsyncEngine, None, None]:
+    # Create connection URL with properly encoded password
+    connection_url = f"postgresql+asyncpg://{DB_USER}:{ENCODED_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     engine = create_async_engine(
-        "postgresql+asyncpg://postgres:#0Comatkhau@localhost:5432/csa_hello",
+        connection_url,
         echo=True,
         # pool_size=20, max_overflow=0
     )
     yield engine
-
-
 
 
 @pytest.fixture()
@@ -38,8 +49,6 @@ async def test_session(test_engine: AsyncEngine) -> AsyncGenerator[AsyncSession,
     Session = async_scoped_session(session_maker, scopefunc=current_task)
     async with Session() as session:
         yield session
-
-
 
 
 @pytest.fixture(autouse=True)

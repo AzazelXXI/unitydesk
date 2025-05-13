@@ -63,7 +63,7 @@ class Task(Base, RootModel):
     creator = relationship("User", foreign_keys=[creator_id], back_populates="tasks_created")
     project = relationship("Project", back_populates="tasks")
     assignees = relationship("TaskAssignee", back_populates="task", cascade="all, delete-orphan")
-    parent_task = relationship("Task", remote_side=[id], backref="subtasks")
+    parent_task = relationship("Task", remote_side="Task.id", backref="subtasks")
 
 
 class TaskAssignee(Base, RootModel):
@@ -89,5 +89,5 @@ class TaskComment(Base, RootModel):
     content = Column(Text, nullable=False)
     
     # Relationships
-    task = relationship("Task", backref="comments")
+    task = relationship("Task", backref="comments", foreign_keys=[task_id])
     user = relationship("User")

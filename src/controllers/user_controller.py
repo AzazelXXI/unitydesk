@@ -75,7 +75,7 @@ async def create_user(db: AsyncSession, user_data: UserCreate) -> User:
             avatar_url=user_data.profile.avatar_url,
             bio=user_data.profile.bio,
             phone=user_data.profile.phone_number,
-            location=user_data.profile.department,  # Map to appropriate field
+            location=user_data.profile.location,  # Sửa từ department thành location
             timezone=user_data.profile.timezone,
         )
         db.add(db_profile)
@@ -231,8 +231,8 @@ async def change_user_password(
     if not user:
         return False
 
-    # Verify current password
-    if not authenticate_user(db, user.username, current_password):
+    # Verify current password - sửa lỗi thiếu await
+    if not await authenticate_user(db, user.username, current_password):
         return False
 
     # Update password

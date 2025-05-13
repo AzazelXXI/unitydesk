@@ -86,6 +86,6 @@ class Message(Base, RootModel):
     # Relationships
     chat = relationship("Chat", back_populates="messages")
     sender = relationship("User", back_populates="messages")
-    parent_message = relationship("Message", remote_side=[id], backref="replies")
+    parent_message = relationship("Message", remote_side="Message.id", backref="replies")
     
     # Add reactions and read receipts later

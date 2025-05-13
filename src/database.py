@@ -12,7 +12,8 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 # Get database URL from environment variable with a fallback for local development
 DATABASE_URL = os.getenv(
     "DATABASE_URL", 
-    "postgresql+asyncpg://postgres:#0Comatkhau@localhost:5432/csa_hello"
+    "postgresql+asyncpg://postgres:KiroHoang1124@hutech.dev@localhost:5432/testdb"
+    #postgresql+asyncpg://postgres:#0Comatkhau@localhost:5432/csa_hello
 )
 
 engine = create_async_engine(

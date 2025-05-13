@@ -103,4 +103,4 @@ websockets==15.0.1
     # via -r d:\projects\CSA\csa-hello\requirements.in
 xlsxwriter==3.2.3
     # via -r d:\projects\CSA\csa-hello\requirements.in
->>>>>>> 4399edb6c9b857b9c7c75691e4191e2ae6052472
+bcrypt
