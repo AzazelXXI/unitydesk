@@ -22,27 +22,28 @@ from src.apis.department_views import router as department_router
 from src.apis.position_views import router as position_router
 from src.apis.user_views import router as user_router
 
-# Create API v1 router that includes all v1 API endpoints
-api_router_v1 = APIRouter(prefix="/api/v1")
+# Main API router
+api_router = APIRouter(prefix="/api/v1")
 
-# Create API router that includes all versions
-api_router = APIRouter()
+# WebSocket router
+ws_router = APIRouter()
+
+@api_router.get("/health")
+async def api_health():
+    return {"status": "API is healthy"}
 
 # Include all API routers in v1
-api_router_v1.include_router(core_router, prefix="/core")
-api_router_v1.include_router(meeting_router, prefix="/meetings")
-api_router_v1.include_router(notification_router)
-api_router_v1.include_router(task_router, prefix="/tasks")
-api_router_v1.include_router(project_router, prefix="/projects")
-api_router_v1.include_router(asset_router, prefix="/assets")
-api_router_v1.include_router(client_router, prefix="/clients")
-api_router_v1.include_router(customer_service_router, prefix="/customer-service")
-api_router_v1.include_router(department_router, prefix="/departments")
-api_router_v1.include_router(position_router, prefix="/positions")
-api_router_v1.include_router(user_router)
-
-# Include the v1 router in the main API router
-api_router.include_router(api_router_v1)
+api_router.include_router(core_router, prefix="/core")
+api_router.include_router(meeting_router, prefix="/meetings")
+api_router.include_router(notification_router)
+api_router.include_router(task_router, prefix="/tasks")
+api_router.include_router(project_router, prefix="/projects")
+api_router.include_router(asset_router, prefix="/assets")
+api_router.include_router(client_router, prefix="/clients")
+api_router.include_router(customer_service_router, prefix="/customer-service")
+api_router.include_router(department_router, prefix="/departments")
+api_router.include_router(position_router, prefix="/positions")
+api_router.include_router(user_router)
 
 # Export the WebSocket router separately since it shouldn't have the /api prefix
 ws_router = notification_ws_router
