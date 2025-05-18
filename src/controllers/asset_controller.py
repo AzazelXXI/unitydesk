@@ -8,6 +8,7 @@ import os
 import shutil
 from uuid import uuid4
 from fastapi import HTTPException, status, UploadFile
+from sqlalchemy import and_
 
 from src.database import get_db
 from src.models.marketing_project import (
@@ -518,3 +519,45 @@ class AssetController:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to add client feedback: {str(e)}"
             )
+    
+    @staticmethod
+    async def share_asset_with_client(project_id: int, asset_id: int, share: bool, db: AsyncSession) -> MarketingAsset:
+        """
+        Share or unshare an asset with the client.
+        
+        Args:
+            project_id (int): ID of the project
+            asset_id (int): ID of the asset to share/unshare
+            share (bool): Whether to share (True) or unshare (False) the asset
+            db (AsyncSession): Database session
+            
+        Returns:
+            MarketingAsset: The updated asset
+            
+        Raises:
+            HTTPException: If the asset is not found
+        """
+        # Verify the asset exists and belongs to the given project
+        query = select(MarketingAsset).where(
+            and_(
+                MarketingAsset.id == asset_id,
+                MarketingAsset.project_id == project_id
+            )
+        )
+        
+        result = await db.execute(query)
+        asset = result.scalars().first()
+        
+        if not asset:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Asset with ID {asset_id} not found in project {project_id}"
+            )
+        
+        # Update the shared_with_client status
+        asset.shared_with_client = share
+        
+        # Save changes
+        await db.commit()
+        
+        return asset

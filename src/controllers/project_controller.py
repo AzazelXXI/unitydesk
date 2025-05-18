@@ -72,8 +72,9 @@ class ProjectController:
 
         # Execute query
         result = await db.execute(query)
-        return result.scalars().all() @ staticmethod
+        return result.scalars().all()
 
+    @staticmethod
     async def get_project(project_id: int, db):
         """
         Get a project by its ID.
