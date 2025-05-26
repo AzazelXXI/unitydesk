@@ -76,40 +76,26 @@
 - Easy navigation between projects
 - Progress indicators and reporting tools
 
-## 4. Industry-Specific Requirements
-
-### Marketing Team Requirements
-
-- Content calendar with editorial workflow
-- Campaign performance tracking (CTR, ROI, conversion rates)
-- Social media post scheduling and automation
-- Lead scoring and nurturing pipeline
-- A/B testing management for campaigns
-- Brand asset library and version control
-- Influencer collaboration tracking
-- Marketing automation integration
-
-### Agency Requirements
-
-- Client billing and time tracking
-- Multi-client project segregation
-- Proposal and contract management
-- Client approval workflows
-- Retainer vs project-based billing
-- Statement of Work (SOW) templates
-- Client communication portal
-- Resource allocation across multiple clients
-
-### IT Team Requirements
-
-- Bug tracking with severity/priority levels
-- Code review and approval workflows
-- Sprint planning and retrospectives
-- Technical debt tracking
-- CI/CD pipeline integration
-- Infrastructure monitoring alerts
-- Security compliance checklists
-- Documentation version control
+## 4. Target Audience
+- Marketing teams:
+    - Content creation tasks
+    - Campaign management
+    - Social media scheduling
+    - Event planning
+    - Basic approval workflows
+    - Task comments
+- Agency teams:
+    - Client project management
+    - Task delegation and tracking
+    - Resource allocation
+    - Time tracking for billable hours
+    - Reporting and analytics for client projects
+- IT teams:
+    - Software development tasks
+    - Bug tracking and issue resolution
+    - Sprint planning and backlog management
+    - Deployment scheduling
+    - Documentation and knowledge base management
 
 ---
 
@@ -196,34 +182,3 @@
 - View shared progress reports
 - Receive notifications about important milestones
 - Approve or reject deliverables
-
----
-
-## Scenarios
-
-### A description of the starting situation:
-
-A user named Hao and his group have a marketing project and just receives an email about the project and gets agreement from the administrator of his company. Hao and his group signed in successfully into the system to manage projects and tasks.
-
-### A description of the main flow of events:
-
-1. **Access to the Dashboard** for users to control the project. Hao created a project and gave it a name. Then assigned tasks and due dates for his group members.
-2. **Tracking Progress.** The system will list all of the projects that Hao had created before, he will choose the one that he wants to check and see the latest progress that include the progress of task completion, timelines, project status, comments, documents that his group members attached to the task.
-3. **Approval** after checking carefully all of the tasks contain a finished tag or status that fit with his requirements then he could comment to agree like "Accept and the approval" to ensure that his group members could know that he approved of what they did.
-4. After the approval that the project is done Hao could set the project status into finished and everything included to that project will be frozen except the recurring task.
-
-### A description of what can go wrong:
-
-- The attached document could be an error and Hao can not see or watch. Make Hao could not make a decision about approval.
-- The system got in trouble and made the application slowdown. It will slow the whole progress.
-- System not showing the latest tracking progress. Will make Hao think that his group members did not do anything that will lead to internal problems or misunderstanding.
-
-### Information about other concurrent activities:
-
-- While Hao is tracking the progress and tasks that are assigned. His group members could comment, share and upload files to the tasks that they are in process.
-- A developer on his way to develop a function in the system or an application in the system.
-
-### A description of the state when the scenario finishes:
-
-- Hao could still sign-in into the system to check the project and he could remove, archive or create to start a new project while the old one is still there.
-- Project status after finishing will affect all of the tasks that involve that project except the recurring/daily tasks.
