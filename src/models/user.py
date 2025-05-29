@@ -48,7 +48,7 @@ class User(Base, RootModel):
         uselist=False,
         back_populates="user",
         cascade="all, delete-orphan",
-    )    
+    )
     primary_department = relationship(
         "Department", foreign_keys=[department_id], back_populates="primary_members"
     )
@@ -57,7 +57,7 @@ class User(Base, RootModel):
         "User",
         foreign_keys="[User.manager_id]",
         backref=backref("direct_reports"),
-        remote_side="User.id"
+        remote_side="User.id",
     )
     department_memberships = relationship(
         "DepartmentMembership", back_populates="user", cascade="all, delete-orphan"
@@ -91,6 +91,7 @@ class UserProfile(Base, RootModel):
     avatar_url = Column(String(255))
     bio = Column(Text, nullable=True)
     phone = Column(String(50), nullable=True)
+    department = Column(String(100), nullable=True)  # Added department field
     location = Column(String(100), nullable=True)
     timezone = Column(String(50), nullable=True)
 
@@ -110,8 +111,7 @@ class Department(Base, RootModel):
     is_active = Column(Boolean, default=True, nullable=False)
     order_index = Column(Integer, default=0)
     path = Column(
-        String(255), 
-        nullable=True
+        String(255), nullable=True
     )  # Materialized path for efficient hierarchy queries    level = Column(Integer, default=0)  # Hierarchy level (0=root, 1=division, etc.)    # Relationships
     parent = relationship(
         "Department",
@@ -145,7 +145,7 @@ class Position(Base, RootModel):
     reports_to_position_id = Column(
         Integer, ForeignKey("positions.id"), nullable=True
     )  # Relationships
-    department = relationship("Department", back_populates="positions")    
+    department = relationship("Department", back_populates="positions")
     reports_to = relationship(
         "Position",
         primaryjoin="Position.reports_to_position_id == Position.id",

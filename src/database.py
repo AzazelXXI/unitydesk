@@ -11,9 +11,9 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 
 # Get database URL from environment variable with a fallback for local development
 DATABASE_URL = os.getenv(
-    "DATABASE_URL", 
-    "postgresql+asyncpg://postgres:KiroHoang1124@hutech.dev@localhost:5432/testdb"
-    #postgresql+asyncpg://postgres:#0Comatkhau@localhost:5432/csa_hello
+    "DATABASE_URL",
+    "postgresql+asyncpg://postgres:azazeladmin@localhost:5432/testdb",
+    # postgresql+asyncpg://postgres:#0Comatkhau@localhost:5432/csa_hello
 )
 
 engine = create_async_engine(
@@ -24,14 +24,13 @@ engine = create_async_engine(
 
 Base = declarative_base()
 
+
 # Dependency for getting async DB session
 async def get_db() -> AsyncGenerator[AsyncSession, Any]:
     # expire_on_commit=False will prevent attributes from being expired
     # after commit.
     session_maker = sessionmaker(
-        bind=engine, 
-        expire_on_commit=False, 
-        class_=AsyncSession
+        bind=engine, expire_on_commit=False, class_=AsyncSession
     )
     Session = async_scoped_session(session_maker, scopefunc=current_task)
     async with Session() as session:

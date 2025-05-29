@@ -1,17 +1,5 @@
 # CSA-HELLO: Module Requirements Specification
 
----
-
-**Members:**
-
-- Hoàng Chí Trung - 2280603437
-- Nguyễn Vũ Anh Hào - 2280600848
-- Nguyễn Minh Duy - 2280600471
-
-**Topic:** Projects/Tasks Management for Office Company (Marketing, Agency, IT)
-
----
-
 # Requirements
 
 ## 1. Task Module

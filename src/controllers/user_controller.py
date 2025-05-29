@@ -75,7 +75,7 @@ async def create_user(db: AsyncSession, user_data: UserCreate) -> User:
             avatar_url=user_data.profile.avatar_url,
             bio=user_data.profile.bio,
             phone=user_data.profile.phone_number,
-            location=user_data.profile.location,  # Sửa từ department thành location
+            department=user_data.profile.department,  # Sửa từ department thành location
             timezone=user_data.profile.timezone,
         )
         db.add(db_profile)
