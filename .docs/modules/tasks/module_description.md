@@ -66,24 +66,13 @@
 
 ## 4. Target Audience
 - Marketing teams:
-    - Content creation tasks
-    - Campaign management
-    - Social media scheduling
-    - Event planning
-    - Basic approval workflows
-    - Task comments
-- Agency teams:
-    - Client project management
-    - Task delegation and tracking
-    - Resource allocation
-    - Time tracking for billable hours
-    - Reporting and analytics for client projects
-- IT teams:
-    - Software development tasks
-    - Bug tracking and issue resolution
-    - Sprint planning and backlog management
-    - Deployment scheduling
-    - Documentation and knowledge base management
+    - Content creation tasks (e.g, blog posts, social media updates, email newsletters)
+    - Campaign management (e.g, planning, execution, tracking)
+    - Event planning (e.g, webinars, conferences, product launches)
+    - Collaboration on creative projects (e.g, graphic design, video production)
+    - Basic approval workflows (e.g, content review, design feedback)
+    - Task prioritization and assignment
+    - Time tracking for marketing activities
 
 ---
 
