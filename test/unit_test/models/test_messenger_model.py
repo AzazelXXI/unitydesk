@@ -3,8 +3,8 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
 from datetime import datetime, timedelta
 import uuid
-from src.models.messenger import Chat, ChatMember, Message, ChatType, MessageType
-from src.models.user import User
+from src.models_backup.messenger import Chat, ChatMember, Message, ChatType, MessageType
+from src.models_backup.user import User
 
 # Khai báo biến MODELS_IMPORTED để các test có thể kiểm tra
 MODELS_IMPORTED = True

@@ -12,7 +12,7 @@ from uuid import uuid4
 from fastapi import HTTPException, status, UploadFile
 
 from src.database import get_db
-from src.models.marketing_project import (
+from src.models_backup.marketing_project import (
     MarketingProject, AnalyticsReport, ReportType
 )
 from src.schemas.marketing_project import (

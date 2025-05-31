@@ -1,6 +1,6 @@
 import pytest
 from sqlalchemy.future import select
-from src.models.calendar import Event, EventStatus, EventRecurrence, EventParticipant, ResponseStatus
+from src.models_backup.calendar import Event, EventStatus, EventRecurrence, EventParticipant, ResponseStatus
 import datetime
 from sqlalchemy.orm import joinedload
 
@@ -187,8 +187,8 @@ async def test_update_event(test_session):
 @pytest.mark.asyncio
 async def test_event_calendar_relationship(test_session):
     """Test the relationship between events and calendars"""
-    from src.models.calendar import Calendar
-    from src.models.user import User
+    from src.models_backup.calendar import Calendar
+    from src.models_backup.user import User
     
     # Create a user for the calendar owner
     user = User(

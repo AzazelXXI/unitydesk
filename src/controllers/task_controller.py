@@ -7,7 +7,7 @@ import logging
 from datetime import datetime
 from fastapi import HTTPException, status
 
-from src.models.marketing_project import (
+from src.models_backup.marketing_project import (
     MarketingProject, WorkflowStep, MarketingTask, 
     TaskStatus, TaskPriority, TaskComment
 )

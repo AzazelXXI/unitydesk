@@ -3,12 +3,12 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
 from datetime import datetime, timedelta
 
-from src.models.marketing_project import (
+from src.models_backup.marketing_project import (
     MarketingProject, Client, ClientContact, WorkflowStep, MarketingTask,
     MarketingTaskComment, MarketingAsset, AnalyticsReport, 
     ProjectStatus, ProjectType, WorkflowStage, TaskPriority, TaskStatus, AssetType, ReportType
 )
-from src.models.user import User
+from src.models_backup.user import User
 
 @pytest.mark.asyncio
 async def test_create_marketing_project(test_session):

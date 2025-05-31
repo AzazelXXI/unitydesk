@@ -4,12 +4,12 @@ from sqlalchemy import text
 from sqlalchemy.orm import joinedload
 from datetime import datetime, timedelta
 
-from src.models.document import (
+from src.models_backup.document import (
     Document, DocumentVersion, DocumentPermission,
     DocumentType, DocumentPermissionLevel
 )
-from src.models.user import User
-from src.models.storage import Folder
+from src.models_backup.user import User
+from src.models_backup.storage import Folder
 
 @pytest.mark.asyncio
 async def test_create_document(test_session):

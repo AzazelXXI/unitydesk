@@ -6,7 +6,7 @@ from datetime import datetime
 
 from src.database import get_db
 from src.controllers.customer_service_controller import CustomerServiceController
-from src.models.customer_service import TicketStatus, DocumentType
+from src.models_backup.customer_service import TicketStatus, DocumentType
 from src.schemas.customer_service import (
     ServiceTicketCreate, ServiceTicketUpdate, ServiceTicketRead, ServiceTicketDetailRead,
     ServiceStepCreate, ServiceStepUpdate, ServiceStepRead,

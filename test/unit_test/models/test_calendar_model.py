@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.future import select
-from src.models.calendar import Calendar, Event, EventStatus
-from src.models.user import User
+from src.models_backup.calendar import Calendar, Event, EventStatus
+from src.models_backup.user import User
 import datetime
 from sqlalchemy.orm import joinedload
 

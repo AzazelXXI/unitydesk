@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 # Import Base and all models
 from src.database import Base
-from src.models import Meeting, Participant  # Import specific models
+from src.models_backup import Meeting, Participant  # Import specific models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

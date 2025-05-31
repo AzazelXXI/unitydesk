@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 
 from src.database import get_db
-from src.models.user import User, UserRole
+from src.models_backup.user import User, UserRole
 from src.schemas.user import (
     UserCreate,
     UserUpdate,

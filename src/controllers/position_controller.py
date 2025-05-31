@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from src.database import get_db
-from src.models.user import Position, Department, User
+from src.models_backup.user import Position, Department, User
 from src.schemas.department import (
     PositionCreate, PositionUpdate, PositionResponse
 )

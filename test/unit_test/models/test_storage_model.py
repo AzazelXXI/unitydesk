@@ -5,9 +5,9 @@ from datetime import datetime, timedelta
 import uuid
 from sqlalchemy import or_, func
 
-from src.models.storage import File, Folder, FilePermission, StoragePermissionLevel
-from src.models.user import User
-from src.models.document import Document, DocumentType
+from src.models_backup.storage import File, Folder, FilePermission, StoragePermissionLevel
+from src.models_backup.user import User
+from src.models_backup.document import Document, DocumentType
 
 
 @pytest.mark.asyncio

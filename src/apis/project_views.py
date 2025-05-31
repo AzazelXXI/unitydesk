@@ -5,7 +5,7 @@ import logging
 
 from src.database import get_db
 from src.controllers.project_controller import ProjectController
-from src.models.marketing_project import ProjectStatus, ProjectType
+from src.models_backup.marketing_project import ProjectStatus, ProjectType
 from src.schemas.marketing_project import (
     MarketingProjectCreate, MarketingProjectUpdate, MarketingProjectRead
 )

@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi import HTTPException
 
-from src.models.user import User, UserProfile, UserRole
+from src.models_backup.user import User, UserProfile, UserRole
 from src.schemas.user import UserCreate, UserProfileCreate, UserUpdate, Token
 
 # Add shared pytest fixtures

@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from fastapi import HTTPException
 
 # Import modules needed for test fixtures only
-from src.models.customer_service import (
+from src.models_backup.customer_service import (
     ServiceTicket, ServiceStep, TicketStep, QuoteDocument, 
     TicketStatus, StepStatus, DocumentType
 )
@@ -83,7 +83,7 @@ def mock_ticket():
 def mock_step():
     """Create a mock ServiceStep"""
     # Import inside fixture to avoid test discovery issues
-    from src.models.customer_service import ServiceStep
+    from src.models_backup.customer_service import ServiceStep
     
     step = MagicMock(spec=ServiceStep)
     step.id = 1
@@ -101,7 +101,7 @@ def mock_step():
 def mock_ticket_step():
     """Create a mock TicketStep"""
     # Import inside fixture to avoid test discovery issues
-    from src.models.customer_service import TicketStep, StepStatus
+    from src.models_backup.customer_service import TicketStep, StepStatus
     
     ticket_step = MagicMock(spec=TicketStep)
     ticket_step.id = 1
@@ -128,7 +128,7 @@ def mock_ticket_step():
 def mock_quote_document():
     """Create a mock QuoteDocument"""
     # Import inside fixture to avoid test discovery issues
-    from src.models.customer_service import QuoteDocument, DocumentType
+    from src.models_backup.customer_service import QuoteDocument, DocumentType
     
     quote = MagicMock(spec=QuoteDocument)
     quote.id = 1
@@ -414,7 +414,7 @@ class TestServiceSteps:
         with patch.dict('sys.modules', {'src.controllers.task_controller': MagicMock()}):
             # Now we can safely import
             from src.controllers.customer_service_controller import CustomerServiceController
-            from src.models.customer_service import ServiceStep
+            from src.models_backup.customer_service import ServiceStep
             
             # Arrange
             step_data = MagicMock()
@@ -557,7 +557,7 @@ class TestTicketSteps:
     async def test_update_ticket_step(self, mock_db, mock_ticket, mock_ticket_step):
         """Test updating a ticket step"""
         # Arrange
-        from src.models.customer_service import StepStatus
+        from src.models_backup.customer_service import StepStatus
         
         step_data = MagicMock()
         step_data.dict.return_value = {"quantity": 3, "unit_price": 110.0, "status": StepStatus.IN_PROGRESS}
@@ -593,7 +593,7 @@ class TestTicketSteps:
     async def test_complete_step(self, mock_db, mock_ticket_step):
         """Test marking a step as completed"""
         # Arrange
-        from src.models.customer_service import StepStatus
+        from src.models_backup.customer_service import StepStatus
         
         notes = "Step completed successfully"
         
@@ -635,7 +635,7 @@ class TestQuoteGeneration:
         with patch.dict('sys.modules', {'src.controllers.task_controller': MagicMock()}):
             # Now we can safely import
             from src.controllers.customer_service_controller import CustomerServiceController
-            from src.models.customer_service import DocumentType, QuoteDocument
+            from src.models_backup.customer_service import DocumentType, QuoteDocument
             
             # Arrange
             mock_db.execute.return_value.scalar_one_or_none.return_value = mock_ticket

@@ -7,7 +7,7 @@ from datetime import datetime
 import os
 
 from src.database import get_db
-from src.models.user import User
+from src.models_backup.user import User
 from src.middleware.auth_middleware import get_current_user
 
 
@@ -43,7 +43,7 @@ class ProjectController:
         """
         from sqlalchemy import or_
         from sqlalchemy.future import select
-        from src.models.marketing_project import MarketingProject
+        from src.models_backup.marketing_project import MarketingProject
 
         # Build the query
         query = select(MarketingProject)
@@ -91,7 +91,7 @@ class ProjectController:
         """
         from sqlalchemy.future import select
         from fastapi import HTTPException, status
-        from src.models.marketing_project import MarketingProject
+        from src.models_backup.marketing_project import MarketingProject
 
         query = select(MarketingProject).where(MarketingProject.id == project_id)
         result = await db.execute(query)
@@ -117,7 +117,7 @@ class ProjectController:
         Returns:
             Created marketing project object
         """
-        from src.models.marketing_project import MarketingProject
+        from src.models_backup.marketing_project import MarketingProject
 
         # Create dict of project data excluding relationships
         project_dict = project_data.model_dump(exclude={"team_members"})
@@ -132,7 +132,7 @@ class ProjectController:
 
         # Handle team members if provided
         if hasattr(project_data, "team_members") and project_data.team_members:
-            from src.models.marketing_project import project_team_association
+            from src.models_backup.marketing_project import project_team_association
 
             for team_member in project_data.team_members:
                 await db.execute(

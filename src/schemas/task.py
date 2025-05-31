@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
 
-from src.models.task import TaskStatus, TaskPriority
+from src.models_backup.task import TaskStatus, TaskPriority
 
 
 # Base schema

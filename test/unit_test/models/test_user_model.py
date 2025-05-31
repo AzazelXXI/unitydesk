@@ -1,7 +1,7 @@
 import pytest
 from dataclasses import dataclass
 from datetime import datetime
-from src.models.user import (
+from src.models_backup.user import (
     UserRole,
     User,
     UserProfile,
@@ -10,7 +10,7 @@ from src.models.user import (
     DepartmentMembership,
 )
 from src.database import Base
-from src.models.base import RootModel
+from src.models_backup.base import RootModel
 from sqlalchemy import inspect
 
 

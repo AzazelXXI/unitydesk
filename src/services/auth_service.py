@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from dotenv import load_dotenv
 
-from src.models.user import User
+from src.models_backup.user import User
 from src.schemas.user import TokenData, UserResponse, UserWithPassword
 import logging
 

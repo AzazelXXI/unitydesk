@@ -6,7 +6,7 @@ from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
-from src.models.user import UserRole, User
+from src.models_backup.user import UserRole, User
 from src.schemas.user import TokenData
 from src.services.auth_service import verify_token
 import logging

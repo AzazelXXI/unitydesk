@@ -5,7 +5,7 @@ from sqlalchemy import func, desc, and_, or_
 from datetime import datetime, timedelta
 
 from src.database import get_db
-from src.models.user import Department, Position, DepartmentMembership, User, UserProfile
+from src.models_backup.user import Department, Position, DepartmentMembership, User, UserProfile
 from src.schemas.department import (
     DepartmentCreate, DepartmentUpdate, DepartmentResponse, DepartmentDetailResponse,
     PositionCreate, PositionUpdate, PositionResponse,

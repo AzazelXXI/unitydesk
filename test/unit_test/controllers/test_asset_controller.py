@@ -6,7 +6,7 @@ import os
 import io
 
 from src.controllers.asset_controller import AssetController
-from src.models.marketing_project import (
+from src.models_backup.marketing_project import (
     MarketingProject, MarketingTask, MarketingAsset, AssetType
 )
 

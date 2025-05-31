@@ -7,7 +7,7 @@ from datetime import timedelta
 from typing import List, Optional
 
 from src.database import get_db
-from src.models.user import User, UserProfile, UserRole
+from src.models_backup.user import User, UserProfile, UserRole
 from src.schemas.user import (
     UserCreate,
     UserUpdate,

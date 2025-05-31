@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
 
-from src.models.user import UserRole
+from src.models_backup.user import UserRole
 
 
 # Base user schemas

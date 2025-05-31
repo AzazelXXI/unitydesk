@@ -3,8 +3,8 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
 from datetime import datetime, timedelta
 
-from src.models.user import User
-from src.models.task import Task, TaskStatus, TaskPriority
+from src.models_backup.user import User
+from src.models_backup.task import Task, TaskStatus, TaskPriority
 
 
 @pytest.mark.asyncio
@@ -509,7 +509,7 @@ async def test_task_comments(test_session):
     
     # Check if TaskComment is defined
     try:
-        from src.models.task import TaskComment
+        from src.models_backup.task import TaskComment
     except ImportError:
         # If TaskComment doesn't exist, skip the test
         pytest.skip("TaskComment model not found")
@@ -682,7 +682,7 @@ async def test_project_tasks(test_session):
     """Test creating tasks associated with a project"""
     # Import Project model
     try:
-        from src.models.task import Project
+        from src.models_backup.task import Project
     except ImportError:
         pytest.skip("Project model not found")
     
@@ -769,7 +769,7 @@ async def test_task_assignees(test_session):
     """Test task with multiple assignees using TaskAssignee association"""
     # Import TaskAssignee model
     try:
-        from src.models.task import TaskAssignee
+        from src.models_backup.task import TaskAssignee
     except ImportError:
         pytest.skip("TaskAssignee model not found")
     

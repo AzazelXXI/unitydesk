@@ -6,7 +6,7 @@ import os
 import json
 
 from src.controllers.analytics_controller import AnalyticsController
-from src.models.marketing_project import MarketingProject, AnalyticsReport, ReportType
+from src.models_backup.marketing_project import MarketingProject, AnalyticsReport, ReportType
 
 # Mock fixtures
 @pytest.fixture

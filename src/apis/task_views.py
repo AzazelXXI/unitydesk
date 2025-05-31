@@ -5,7 +5,7 @@ import logging
 
 from src.database import get_db
 from src.controllers.task_controller import TaskController
-from src.models.marketing_project import TaskStatus, TaskPriority
+from src.models_backup.marketing_project import TaskStatus, TaskPriority
 from src.schemas.marketing_project import (
     WorkflowStepUpdate, WorkflowStepRead,
     MarketingTaskCreate, MarketingTaskUpdate, MarketingTaskRead, MarketingTaskReadBasic,

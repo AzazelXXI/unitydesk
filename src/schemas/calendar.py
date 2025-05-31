@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
 
-from src.models.calendar import EventStatus, EventRecurrence, ResponseStatus
+from src.models_backup.calendar import EventStatus, EventRecurrence, ResponseStatus
 
 
 # Base schema

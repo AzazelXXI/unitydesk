@@ -4,11 +4,11 @@ from sqlalchemy.orm import joinedload
 from datetime import datetime, timedelta
 import json
 
-from src.models.notification import (
+from src.models_backup.notification import (
     Notification, NotificationSetting, NotificationTemplate,
     NotificationType, NotificationPriority, NotificationChannel
 )
-from src.models.user import User, UserRole
+from src.models_backup.user import User, UserRole
 
 
 @pytest.mark.asyncio

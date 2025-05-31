@@ -10,7 +10,7 @@ import uuid
 from fastapi import HTTPException, status
 import re
 
-from src.models.customer_service import (
+from src.models_backup.customer_service import (
     ServiceTicket, ServiceStep, TicketStep, QuoteDocument, 
     TicketStatus, StepStatus, DocumentType
 )

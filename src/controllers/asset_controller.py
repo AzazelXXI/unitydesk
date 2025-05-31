@@ -11,7 +11,7 @@ from fastapi import HTTPException, status, UploadFile
 from sqlalchemy import and_
 
 from src.database import get_db
-from src.models.marketing_project import (
+from src.models_backup.marketing_project import (
     MarketingProject, MarketingTask, MarketingAsset, AssetType
 )
 from src.schemas.marketing_project import (

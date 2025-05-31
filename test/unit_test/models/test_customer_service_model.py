@@ -1,12 +1,12 @@
 import pytest
 from sqlalchemy.future import select
 from sqlalchemy import text
-from src.models.customer_service import (
+from src.models_backup.customer_service import (
     ServiceTicket, ServiceStep, TicketStep, QuoteDocument,
     TicketStatus, Priority, StepStatus, PricingModel, DocumentType
 )
-from src.models.user import User
-from src.models.marketing_project import Client
+from src.models_backup.user import User
+from src.models_backup.marketing_project import Client
 import datetime
 from sqlalchemy.orm import joinedload
 from datetime import datetime, timedelta
@@ -400,7 +400,7 @@ async def test_foreign_key_constraints(test_session):
     
     # Import đúng Client từ module customer_service nếu có
     try:
-        from src.models.customer_service import Client as ServiceClient
+        from src.models_backup.customer_service import Client as ServiceClient
         client = ServiceClient(
             company_name="FK Test Company",
             industry="Testing"

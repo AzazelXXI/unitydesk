@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 from enum import Enum
 
-from src.models.notification import (
+from src.models_backup.notification import (
     NotificationType,
     NotificationChannel,
     NotificationPriority,

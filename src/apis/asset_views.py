@@ -5,7 +5,7 @@ import logging
 
 from src.database import get_db
 from src.controllers.asset_controller import AssetController
-from src.models.marketing_project import AssetType
+from src.models_backup.marketing_project import AssetType
 from src.schemas.marketing_project import (
     MarketingAssetCreate, MarketingAssetUpdate, MarketingAssetRead
 )

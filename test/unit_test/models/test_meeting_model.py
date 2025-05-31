@@ -4,8 +4,8 @@ from sqlalchemy.orm import joinedload
 from datetime import datetime, timedelta
 import uuid
 
-from src.models.meeting import Meeting, Participant, MeetingStatus
-from src.models.user import User, UserRole
+from src.models_backup.meeting import Meeting, Participant, MeetingStatus
+from src.models_backup.user import User, UserRole
 
 @pytest.mark.asyncio
 async def test_create_meeting(test_session):

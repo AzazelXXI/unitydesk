@@ -6,7 +6,7 @@ from datetime import datetime
 
 from src.database import get_db
 from src.controllers.analytics_controller import AnalyticsController
-from src.models.marketing_project import ReportType
+from src.models_backup.marketing_project import ReportType
 from src.schemas.marketing_project import (
     AnalyticsReportCreate, AnalyticsReportUpdate, AnalyticsReportRead
 )

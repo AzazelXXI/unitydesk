@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
 
-from src.models.storage import StoragePermissionLevel
+from src.models_backup.storage import StoragePermissionLevel
 
 
 # Base schema

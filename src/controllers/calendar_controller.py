@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from fastapi import HTTPException, status
 
 from src.database import get_db
-from src.models.calendar import (
+from src.models_backup.calendar import (
     Calendar, Event, EventParticipant, 
     EventStatus, EventRecurrence, ResponseStatus
 )

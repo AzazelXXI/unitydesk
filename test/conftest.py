@@ -47,7 +47,7 @@ async def clean_db_after_test(test_engine):
     Setup and teardown fixture for the database.
     This runs automatically for each test that uses the database.
     """
-    from src.models.base import Base
+    from src.models_backup.base import Base
 
     # Setup - Create tables before tests if they don't exist
     async with test_engine.begin() as conn:

@@ -5,7 +5,7 @@ from typing import List, Optional
 import logging
 from fastapi import HTTPException, status
 
-from src.models.marketing_project import Client, ClientContact
+from src.models_backup.marketing_project import Client, ClientContact
 from src.schemas.marketing_project import (
     ClientCreate, ClientUpdate, ClientRead,
     ClientContactCreate, ClientContactUpdate, ClientContactRead
