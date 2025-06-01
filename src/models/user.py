@@ -1,6 +1,6 @@
 import enum
 import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Enum as SAEnum, Text
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Enum as SAEnum
 from sqlalchemy.orm import relationship
 from .base import Base
 
@@ -18,7 +18,7 @@ class UserTypeEnum(str, enum.Enum):
 
 
 class User(Base):
-    __table__ = "users"
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     name = Column(String(255), nullable=False)
@@ -30,32 +30,46 @@ class User(Base):
         default=UserStatusEnum.OFFLINE,
     )
     created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
-    update_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
-
-    user_type = Column(
-        SAEnum(UserTypeEnum, name="user_type_name", create_type=False), nullable=False
+    update_at = Column(
+        DateTime,
+        default=datetime.datetime.utcnow,
+        onupdate=datetime.datetime.utcnow,
+        nullable=False,
     )
 
-    # ProjectManager Specific
-    department = Column(String(255), nullable=True)
+    user_type = Column(
+        SAEnum(UserTypeEnum, name="user_type_enum", create_type=False), nullable=False
+    )
 
     __mapper_args = {
-        # Value for superclass, can skip if User is always one of three
+        # Value for superclass (if it does contain)
         "polymorphic_identity": "user",
+        # Column use to determine subclass
         "polymorphic_on": user_type,
     }
 
-    # Relationships: will define later when other models created
+    # Foreign Key
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
 
-    def __repr__(self):
-        return f"<User(id={self.id}, name={self.name}, email={self.email}, type={self.user_type.value})>"
+    # Relationships
+    # A user could create many Project
+    created_project = relationship("Project", back_populates="creator", foreign_keys="Project.creator_id")
+    # A user could be assigned many Task
+    assigned_tasks = relationship("Task", back_populates="assignee", foreign_keys="[Task.assignee_id]")
+    # A user could write many Comment
+    comments = relationship("Comment", back_populates="author", foreign_keys="[Comment.user_id]")
+    # A user could upload many attachment
+    uploaded_attachments = relationship("Attachment", back_populates="uploader", foreign_keys="Attachment.user_id")
+    
 
 
 class ProjectManagerUser(User):
     __mapper_args__ = {"polymorphic_identity": UserTypeEnum.PROJECT_MANAGER}
 
+
 class TeamMemberUser(User):
     __mapper_args__ = {"polymorphic_identity": UserTypeEnum.TEAM_MEMBER}
+
 
 class ClientUser(User):
     __mapper_args__ = {"polymorphic_identity": UserTypeEnum.CLIENT}
