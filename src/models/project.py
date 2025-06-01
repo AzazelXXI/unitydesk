@@ -52,4 +52,8 @@ class Project(Base):
     # User could create many Project
     creator = relationship("User", back_populates="created_projects")
     
+    # A Project has many Tasks
     tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
+    
+    # Many Team has many Project
+    team_project_created = relationship("Team", back_populates="team_project_creator", foreign_keys="[Team.project_id]")

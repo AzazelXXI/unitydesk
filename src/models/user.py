@@ -53,14 +53,28 @@ class User(Base):
 
     # Relationships
     # A user could create many Project
-    created_project = relationship("Project", back_populates="creator", foreign_keys="Project.creator_id")
+    created_project = relationship(
+        "Project", back_populates="creator", foreign_keys="[Project.creator_id]"
+    )
+
     # A user could be assigned many Task
-    assigned_tasks = relationship("Task", back_populates="assignee", foreign_keys="[Task.assignee_id]")
+    assigned_tasks = relationship(
+        "Task", back_populates="assignee", foreign_keys="[Task.assignee_id]"
+    )
+
     # A user could write many Comment
-    comments = relationship("Comment", back_populates="author", foreign_keys="[Comment.user_id]")
+    comments = relationship(
+        "Comment", back_populates="author", foreign_keys="[Comment.user_id]"
+    )
+
     # A user could upload many attachment
-    uploaded_attachments = relationship("Attachment", back_populates="uploader", foreign_keys="Attachment.user_id")
-    
+    uploaded_attachments = relationship(
+        "Attachment", back_populates="uploader", foreign_keys="[Attachment.user_id]"
+    )
+
+    created_teams = relationship(
+        "Team", back_populates="team_creator", foreign_keys="[Team.user_id]"
+    )
 
 
 class ProjectManagerUser(User):
