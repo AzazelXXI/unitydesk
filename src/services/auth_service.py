@@ -7,7 +7,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from dotenv import load_dotenv
 
-from src.models_backup.user import User
+# Temporarily commenting out model imports as we use Any placeholders
+# from src.models.user import User
+
+# Using Any as placeholder for models to allow the application to start
+from typing import Any
+
+User = Any
 from src.schemas.user import TokenData, UserResponse, UserWithPassword
 import logging
 

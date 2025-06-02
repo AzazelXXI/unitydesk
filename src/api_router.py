@@ -10,7 +10,9 @@ from fastapi import APIRouter
 
 # Import all API routers
 from src.apis.core_views import router as core_router
-from src.apis.meeting_views import router as meeting_router
+
+# Meeting module will be developed later
+# from src.apis.meeting_views import router as meeting_router
 from src.apis.notification_views import router as notification_router
 from src.apis.notification_views import ws_router as notification_ws_router
 from src.apis.task_views import router as task_router
@@ -22,6 +24,7 @@ from src.apis.department_views import router as department_router
 from src.apis.position_views import router as position_router
 from src.apis.user_views import router as user_router
 from src.apis.calendar_views import router as calendar_router
+from src.views.task.web_routes import task_web_router
 
 # Create API v1 router that includes all v1 API endpoints
 api_router_v1 = APIRouter(prefix="/api/v1")
@@ -31,7 +34,8 @@ api_router = APIRouter()
 
 # Include all API routers in v1
 api_router_v1.include_router(core_router, prefix="/core")
-api_router_v1.include_router(meeting_router, prefix="/meetings")
+# Meeting module will be developed later
+# api_router_v1.include_router(meeting_router, prefix="/meetings")
 api_router_v1.include_router(notification_router)
 api_router_v1.include_router(task_router, prefix="/tasks")
 api_router_v1.include_router(project_router, prefix="/projects")
@@ -45,6 +49,10 @@ api_router_v1.include_router(calendar_router)
 
 # Include the v1 router in the main API router
 api_router.include_router(api_router_v1)
+
+# Include web routers
+# Don't include task_web_router in api_router, it will be included directly in main app
+# to avoid the /api prefix
 
 # Export the WebSocket router separately since it shouldn't have the /api prefix
 ws_router = notification_ws_router

@@ -6,6 +6,7 @@ This module contains all task-related web routes for the CSA Platform, including
 - Task details
 - Task creation and editing interfaces
 """
+
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
@@ -17,33 +18,29 @@ router = APIRouter(
 )
 
 # Templates
-templates = Jinja2Templates(directory="src/web/task/templates")
+templates = Jinja2Templates(directory="src/views")
+
 
 @router.get("/")
 async def tasks_home(request: Request):
     """Tasks home page"""
     # Sample data for task board view
-    task_stats = {
-        "total": 48,
-        "in_progress": 12,
-        "overdue": 5,
-        "completed": 23
-    }
-    
+    task_stats = {"total": 48, "in_progress": 12, "overdue": 5, "completed": 23}
+
     # Sample projects for filters
     projects = [
         {"id": 1, "name": "Website Redesign"},
         {"id": 2, "name": "Mobile App Development"},
-        {"id": 3, "name": "Marketing Campaign"}
+        {"id": 3, "name": "Marketing Campaign"},
     ]
-    
+
     # Sample users for filters and assignments
     users = [
         {"id": 1, "name": "John Smith"},
         {"id": 2, "name": "Jane Doe"},
-        {"id": 3, "name": "Bob Johnson"}
+        {"id": 3, "name": "Bob Johnson"},
     ]
-    
+
     # Sample tasks organized by status columns
     columns = {
         "todo": [
@@ -54,7 +51,7 @@ async def tasks_home(request: Request):
                 "priority": "high",
                 "due_date": "May 5, 2025",
                 "is_overdue": False,
-                "assignee": {"name": "Jane Doe", "initials": "JD"}
+                "assignee": {"name": "Jane Doe", "initials": "JD"},
             },
             {
                 "id": 2,
@@ -63,8 +60,8 @@ async def tasks_home(request: Request):
                 "priority": "medium",
                 "due_date": "May 8, 2025",
                 "is_overdue": False,
-                "assignee": {"name": "John Smith", "initials": "JS"}
-            }
+                "assignee": {"name": "John Smith", "initials": "JS"},
+            },
         ],
         "in_progress": [
             {
@@ -74,7 +71,7 @@ async def tasks_home(request: Request):
                 "priority": "high",
                 "due_date": "April 30, 2025",
                 "is_overdue": True,
-                "assignee": {"name": "Bob Johnson", "initials": "BJ"}
+                "assignee": {"name": "Bob Johnson", "initials": "BJ"},
             },
             {
                 "id": 4,
@@ -83,8 +80,8 @@ async def tasks_home(request: Request):
                 "priority": "medium",
                 "due_date": "May 3, 2025",
                 "is_overdue": False,
-                "assignee": {"name": "Jane Doe", "initials": "JD"}
-            }
+                "assignee": {"name": "Jane Doe", "initials": "JD"},
+            },
         ],
         "review": [
             {
@@ -94,7 +91,7 @@ async def tasks_home(request: Request):
                 "priority": "medium",
                 "due_date": "May 2, 2025",
                 "is_overdue": False,
-                "assignee": {"name": "John Smith", "initials": "JS"}
+                "assignee": {"name": "John Smith", "initials": "JS"},
             }
         ],
         "done": [
@@ -105,7 +102,7 @@ async def tasks_home(request: Request):
                 "priority": "low",
                 "due_date": "April 25, 2025",
                 "is_overdue": False,
-                "assignee": {"name": "Jane Doe", "initials": "JD"}
+                "assignee": {"name": "Jane Doe", "initials": "JD"},
             },
             {
                 "id": 7,
@@ -114,11 +111,10 @@ async def tasks_home(request: Request):
                 "priority": "medium",
                 "due_date": "April 27, 2025",
                 "is_overdue": False,
-                "assignee": {"name": "Bob Johnson", "initials": "BJ"}
-            }
-        ]
+                "assignee": {"name": "Bob Johnson", "initials": "BJ"},
+            },
+        ],
     }
-    
     # Combine all tasks for list view
     all_tasks = []
     for status, tasks in columns.items():
@@ -127,47 +123,60 @@ async def tasks_home(request: Request):
             task_copy["status"] = status
             task_copy["project"] = {"name": "Website Redesign"}  # Sample project name
             all_tasks.append(task_copy)
-    
+
     return templates.TemplateResponse(
-        request=request, 
-        name="modern_tasks.html", 
+        request=request,
+        name="task/templates/modern_tasks.html",
         context={
             "request": request,
             "task_stats": task_stats,
             "projects": projects,
             "users": users,
             "columns": columns,
-            "all_tasks": all_tasks
-        }
+            "all_tasks": all_tasks,
+        },
     )
+
 
 @router.get("/{task_id}")
 async def task_details(request: Request, task_id: int):
     """Task details page"""
     # In a real application, you would fetch the task from a database
-    task = {"id": task_id, "title": "Example Task", "status": "In Progress", "due_date": "2025-04-30"}
+    task = {
+        "id": task_id,
+        "title": "Example Task",
+        "status": "In Progress",
+        "due_date": "2025-04-30",
+    }
     return templates.TemplateResponse(
-        request=request, 
-        name="task_details.html", 
-        context={"request": request, "title": "Task Details", "task": task}
+        request=request,
+        name="task/templates/task_details.html",
+        context={"request": request, "title": "Task Details", "task": task},
     )
+
 
 @router.get("/new")
 async def new_task(request: Request):
     """Create new task page"""
     return templates.TemplateResponse(
-        request=request, 
-        name="new_task.html", 
-        context={"request": request, "title": "Create New Task"}
+        request=request,
+        name="task/templates/new_task.html",
+        context={"request": request, "title": "Create New Task"},
     )
+
 
 @router.get("/{task_id}/edit")
 async def edit_task(request: Request, task_id: int):
     """Edit task page"""
     # In a real application, you would fetch the task from a database
-    task = {"id": task_id, "title": "Example Task", "status": "In Progress", "due_date": "2025-04-30"}
+    task = {
+        "id": task_id,
+        "title": "Example Task",
+        "status": "In Progress",
+        "due_date": "2025-04-30",
+    }
     return templates.TemplateResponse(
-        request=request, 
-        name="edit_task.html", 
-        context={"request": request, "title": "Edit Task", "task": task}
+        request=request,
+        name="edit_task.html",
+        context={"request": request, "title": "Edit Task", "task": task},
     )

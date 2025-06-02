@@ -14,7 +14,15 @@ from typing import Optional, List
 import os
 
 from src.database import get_db
-from src.models_backup.user import User, UserRole
+
+# Temporarily commenting out model imports as we use Any placeholders
+# from src.models.user import User, UserTypeEnum as UserRole
+
+# Using Any as placeholders for models to allow the application to start
+from typing import Any
+
+User = Any
+UserRole = Any
 from src.schemas.user import UserUpdate, UserCreate
 from src.controllers.user_controller import (
     get_users,

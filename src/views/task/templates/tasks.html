@@ -1,229 +1,303 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Tasks - CSA Platform</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/css/main.css">
-    <style>
-        .task-filters {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .filter-button {
-            padding: 8px 15px;
-            border: none;
-            border-radius: 20px;
-            background-color: #f5f5f5;
-            cursor: pointer;
-        }
-        
-        .filter-button.active {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        
-        .task-list {
-            background: white;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        
-        .task-item {
-            display: flex;
-            align-items: center;
-            padding: 15px 20px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .task-item:last-child {
-            border-bottom: none;
-        }
-        
-        .task-checkbox {
-            margin-right: 15px;
-        }
-        
-        .task-content {
-            flex: 1;
-        }
-        
-        .task-title {
-            margin: 0 0 5px;
-            font-size: 1rem;
-        }
-        
-        .task-meta {
-            display: flex;
-            font-size: 12px;
-            color: #666;
-        }
-        
-        .task-meta > div {
-            margin-right: 15px;
-        }
-        
-        .task-priority {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 5px;
-        }
-        
-        .priority-high {
-            background-color: #f44336;
-        }
-        
-        .priority-medium {
-            background-color: #ff9800;
-        }
-        
-        .priority-low {
-            background-color: #4caf50;
-        }
-        
-        .actions {
-            margin: 20px 0;
-        }
-        
-        .button {
-            padding: 8px 16px;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <h1>Tasks</h1>
-    </header>
-    
-    <main>
+{% extends "core/templates/base.html" %} {% block title %}Tasks - CSA Platform{%
+endblock %} {% block head_extra %}
+<!-- Using our shared task CSS file -->
+<link rel="stylesheet" href="/tasks/static/task.css" />
+{% endblock %} {% block content %}
+<div class="container task-container mt-4">
+  <div class="row mb-4">
+    <div class="col">
+      <div
+        class="d-flex justify-content-between align-items-center task-details-header"
+      >
+        <h2><i class="fas fa-tasks me-2"></i>Task Management</h2>
+        <a href="/tasks/create" class="btn btn-primary btn-task-primary">
+          <i class="fas fa-plus me-1"></i> Create New Task
+        </a>
+      </div>
+    </div>
+  </div>
+  <!-- Task Statistics -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="task-stats-card bg-white">
+        <i
+          class="fas fa-clipboard-list text-primary"
+          style="font-size: 1.5rem"
+        ></i>
+        <div class="task-stats-number">48</div>
+        <div class="task-stats-label">Total Tasks</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="task-stats-card bg-white">
+        <i class="fas fa-spinner text-warning" style="font-size: 1.5rem"></i>
+        <div class="task-stats-number">12</div>
+        <div class="task-stats-label">In Progress</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="task-stats-card bg-white">
+        <i
+          class="fas fa-exclamation-circle text-danger"
+          style="font-size: 1.5rem"
+        ></i>
+        <div class="task-stats-number">5</div>
+        <div class="task-stats-label">Overdue</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="task-stats-card bg-white">
+        <i
+          class="fas fa-check-circle text-success"
+          style="font-size: 1.5rem"
+        ></i>
+        <div class="task-stats-number">23</div>
+        <div class="task-stats-label">Completed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task Filters -->
+  <div class="row mb-4">
+    <div class="col-12 task-filter-section">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <select class="form-select">
+            <option selected>All Projects</option>
+            <option>Website Redesign</option>
+            <option>Mobile App Development</option>
+            <option>Marketing Campaign</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select">
+            <option selected>All Assignees</option>
+            <option>John Smith</option>
+            <option>Jane Doe</option>
+            <option>Bob Johnson</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select">
+            <option selected>All Statuses</option>
+            <option>Not Started</option>
+            <option>In Progress</option>
+            <option>Under Review</option>
+            <option>Completed</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Search tasks..."
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-12">
+      <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <a class="nav-link active" href="#">List View</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/tasks/board">Board View</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/tasks/calendar">Calendar View</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Task List -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body p-0">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th width="40">
+                  <input type="checkbox" class="form-check-input" />
+                </th>
+                <th>Task</th>
+                <th>Project</th>
+                <th>Assignee</th>
+                <th>Status</th>
+                <th>Due Date</th>
+                <th>Priority</th>
+                <th width="100">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for task in tasks %}
+              <tr>
+                <td><input type="checkbox" class="form-check-input" /></td>
+                <td>{{ task.title }}</td>
+                <td>{{ task.project }}</td>
+                <td>{{ task.assignee }}</td>
+                <td>
+                  <span
+                    class="badge {% if task.status == 'In Progress' %}bg-warning{% elif task.status == 'Completed' %}bg-success{% elif task.status == 'Scheduled' %}bg-info{% else %}bg-secondary{% endif %}"
+                  >
+                    {{ task.status }}
+                  </span>
+                </td>
+                <td>{{ task.due_date }}</td>
+                <td>
+                  <span
+                    class="badge {% if task.priority == 'High' %}bg-danger{% elif task.priority == 'Medium' %}bg-warning text-dark{% else %}bg-success{% endif %}"
+                  >
+                    {{ task.priority }}
+                  </span>
+                </td>
+                <td>
+                  <div class="dropdown">
+                    <button
+                      class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                      type="button"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                    >
+                      Actions
+                    </button>
+                    <ul class="dropdown-menu">
+                      <li>
+                        <a class="dropdown-item" href="/tasks/{{ task.id }}"
+                          >View Details</a
+                        >
+                      </li>
+                      <li>
+                        <a
+                          class="dropdown-item"
+                          href="/tasks/{{ task.id }}/edit"
+                          >Edit</a
+                        >
+                      </li>
+                      <li><hr class="dropdown-divider" /></li>
+                      <li>
+                        <a class="dropdown-item text-danger" href="#">Delete</a>
+                      </li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+              <!-- Sample tasks if no data provided -->
+              {% if not tasks %}
+              <tr>
+                <td><input type="checkbox" class="form-check-input" /></td>
+                <td>Complete project proposal</td>
+                <td>Website Redesign</td>
+                <td>Jane Doe</td>
+                <td><span class="badge bg-warning">In Progress</span></td>
+                <td>Apr 26, 2025</td>
+                <td><span class="badge bg-danger">High</span></td>
+                <td>
+                  <div class="dropdown">
+                    <button
+                      class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                      type="button"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                    >
+                      Actions
+                    </button>
+                    <ul class="dropdown-menu">
+                      <li>
+                        <a class="dropdown-item" href="/tasks/1"
+                          >View Details</a
+                        >
+                      </li>
+                      <li>
+                        <a class="dropdown-item" href="/tasks/1/edit">Edit</a>
+                      </li>
+                      <li><hr class="dropdown-divider" /></li>
+                      <li>
+                        <a class="dropdown-item text-danger" href="#">Delete</a>
+                      </li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" class="form-check-input" /></td>
+                <td>Schedule team meeting</td>
+                <td>Mobile App Development</td>
+                <td>John Smith</td>
+                <td><span class="badge bg-info">Scheduled</span></td>
+                <td>Apr 25, 2025</td>
+                <td><span class="badge bg-warning text-dark">Medium</span></td>
+                <td>
+                  <div class="dropdown">
+                    <button
+                      class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                      type="button"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                    >
+                      Actions
+                    </button>
+                    <ul class="dropdown-menu">
+                      <li>
+                        <a class="dropdown-item" href="/tasks/2"
+                          >View Details</a
+                        >
+                      </li>
+                      <li>
+                        <a class="dropdown-item" href="/tasks/2/edit">Edit</a>
+                      </li>
+                      <li><hr class="dropdown-divider" /></li>
+                      <li>
+                        <a class="dropdown-item text-danger" href="#">Delete</a>
+                      </li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="d-flex justify-content-between align-items-center mt-3">
+        <div>Showing 1-5 of 48 tasks</div>
         <nav>
-            <ul>
-                <li><a href="/dashboard">Dashboard</a></li>
-                <li><a href="/projects">Projects</a></li>
-                <li><a href="/calendar">Calendar</a></li>
-                <li><a href="/">Home</a></li>
-            </ul>
+          <ul class="pagination">
+            <li class="page-item disabled">
+              <a class="page-link" href="#" tabindex="-1">Previous</a>
+            </li>
+            <li class="page-item active">
+              <a class="page-link" href="#">1</a>
+            </li>
+            <li class="page-item"><a class="page-link" href="#">2</a></li>
+            <li class="page-item"><a class="page-link" href="#">3</a></li>
+            <li class="page-item">
+              <a class="page-link" href="#">Next</a>
+            </li>
+          </ul>
         </nav>
-        
-        <div class="actions">
-            <a href="/tasks/new" class="button">Create New Task</a>
-        </div>
-        
-        <div class="task-filters">
-            <button class="filter-button active">All</button>
-            <button class="filter-button">My Tasks</button>
-            <button class="filter-button">Due Today</button>
-            <button class="filter-button">Completed</button>
-        </div>
-        
-        <div class="task-list">
-            <div class="task-item">
-                <input type="checkbox" class="task-checkbox">
-                <div class="task-content">
-                    <h3 class="task-title">Complete project proposal</h3>
-                    <div class="task-meta">
-                        <div><span class="task-priority priority-high"></span>High</div>
-                        <div>Due: Apr 26, 2025</div>
-                        <div>Project: Website Redesign</div>
-                    </div>
-                </div>
-                <a href="/tasks/1" style="margin-left: auto;">Details</a>
-            </div>
-            
-            <div class="task-item">
-                <input type="checkbox" class="task-checkbox">
-                <div class="task-content">
-                    <h3 class="task-title">Schedule team meeting</h3>
-                    <div class="task-meta">
-                        <div><span class="task-priority priority-medium"></span>Medium</div>
-                        <div>Due: Apr 25, 2025</div>
-                        <div>Project: Mobile App Development</div>
-                    </div>
-                </div>
-                <a href="/tasks/2" style="margin-left: auto;">Details</a>
-            </div>
-            
-            <div class="task-item">
-                <input type="checkbox" class="task-checkbox" checked>
-                <div class="task-content">
-                    <h3 class="task-title" style="text-decoration: line-through;">Review design mockups</h3>
-                    <div class="task-meta">
-                        <div><span class="task-priority priority-low"></span>Low</div>
-                        <div>Completed: Apr 23, 2025</div>
-                        <div>Project: Website Redesign</div>
-                    </div>
-                </div>
-                <a href="/tasks/3" style="margin-left: auto;">Details</a>
-            </div>
-            
-            <div class="task-item">
-                <input type="checkbox" class="task-checkbox">
-                <div class="task-content">
-                    <h3 class="task-title">Prepare client presentation</h3>
-                    <div class="task-meta">
-                        <div><span class="task-priority priority-high"></span>High</div>
-                        <div>Due: Apr 28, 2025</div>
-                        <div>Project: Customer Research</div>
-                    </div>
-                </div>
-                <a href="/tasks/4" style="margin-left: auto;">Details</a>
-            </div>
-            
-            <div class="task-item">
-                <input type="checkbox" class="task-checkbox">
-                <div class="task-content">
-                    <h3 class="task-title">Update content management system</h3>
-                    <div class="task-meta">
-                        <div><span class="task-priority priority-medium"></span>Medium</div>
-                        <div>Due: May 2, 2025</div>
-                        <div>Project: Website Redesign</div>
-                    </div>
-                </div>
-                <a href="/tasks/5" style="margin-left: auto;">Details</a>
-            </div>
-            
-            <div class="task-item">
-                <input type="checkbox" class="task-checkbox">
-                <div class="task-content">
-                    <h3 class="task-title">Finalize marketing materials</h3>
-                    <div class="task-meta">
-                        <div><span class="task-priority priority-medium"></span>Medium</div>
-                        <div>Due: May 5, 2025</div>
-                        <div>Project: Marketing Campaign</div>
-                    </div>
-                </div>
-                <a href="/tasks/6" style="margin-left: auto;">Details</a>
-            </div>
-        </div>
-    </main>
-    
-    <footer>
-        <p>&copy; 2025 CSA Platform</p>
-    </footer>
-    
-    <script>
-        // Simple filter button functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const filterButtons = document.querySelectorAll('.filter-button');
-            filterButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    filterButtons.forEach(b => b.classList.remove('active'));
-                    button.classList.add('active');
-                });
-            });
-        });
-    </script>
-</body>
-</html>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts_extra %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      // Task checkboxes
+      document.querySelectorAll('input[type="checkbox"]').forEach(function(checkbox) {
+          checkbox.addEventListener('change', function() {
+              const row = this.closest('tr');
+              if (this.checked) {
+                  row.style.opacity = '0.6';
+              } else {
+                  row.style.opacity = '1';
+              }
+          });
+  });
+</script>
+{% endblock %}

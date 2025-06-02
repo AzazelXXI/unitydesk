@@ -4,7 +4,7 @@ run: # run the project with uvicorn and reload on changes with ssl
 
 run-local: # run the project locally with uvicorn and reload on changes without ssl
 	cls
-	uvicorn src.main:app --reload --port 8000 --ssl-keyfile .cert/key.pem --ssl-certfile .cert/cert.pem
+	uvicorn src.main:app --reload --port 8000
 
 clean-windows: # clean up the project with python cache, mypy cache, and pycache files and its folders
 	cls

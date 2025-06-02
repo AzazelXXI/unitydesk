@@ -6,7 +6,7 @@ from src.middleware.auth_middleware import (
     admin_or_manager,
     non_guest,
 )
-from src.models_backup.user import User
+from src.models.user import User  # Changed from src.models_backup.user
 
 router = APIRouter(tags=["core"])
 controller = CoreController()

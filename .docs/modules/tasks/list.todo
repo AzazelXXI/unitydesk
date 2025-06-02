@@ -1,6 +1,6 @@
 Task Module:
     ✔ Fix class diagram @started(25-05-31 00:23) @done(25-05-31 12:49) @lasted(12h26m22s)
-    ☐ Rebuild the database @started(25-06-01 09:29)
+    ✔ Rebuild the database @started(25-06-01 09:29) @done(25-06-02 19:48) @lasted(1d10h19m32s)
+    ☐ Design UI @started(25-06-02 19:35)   
     ☐ Unit test
     ☐ Intergration Test
-Archive:

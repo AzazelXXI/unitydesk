@@ -69,9 +69,22 @@ class User(Base):
     assigned_tasks = relationship("Task", back_populates="assignee")
     comments = relationship("Comment", back_populates="author")
     uploaded_attachments = relationship("Attachment", back_populates="uploader")
-    created_teams = relationship("Team", back_populates="team_creator")
+    created_teams = relationship(
+        "Team", back_populates="team_creator"
+    )  # Người tạo team
     calendars = relationship(
         "Calendar", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    # Mối quan hệ thành viên trong team
+    team_membership_details = relationship(
+        "TeamMemberAssociation", back_populates="user"
+    )
+    member_of_teams = relationship(
+        "Team",
+        secondary="team_members",  # Thay đổi ở đây
+        back_populates="members",
+        viewonly=True,  # Để tránh xung đột khi quản lý qua TeamMemberAssociation
     )
 
 
@@ -85,3 +98,17 @@ class TeamMemberUser(User):
 
 class ClientUser(User):
     __mapper_args__ = {"polymorphic_identity": UserTypeEnum.CLIENT}
+
+
+class TeamMemberAssociation(Base):  # Bảng trung gian với thông tin thêm (vai trò)
+    __tablename__ = "team_members"  # Trùng tên với table đã định nghĩa
+    team_id = Column(
+        UUID(as_uuid=True), ForeignKey("teams.id", ondelete="CASCADE"), primary_key=True
+    )
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    role = Column(String(50), default="Member", nullable=False)
+
+    user = relationship("User", back_populates="team_membership_details")
+    team = relationship("Team", back_populates="member_details")

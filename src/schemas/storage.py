@@ -3,7 +3,13 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
 
-from src.models_backup.storage import StoragePermissionLevel
+# Temporarily commenting out enum imports as we use Any placeholders
+# from src.models.storage import StoragePermissionLevel
+
+# Using Any as placeholders for enums to allow the application to start
+from typing import Any
+
+StoragePermissionLevel = Any
 
 
 # Base schema

@@ -4,14 +4,12 @@ from src.apis.analytics_views import router as analytics_router
 from src.apis.client_views import router as client_router
 from src.apis.project_views import router as project_router
 from src.apis.task_views import router as task_router
-from src.apis.task_views import task_router
 
 # List of all routers to include in the application
-routers = [
+web_routers = [
     asset_router,
     analytics_router,
     client_router,
     project_router,
-    task_router,   # Task router for project-related endpoints
-    task_router    # Task router for direct task operations
+    task_router,  # Task router for task operations
 ]

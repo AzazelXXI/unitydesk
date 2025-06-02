@@ -9,7 +9,9 @@ The routes are organized by module, with each module having its own router file.
 # Import all routers for easy access
 from src.views.core_routes import router as core_router
 from src.views.dashboard_routes import router as dashboard_router
-from src.views.meeting_routes import router as meeting_router
+
+# Meeting module will be developed later
+# from src.views.meeting_routes import router as meeting_router
 from src.views.calendar_routes import router as calendar_router
 from src.views.projects_routes import router as projects_router
 from src.views.task_routes import router as task_router
@@ -21,13 +23,13 @@ from src.controllers.project_controller import router as project_controller_rout
 web_routers = [
     core_router,
     dashboard_router,
-    meeting_router,
+    # meeting_router,  # Hidden for now, will be developed later
     calendar_router,
     projects_router,
     task_router,
     user_router,
     public_user_router,  # /public-user prefix
-    project_controller_router  # Modern project templates
+    project_controller_router,  # Modern project templates
 ]
 
 __all__ = [

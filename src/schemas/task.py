@@ -3,7 +3,14 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
 
-from src.models_backup.task import TaskStatus, TaskPriority
+# Temporarily commenting out enum imports as we use Any placeholders
+# from src.models.task import TaskStatus, TaskPriority
+
+# Using Any as placeholders for enums to allow the application to start
+from typing import Any
+
+TaskStatus = Any
+TaskPriority = Any
 
 
 # Base schema
@@ -97,8 +104,8 @@ class TaskBase(BaseModel):
 
     title: str
     description: Optional[str] = None
-    status: TaskStatus = TaskStatus.TODO
-    priority: TaskPriority = TaskPriority.MEDIUM
+    status: TaskStatus = None
+    priority: TaskPriority = None
     due_date: Optional[datetime] = None
     start_date: Optional[datetime] = None
     estimated_hours: Optional[float] = None

@@ -5,9 +5,23 @@ import logging
 
 from src.database import get_db
 from src.controllers.project_controller import ProjectController
-from src.models_backup.marketing_project import ProjectStatus, ProjectType
+
+# Temporarily commenting out enum imports as we use Any placeholders
+# from src.models.project import (
+#     ProjectStatus,
+#     ProjectType,
+# )
+
+# Using Any as placeholders for enums to allow the application to start
+from typing import Any
+
+ProjectStatus = Any
+ProjectType = Any
+
 from src.schemas.marketing_project import (
-    MarketingProjectCreate, MarketingProjectUpdate, MarketingProjectRead
+    MarketingProjectCreate,
+    MarketingProjectUpdate,
+    MarketingProjectRead,
 )
 
 # Configure logging
@@ -16,12 +30,16 @@ logger = logging.getLogger(__name__)
 router = APIRouter(
     prefix="/api/projects",
     tags=["marketing projects"],
-    responses={404: {"description": "Not found"}}
+    responses={404: {"description": "Not found"}},
 )
 
 
-@router.post("/", response_model=MarketingProjectRead, status_code=status.HTTP_201_CREATED)
-async def create_project(project_data: MarketingProjectCreate, db: AsyncSession = Depends(get_db)):
+@router.post(
+    "/", response_model=MarketingProjectRead, status_code=status.HTTP_201_CREATED
+)
+async def create_project(
+    project_data: MarketingProjectCreate, db: AsyncSession = Depends(get_db)
+):
     """
     Create a new marketing project
     """
@@ -36,12 +54,14 @@ async def get_projects(
     project_type: Optional[ProjectType] = None,
     client_id: Optional[int] = None,
     search: Optional[str] = None,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Get all marketing projects with optional filtering
     """
-    return await ProjectController.get_projects(skip, limit, status, project_type, client_id, search, db)
+    return await ProjectController.get_projects(
+        skip, limit, status, project_type, client_id, search, db
+    )
 
 
 @router.get("/{project_id}", response_model=MarketingProjectRead)
@@ -56,7 +76,7 @@ async def get_project(project_id: int, db: AsyncSession = Depends(get_db)):
 async def update_project(
     project_id: int,
     project_data: MarketingProjectUpdate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Update a marketing project

@@ -1,0 +1,137 @@
+{% extends "core/templates/base.html" %}
+{% block title %}Create New Task{% endblock %}
+{% block head_extra %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+<link rel="stylesheet" href="/tasks/static/task.css" />
+{% endblock %}{% block content %}
+<div class="container task-container mt-5">
+  <div class="task-details-header">
+    <h2><i class="fas fa-plus-circle me-2"></i>Create New Task</h2>
+  </div>
+  <form id="createTaskForm">
+    <div class="row">
+      <div class="col-md-8 mb-3">
+        <label for="taskName" class="form-label">Task Name <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="taskName" name="taskName" required />
+      </div>
+      <div class="col-md-4 mb-3">
+        <label for="taskProject" class="form-label">Project <span class="text-danger">*</span></label>
+        <select class="form-select" id="taskProject" name="taskProject" required>
+          <option selected disabled value="">Choose project...</option>
+          <option value="proj1">Project Alpha</option>
+          <option value="proj2">Project Beta</option>
+          <option value="proj3">Internal Development</option>
+        </select>
+      </div>
+    </div>    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label for="taskAssignee" class="form-label">Assignee</label>
+        <select class="form-select" id="taskAssignee" name="taskAssignee">
+          <option selected disabled value="">Assign to...</option>
+          <option value="user1">Alice Wonderland</option>
+          <option value="user2">Bob The Builder</option>
+          <option value="user3">Charlie Brown</option>
+        </select>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label for="taskStatus" class="form-label">Status</label>
+        <select class="form-select" id="taskStatus" name="taskStatus">
+          <option value="NOT_STARTED" selected>Not Started</option>
+          <option value="IN_PROGRESS">In Progress</option>
+          <option value="COMPLETED">Completed</option>
+        </select>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label for="taskPriority" class="form-label">Priority</label>
+        <select class="form-select" id="taskPriority" name="taskPriority">
+          <option value="LOW">Low</option>
+          <option value="MEDIUM" selected>Medium</option>
+          <option value="HIGH">High</option>
+          <option value="URGENT">Urgent</option>
+        </select>
+      </div>
+    </div>    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label for="taskStartDate" class="form-label">Start Date</label>
+        <input type="text" class="form-control date-picker" id="taskStartDate" name="taskStartDate" placeholder="Select date..." />
+      </div>
+      <div class="col-md-4 mb-3">
+        <label for="taskEndDate" class="form-label">End Date / Deadline</label>
+        <input type="text" class="form-control date-picker" id="taskEndDate" name="taskEndDate" placeholder="Select date..." />
+      </div>
+      <div class="col-md-4 mb-3">
+        <label for="taskEstimatedTime" class="form-label">Estimated Time (hours)</label>
+        <input type="number" class="form-control" id="taskEstimatedTime" name="taskEstimatedTime" min="0" />
+      </div>
+    </div>    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="taskCategory" class="form-label">Category</label>
+        <input type="text" class="form-control" id="taskCategory" name="taskCategory" />
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="taskType" class="form-label">Type</label>
+        <input type="text" class="form-control" id="taskType" name="taskType" />
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="taskDescription" class="form-label">Description</label>
+      <textarea class="form-control" id="taskDescription" name="taskDescription" rows="4"></textarea>
+    </div>
+
+    <div class="form-check mb-3">
+      <input class="form-check-input" type="checkbox" value="" id="taskIsRecurring" name="taskIsRecurring" />
+      <label class="form-check-label" for="taskIsRecurring">Is this a recurring task?</label>
+    </div>
+
+    <hr />
+    <div class="d-flex justify-content-end">
+      <button type="button" class="btn btn-secondary me-2" onclick="window.history.back();">Cancel</button>
+      <button type="submit" class="btn btn-primary btn-task-primary">
+        <i class="fas fa-save me-1"></i> Create Task
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}{% block scripts_extra %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Initialize Flatpickr only if elements exist
+    const datePickers = document.querySelectorAll(".date-picker");
+    if (datePickers.length > 0) {
+      flatpickr(".date-picker", {
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "F j, Y",
+      });
+    }
+
+    const form = document.getElementById("createTaskForm");
+    if (form) {
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const taskName = document.getElementById("taskName").value;
+        const taskProject = document.getElementById("taskProject").value;
+
+        if (!taskName.trim()) {
+          alert("Task Name is required.");
+          return;
+        }
+        if (!taskProject) {
+          alert("Project is required.");
+          return;
+        }
+
+        const formData = new FormData(form);
+        const data = {};
+        formData.forEach((value, key) => (data[key] = value));
+
+        console.log("Form data:", data);
+        alert("Task creation form submitted (simulated). Check console for data.");
+      });
+    }
+  });
+</script>
+{% endblock %}

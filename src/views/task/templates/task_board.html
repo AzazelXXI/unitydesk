@@ -1,1539 +1,522 @@
-{% extends "base.html" %} {% block title %}Tasks - CSA Hello System{% endblock
-%} {% block extra_css %}
-<link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/dragula@3.7.3/dist/dragula.min.css"
-/>
+{% extends "core/templates/base.html" %}
+{% block title %}Task Board - CSA Platform{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dragula@3.7.3/dist/dragula.min.css" />
+<link rel="stylesheet" href="/tasks/static/task.css" />
 <style>
-    /* Task Board Styles */
-    .task-board {
-        display: flex;
-        gap: 1.25rem;
-        overflow-x: auto;
-        padding-bottom: 1rem;
-        min-height: calc(100vh - 250px);
-    }
+/* Task Board Specific Styles */
+.task-board-container {
+    padding: 20px;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
 
-    .task-column {
-        min-width: 300px;
-        width: 300px;
-        background-color: #f8f9fa;
-        border-radius: 0.5rem;
-        display: flex;
-        flex-direction: column;
-        max-height: calc(100vh - 250px);
-    }
+.task-board {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    padding: 20px 0;
+}
 
-    .task-column-header {
-        padding: 0.75rem 1rem;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background-color: rgba(0, 0, 0, 0.03);
-        border-top-left-radius: 0.5rem;
-        border-top-right-radius: 0.5rem;
-    }
+.task-column {
+    min-width: 280px;
+    background-color: #e9ecef;
+    border-radius: 8px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+}
 
-    .task-column-title {
-        font-weight: 600;
-        margin: 0;
-    }
+.task-column-header {
+    padding: 15px;
+    background-color: #dee2e6;
+    border-radius: 8px 8px 0 0;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-    .task-column-count {
-        background-color: rgba(0, 0, 0, 0.1);
-        color: #444;
-        border-radius: 50%;
-        width: 24px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        font-weight: 600;
-    }
+.task-column-tasks {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    min-height: 200px;
+}
 
-    .task-column-tasks {
-        padding: 0.75rem;
-        flex-grow: 1;
-        overflow-y: auto;
-    }
+.task-card {
+    background: white;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    cursor: move;
+    border-left: 4px solid;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
 
-    .task-card {
-        background-color: white;
-        border-radius: 0.375rem;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        margin-bottom: 0.75rem;
-        border-left: 3px solid;
-        cursor: pointer;
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
+.task-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
 
-    .task-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
-    }
+.task-card.priority-high {
+    border-left-color: #dc3545;
+}
 
-    .task-card-content {
-        padding: 0.75rem;
-    }
+.task-card.priority-medium {
+    border-left-color: #ffc107;
+}
 
-    .task-card-title {
-        font-weight: 500;
-        margin-bottom: 0.5rem;
-        font-size: 0.9rem;
-    }
+.task-card.priority-low {
+    border-left-color: #28a745;
+}
 
-    .task-card-footer {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding-top: 0.5rem;
-        border-top: 1px solid rgba(0, 0, 0, 0.05);
-        font-size: 0.75rem;
-    }
+.task-card-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
 
-    .priority-high {
-        border-color: #e74a3b;
-    }
+.task-card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 8px;
+}
 
-    .priority-medium {
-        border-color: #f6c23e;
-    }
+.task-assignee {
+    background-color: #007bff;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+}
 
-    .priority-low {
-        border-color: #1cc88a;
-    }
+.task-due-date {
+    font-size: 11px;
+}
 
-    .task-add-new {
-        display: flex;
-        align-items: center;
-        padding: 0.75rem;
-        color: #6c757d;
-        border-radius: 0.375rem;
-        background-color: rgba(0, 0, 0, 0.03);
-        margin-bottom: 0.75rem;
-        cursor: pointer;
-        transition: background-color 0.15s ease;
-    }
+.task-due-date.overdue {
+    color: #dc3545;
+    font-weight: 600;
+}
 
-    .task-add-new:hover {
-        background-color: rgba(0, 0, 0, 0.06);
-        color: #4e73df;
-    }
+/* Dragula specific styles */
+.gu-mirror {
+    position: fixed !important;
+    margin: 0 !important;
+    z-index: 9999 !important;
+    opacity: 0.8;
+    transform: rotate(5deg);
+}
 
-    .task-add-new i {
-        margin-right: 0.5rem;
-    }
+.gu-hide {
+    display: none !important;
+}
 
-    .gu-mirror {
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-        opacity: 0.8;
-    }
+.gu-unselectable {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+}
 
-    .gu-transit {
-        opacity: 0.2;
-    }
+.gu-transit {
+    opacity: 0.2;
+}
 
-    .due-date {
-        font-size: 0.75rem;
-        color: #6c757d;
-    }
+.task-column.drag-over {
+    background-color: #d1ecf1;
+    border: 2px dashed #bee5eb;
+}
 
-    .due-date.overdue {
-        color: #e74a3b;
-    }
+/* Column specific colors */
+.column-todo .task-column-header {
+    background-color: #6c757d;
+    color: white;
+}
 
-    .due-date i {
-        margin-right: 0.25rem;
-    }
+.column-in-progress .task-column-header {
+    background-color: #007bff;
+    color: white;
+}
 
-    .task-badge {
-        padding: 0.15rem 0.4rem;
-        font-size: 0.7rem;
-        font-weight: 600;
-        border-radius: 0.25rem;
-        text-transform: uppercase;
-        margin-right: 0.25rem;
-    }
+.column-review .task-column-header {
+    background-color: #ffc107;
+    color: #212529;
+}
 
-    .badge-feature {
-        background-color: #4e73df20;
-        color: #4e73df;
-    }
+.column-done .task-column-header {
+    background-color: #28a745;
+    color: white;
+}
 
-    .badge-bug {
-        background-color: #e74a3b20;
-        color: #e74a3b;
-    }
-
-    .badge-docs {
-        background-color: #36b9cc20;
-        color: #36b9cc;
-    }
-
-    .badge-enhancement {
-        background-color: #1cc88a20;
-        color: #1cc88a;
-    }
-
-    .avatar-stack {
-        display: flex;
-    }
-
-    .avatar-stack .avatar {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        border: 2px solid white;
-        background-color: #4e73df;
-        color: white;
-        font-size: 0.7rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-left: -8px;
-    }
-
-    .avatar-stack .avatar:first-child {
-        margin-left: 0;
-    }
-
-    /* Task Filters */
-    .task-filters {
-        margin-bottom: 1.5rem;
-        background-color: white;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-    }
-
-    .filter-row {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin-bottom: 1rem;
-    }
-
-    .filter-group {
-        display: flex;
-        align-items: center;
-    }
-
-    .filter-label {
-        font-weight: 500;
-        margin-right: 0.5rem;
-        color: #5a5c69;
-    }
-
-    .filter-chip {
-        padding: 0.25rem 0.75rem;
-        border-radius: 50px;
-        font-size: 0.8rem;
-        margin-right: 0.25rem;
-        cursor: pointer;
-        transition: all 0.15s ease;
-        background-color: #f8f9fc;
-    }
-
-    .filter-chip:hover,
-    .filter-chip.active {
-        background-color: #4e73df;
-        color: white;
-    }
-
-    .filter-chip.priority-high {
-        border-color: #e74a3b;
-        background-color: #e74a3b10;
-    }
-
-    .filter-chip.priority-high:hover,
-    .filter-chip.priority-high.active {
-        background-color: #e74a3b;
-        color: white;
-    }
-
-    .filter-chip.priority-medium {
-        border-color: #f6c23e;
-        background-color: #f6c23e10;
-    }
-
-    .filter-chip.priority-medium:hover,
-    .filter-chip.priority-medium.active {
-        background-color: #f6c23e;
-        color: white;
-    }
-
-    .filter-chip.priority-low {
-        border-color: #1cc88a;
-        background-color: #1cc88a10;
-    }
-
-    .filter-chip.priority-low:hover,
-    .filter-chip.priority-low.active {
-        background-color: #1cc88a;
-        color: white;
-    }
-
-    /* Task Details Modal */
-    .task-modal .modal-header {
-        display: flex;
-        align-items: flex-start;
-    }
-
-    .task-modal .modal-body {
-        padding: 1.5rem;
-    }
-
-    .task-detail-row {
-        margin-bottom: 1rem;
-    }
-
-    .task-detail-label {
-        font-weight: 500;
-        color: #5a5c69;
-        margin-bottom: 0.25rem;
-    }
-
-    .task-description {
-        background-color: #f8f9fc;
-        padding: 1rem;
-        border-radius: 0.375rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .subtask-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 0.5rem;
-    }
-
-    .subtask-checkbox {
-        margin-right: 0.5rem;
-    }
-
-    .task-comments {
-        margin-top: 1.5rem;
-    }
-
-    .comment {
-        display: flex;
-        margin-bottom: 1rem;
-    }
-
-    .comment-avatar {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        margin-right: 1rem;
-        background-color: #4e73df;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 500;
-    }
-
-    .comment-content {
-        flex-grow: 1;
-    }
-
-    .comment-header {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.25rem;
-    }
-
-    .comment-author {
-        font-weight: 500;
-    }
-
-    .comment-time {
-        color: #6c757d;
-        font-size: 0.8rem;
-    }
-
-    .comment-text {
-        background-color: #f8f9fc;
-        padding: 0.75rem;
-        border-radius: 0.375rem;
-        font-size: 0.9rem;
-    }
-
-    .add-comment {
-        margin-top: 1rem;
-    }
+.task-count {
+    background-color: rgba(255,255,255,0.3);
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 12px;
+}
 </style>
-{% endblock %} {% block content %}
-<div class="container-fluid px-4">
-    <!-- Page Header -->
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">
-            <i class="fas fa-tasks me-2"></i>Task Board
-        </h1>
+{% endblock %}
+
+{% block content %}
+<div class="task-board-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-columns me-2"></i>Task Board</h2>
         <div>
-            <button class="btn btn-sm btn-outline-secondary me-2">
-                <i class="fas fa-filter me-1"></i> View Options
-            </button>
-            <button
-                class="btn btn-sm btn-primary shadow-sm"
-                data-bs-toggle="modal"
-                data-bs-target="#newTaskModal"
-            >
-                <i class="fas fa-plus fa-sm me-1"></i> New Task
-            </button>
+            <a href="/tasks" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-list me-1"></i>List View
+            </a>
+            <a href="/tasks/create" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>New Task
+            </a>
         </div>
     </div>
 
-    <!-- Task Filters -->
-    <div class="task-filters mb-4">
-        <div class="filter-row">
-            <div class="filter-group">
-                <span class="filter-label">Project:</span>
-                <div>
-                    <span class="filter-chip active">All</span>
-                    <span class="filter-chip">Website Redesign</span>
-                    <span class="filter-chip">Mobile App</span>
-                    <span class="filter-chip">CRM Implementation</span>
-                </div>
-            </div>
-
-            <div class="filter-group">
-                <span class="filter-label">Priority:</span>
-                <div>
-                    <span class="filter-chip active">All</span>
-                    <span class="filter-chip priority-high">High</span>
-                    <span class="filter-chip priority-medium">Medium</span>
-                    <span class="filter-chip priority-low">Low</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="filter-row">
-            <div class="filter-group">
-                <span class="filter-label">Type:</span>
-                <div>
-                    <span class="filter-chip active">All</span>
-                    <span class="filter-chip">Feature</span>
-                    <span class="filter-chip">Bug</span>
-                    <span class="filter-chip">Documentation</span>
-                    <span class="filter-chip">Enhancement</span>
-                </div>
-            </div>
-
-            <div class="filter-group">
-                <span class="filter-label">Assigned to:</span>
-                <div>
-                    <span class="filter-chip active">All</span>
-                    <span class="filter-chip">My Tasks</span>
-                    <span class="filter-chip">Unassigned</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-6">
-                <div class="input-group">
-                    <input
-                        type="text"
-                        class="form-control"
-                        placeholder="Search tasks..."
-                    />
-                    <button class="btn btn-primary" type="button">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="col-md-6 text-end d-none d-md-block">
-                <div class="btn-group" role="group">
-                    <button
-                        type="button"
-                        class="btn btn-outline-secondary active"
-                    >
-                        <i class="fas fa-columns"></i> Board
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary">
-                        <i class="fas fa-list"></i> List
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary">
-                        <i class="fas fa-calendar"></i> Calendar
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Task Board -->
     <div class="task-board">
-        <!-- To Do Column -->
-        <div class="task-column">
+        <!-- TODO Column -->
+        <div class="task-column column-todo" data-status="todo">
             <div class="task-column-header">
-                <h5 class="task-column-title">To Do</h5>
-                <span class="task-column-count">4</span>
+                <span>To Do</span>
+                <span class="task-count">{{ columns.todo|length if columns.todo else 0 }}</span>
             </div>
-            <div class="task-column-tasks" id="todo">
-                <div class="task-add-new">
-                    <i class="fas fa-plus"></i> Add New Task
-                </div>
-
-                <!-- Task 1 -->
-                <div class="task-card priority-high" data-task-id="task1">
-                    <div class="task-card-content">
-                        <span class="task-badge badge-feature">Feature</span>
-                        <h6 class="task-card-title">
-                            Create user authentication flow
-                        </h6>
-                        <div class="due-date overdue">
-                            <i class="far fa-calendar-alt"></i> Due yesterday
-                        </div>
-                        <div class="task-card-footer">
-                            <div class="avatar-stack">
-                                <div class="avatar">JD</div>
-                            </div>
-                            <div><i class="far fa-comment"></i> 3</div>
+            <div class="task-column-tasks" id="todo-tasks">
+                {% for task in columns.todo %}
+                <div class="task-card priority-{{ task.priority }}" data-task-id="{{ task.id }}">
+                    <div class="task-card-title">{{ task.title }}</div>
+                    <div class="task-card-description">{{ task.description[:50] }}{% if task.description|length > 50 %}...{% endif %}</div>
+                    <div class="task-card-meta">
+                        <div class="task-assignee">{{ task.assignee.initials }}</div>
+                        <div class="task-due-date {% if task.is_overdue %}overdue{% endif %}">
+                            <i class="fas fa-calendar-alt me-1"></i>{{ task.due_date }}
                         </div>
                     </div>
                 </div>
-
-                <!-- Task 2 -->
-                <div class="task-card priority-medium" data-task-id="task2">
-                    <div class="task-card-content">
-                        <span class="task-badge badge-feature">Feature</span>
-                        <h6 class="task-card-title">
-                            Implement search functionality
-                        </h6>
-                        <div class="due-date">
-                            <i class="far fa-calendar-alt"></i> Due in 2 days
-                        </div>
-                        <div class="task-card-footer">
-                            <div class="avatar-stack">
-                                <div class="avatar">SM</div>
-                            </div>
-                            <div><i class="far fa-comment"></i> 1</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Task 3 -->
-                <div class="task-card priority-low" data-task-id="task3">
-                    <div class="task-card-content">
-                        <span class="task-badge badge-docs">Docs</span>
-                        <h6 class="task-card-title">Write API documentation</h6>
-                        <div class="due-date">
-                            <i class="far fa-calendar-alt"></i> Due in 5 days
-                        </div>
-                        <div class="task-card-footer">
-                            <div class="avatar-stack">
-                                <div class="avatar">RJ</div>
-                            </div>
-                            <div><i class="far fa-comment"></i> 0</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Task 4 -->
-                <div class="task-card priority-low" data-task-id="task4">
-                    <div class="task-card-content">
-                        <span class="task-badge badge-enhancement"
-                            >Enhancement</span
-                        >
-                        <h6 class="task-card-title">Add dark mode support</h6>
-                        <div class="due-date">
-                            <i class="far fa-calendar-alt"></i> Due in 1 week
-                        </div>
-                        <div class="task-card-footer">
-                            <div class="avatar-stack">
-                                <div class="avatar">EW</div>
-                            </div>
-                            <div><i class="far fa-comment"></i> 2</div>
-                        </div>
-                    </div>
-                </div>
+                {% endfor %}
             </div>
         </div>
 
-        <!-- In Progress Column -->
-        <div class="task-column">
+        <!-- IN PROGRESS Column -->
+        <div class="task-column column-in-progress" data-status="in_progress">
             <div class="task-column-header">
-                <h5 class="task-column-title">In Progress</h5>
-                <span class="task-column-count">3</span>
+                <span>In Progress</span>
+                <span class="task-count">{{ columns.in_progress|length if columns.in_progress else 0 }}</span>
             </div>
-            <div class="task-column-tasks" id="inprogress">
-                <div class="task-add-new">
-                    <i class="fas fa-plus"></i> Add New Task
-                </div>
-
-                <!-- Task 5 -->
-                <div class="task-card priority-high" data-task-id="task5">
-                    <div class="task-card-content">
-                        <span class="task-badge badge-bug">Bug</span>
-                        <h6 class="task-card-title">
-                            Fix login validation error
-                        </h6>
-                        <div class="due-date overdue">
-                            <i class="far fa-calendar-alt"></i> Due today
-                        </div>
-                        <div class="task-card-footer">
-                            <div class="avatar-stack">
-                                <div class="avatar">JD</div>
-                                <div class="avatar">MB</div>
-                            </div>
-                            <div><i class="far fa-comment"></i> 5</div>
+            <div class="task-column-tasks" id="in-progress-tasks">
+                {% for task in columns.in_progress %}
+                <div class="task-card priority-{{ task.priority }}" data-task-id="{{ task.id }}">
+                    <div class="task-card-title">{{ task.title }}</div>
+                    <div class="task-card-description">{{ task.description[:50] }}{% if task.description|length > 50 %}...{% endif %}</div>
+                    <div class="task-card-meta">
+                        <div class="task-assignee">{{ task.assignee.initials }}</div>
+                        <div class="task-due-date {% if task.is_overdue %}overdue{% endif %}">
+                            <i class="fas fa-calendar-alt me-1"></i>{{ task.due_date }}
                         </div>
                     </div>
                 </div>
-
-                <!-- Task 6 -->
-                <div class="task-card priority-medium" data-task-id="task6">
-                    <div class="task-card-content">
-                        <span class="task-badge badge-feature">Feature</span>
-                        <h6 class="task-card-title">
-                            Implement data visualization dashboard
-                        </h6>
-                        <div class="due-date">
-                            <i class="far fa-calendar-alt"></i> Due in 3 days
-                        </div>
-                        <div class="task-card-footer">
-                            <div class="avatar-stack">
-                                <div class="avatar">SM</div>
-                                <div class="avatar">EW</div>
-                            </div>
-                            <div><i class="far fa-comment"></i> 2</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Task 7 -->
-                <div class="task-card priority-high" data-task-id="task7">
-                    <div class="task-card-content">
-                        <span class="task-badge badge-feature">Feature</span>
-                        <h6 class="task-card-title">
-                            Set up continuous integration
-                        </h6>
-                        <div class="due-date">
-                            <i class="far fa-calendar-alt"></i> Due in 2 days
-                        </div>
-                        <div class="task-card-footer">
-                            <div class="avatar-stack">
-                                <div class="avatar">MB</div>
-                            </div>
-                            <div><i class="far fa-comment"></i> 1</div>
-                        </div>
-                    </div>
-                </div>
+                {% endfor %}
             </div>
         </div>
 
-        <!-- Review Column -->
-        <div class="task-column">
+        <!-- REVIEW Column -->
+        <div class="task-column column-review" data-status="review">
             <div class="task-column-header">
-                <h5 class="task-column-title">Review</h5>
-                <span class="task-column-count">2</span>
+                <span>Review</span>
+                <span class="task-count">{{ columns.review|length if columns.review else 0 }}</span>
             </div>
-            <div class="task-column-tasks" id="review">
-                <div class="task-add-new">
-                    <i class="fas fa-plus"></i> Add New Task
-                </div>
-
-                <!-- Task 8 -->
-                <div class="task-card priority-medium" data-task-id="task8">
-                    <div class="task-card-content">
-                        <span class="task-badge badge-enhancement"
-                            >Enhancement</span
-                        >
-                        <h6 class="task-card-title">
-                            Optimize database queries
-                        </h6>
-                        <div class="due-date">
-                            <i class="far fa-calendar-alt"></i> Due in 4 days
-                        </div>
-                        <div class="task-card-footer">
-                            <div class="avatar-stack">
-                                <div class="avatar">RJ</div>
-                            </div>
-                            <div><i class="far fa-comment"></i> 3</div>
+            <div class="task-column-tasks" id="review-tasks">
+                {% for task in columns.review %}
+                <div class="task-card priority-{{ task.priority }}" data-task-id="{{ task.id }}">
+                    <div class="task-card-title">{{ task.title }}</div>
+                    <div class="task-card-description">{{ task.description[:50] }}{% if task.description|length > 50 %}...{% endif %}</div>
+                    <div class="task-card-meta">
+                        <div class="task-assignee">{{ task.assignee.initials }}</div>
+                        <div class="task-due-date {% if task.is_overdue %}overdue{% endif %}">
+                            <i class="fas fa-calendar-alt me-1"></i>{{ task.due_date }}
                         </div>
                     </div>
                 </div>
-
-                <!-- Task 9 -->
-                <div class="task-card priority-low" data-task-id="task9">
-                    <div class="task-card-content">
-                        <span class="task-badge badge-feature">Feature</span>
-                        <h6 class="task-card-title">
-                            Implement image upload functionality
-                        </h6>
-                        <div class="due-date">
-                            <i class="far fa-calendar-alt"></i> Due in 1 week
-                        </div>
-                        <div class="task-card-footer">
-                            <div class="avatar-stack">
-                                <div class="avatar">JD</div>
-                            </div>
-                            <div><i class="far fa-comment"></i> 2</div>
-                        </div>
-                    </div>
-                </div>
+                {% endfor %}
             </div>
         </div>
 
-        <!-- Done Column -->
-        <div class="task-column">
+        <!-- DONE Column -->
+        <div class="task-column column-done" data-status="done">
             <div class="task-column-header">
-                <h5 class="task-column-title">Done</h5>
-                <span class="task-column-count">3</span>
+                <span>Done</span>
+                <span class="task-count">{{ columns.done|length if columns.done else 0 }}</span>
             </div>
-            <div class="task-column-tasks" id="done">
-                <div class="task-add-new">
-                    <i class="fas fa-plus"></i> Add New Task
-                </div>
-
-                <!-- Task 10 -->
-                <div class="task-card priority-medium" data-task-id="task10">
-                    <div class="task-card-content">
-                        <span class="task-badge badge-bug">Bug</span>
-                        <h6 class="task-card-title">
-                            Fix form submission error
-                        </h6>
-                        <div class="due-date">
-                            <i class="far fa-check-circle"></i> Completed 2 days
-                            ago
-                        </div>
-                        <div class="task-card-footer">
-                            <div class="avatar-stack">
-                                <div class="avatar">MB</div>
-                            </div>
-                            <div><i class="far fa-comment"></i> 4</div>
+            <div class="task-column-tasks" id="done-tasks">
+                {% for task in columns.done %}
+                <div class="task-card priority-{{ task.priority }}" data-task-id="{{ task.id }}">
+                    <div class="task-card-title">{{ task.title }}</div>
+                    <div class="task-card-description">{{ task.description[:50] }}{% if task.description|length > 50 %}...{% endif %}</div>
+                    <div class="task-card-meta">
+                        <div class="task-assignee">{{ task.assignee.initials }}</div>
+                        <div class="task-due-date {% if task.is_overdue %}overdue{% endif %}">
+                            <i class="fas fa-calendar-alt me-1"></i>{{ task.due_date }}
                         </div>
                     </div>
                 </div>
-
-                <!-- Task 11 -->
-                <div class="task-card priority-high" data-task-id="task11">
-                    <div class="task-card-content">
-                        <span class="task-badge badge-feature">Feature</span>
-                        <h6 class="task-card-title">
-                            Set up project structure
-                        </h6>
-                        <div class="due-date">
-                            <i class="far fa-check-circle"></i> Completed 1 week
-                            ago
-                        </div>
-                        <div class="task-card-footer">
-                            <div class="avatar-stack">
-                                <div class="avatar">JD</div>
-                                <div class="avatar">SM</div>
-                                <div class="avatar">RJ</div>
-                            </div>
-                            <div><i class="far fa-comment"></i> 7</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Task 12 -->
-                <div class="task-card priority-low" data-task-id="task12">
-                    <div class="task-card-content">
-                        <span class="task-badge badge-docs">Docs</span>
-                        <h6 class="task-card-title">
-                            Create project documentation
-                        </h6>
-                        <div class="due-date">
-                            <i class="far fa-check-circle"></i> Completed 1 week
-                            ago
-                        </div>
-                        <div class="task-card-footer">
-                            <div class="avatar-stack">
-                                <div class="avatar">EW</div>
-                            </div>
-                            <div><i class="far fa-comment"></i> 2</div>
-                        </div>
-                    </div>
-                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
 </div>
 
-<!-- New Task Modal -->
-<div
-    class="modal fade"
-    id="newTaskModal"
-    tabindex="-1"
-    aria-labelledby="newTaskModalLabel"
-    aria-hidden="true"
->
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="newTaskModalLabel">
-                    <i class="fas fa-plus me-2"></i>Create New Task
-                </h5>
-                <button
-                    type="button"
-                    class="btn-close btn-close-white"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                ></button>
-            </div>
-            <div class="modal-body">
-                <form id="newTaskForm">
-                    <div class="mb-3">
-                        <label for="taskTitle" class="form-label"
-                            >Task Title</label
-                        >
-                        <input
-                            type="text"
-                            class="form-control"
-                            id="taskTitle"
-                            required
-                        />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="taskDescription" class="form-label"
-                            >Description</label
-                        >
-                        <textarea
-                            class="form-control"
-                            id="taskDescription"
-                            rows="3"
-                        ></textarea>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="taskProject" class="form-label"
-                                >Project</label
-                            >
-                            <select
-                                class="form-select"
-                                id="taskProject"
-                                required
-                            >
-                                <option value="">Select Project</option>
-                                <option value="1">Website Redesign</option>
-                                <option value="2">Mobile App</option>
-                                <option value="3">CRM Implementation</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="taskType" class="form-label"
-                                >Type</label
-                            >
-                            <select class="form-select" id="taskType" required>
-                                <option value="">Select Type</option>
-                                <option value="feature">Feature</option>
-                                <option value="bug">Bug</option>
-                                <option value="docs">Documentation</option>
-                                <option value="enhancement">Enhancement</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="taskPriority" class="form-label"
-                                >Priority</label
-                            >
-                            <select
-                                class="form-select"
-                                id="taskPriority"
-                                required
-                            >
-                                <option value="">Select Priority</option>
-                                <option value="high">High</option>
-                                <option value="medium">Medium</option>
-                                <option value="low">Low</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="taskDueDate" class="form-label"
-                                >Due Date</label
-                            >
-                            <input
-                                type="date"
-                                class="form-control"
-                                id="taskDueDate"
-                            />
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="taskAssignees" class="form-label"
-                            >Assignees</label
-                        >
-                        <select class="form-select" id="taskAssignees" multiple>
-                            <option value="1">John Doe</option>
-                            <option value="2">Sarah Miller</option>
-                            <option value="3">Michael Brown</option>
-                            <option value="4">Emily Wilson</option>
-                            <option value="5">Robert Johnson</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button
-                    type="button"
-                    class="btn btn-outline-secondary"
-                    data-bs-dismiss="modal"
-                >
-                    Cancel
-                </button>
-                <button
-                    type="button"
-                    class="btn btn-primary"
-                    id="createTaskBtn"
-                >
-                    Create Task
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Task Details Modal -->
-<div
-    class="modal fade task-modal"
-    id="taskDetailsModal"
-    tabindex="-1"
-    aria-labelledby="taskDetailsModalLabel"
-    aria-hidden="true"
->
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+<!-- Task Detail Modal -->
+<div class="modal fade" id="taskDetailModal" tabindex="-1" aria-labelledby="taskDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <div>
-                    <h5 class="modal-title" id="taskDetailsModalLabel">
-                        Create user authentication flow
-                    </h5>
-                    <div class="text-muted small">
-                        Task #1 • Created on May 1, 2025
-                    </div>
-                </div>
-                <button
-                    type="button"
-                    class="btn-close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                ></button>
+                <h5 class="modal-title" id="taskDetailModalLabel">Task Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-8">
-                        <!-- Task Description -->
-                        <div class="task-description">
-                            <p>
-                                Implement a complete user authentication flow
-                                including registration, login, password reset,
-                                and account verification. The system should
-                                support both email/password and OAuth
-                                authentication methods.
-                            </p>
-                            <p>
-                                The implementation should follow security best
-                                practices and include proper validation and
-                                error handling.
-                            </p>
-                        </div>
-
-                        <!-- Subtasks -->
-                        <h6>Subtasks</h6>
-                        <div class="subtask-list mb-4">
-                            <div class="subtask-item">
-                                <input
-                                    type="checkbox"
-                                    class="subtask-checkbox"
-                                    id="subtask1"
-                                    checked
-                                />
-                                <label for="subtask1"
-                                    >Create database schema for user
-                                    accounts</label
-                                >
-                            </div>
-                            <div class="subtask-item">
-                                <input
-                                    type="checkbox"
-                                    class="subtask-checkbox"
-                                    id="subtask2"
-                                    checked
-                                />
-                                <label for="subtask2"
-                                    >Set up email service for
-                                    verification</label
-                                >
-                            </div>
-                            <div class="subtask-item">
-                                <input
-                                    type="checkbox"
-                                    class="subtask-checkbox"
-                                    id="subtask3"
-                                />
-                                <label for="subtask3"
-                                    >Implement login form and validation</label
-                                >
-                            </div>
-                            <div class="subtask-item">
-                                <input
-                                    type="checkbox"
-                                    class="subtask-checkbox"
-                                    id="subtask4"
-                                />
-                                <label for="subtask4"
-                                    >Add OAuth providers (Google, GitHub)</label
-                                >
-                            </div>
-                            <div class="subtask-item">
-                                <input
-                                    type="checkbox"
-                                    class="subtask-checkbox"
-                                    id="subtask5"
-                                />
-                                <label for="subtask5"
-                                    >Create password reset flow</label
-                                >
-                            </div>
-                        </div>
-
-                        <!-- Task Comments -->
-                        <div class="task-comments">
-                            <h6>Comments</h6>
-
-                            <div class="comment">
-                                <div class="comment-avatar">SM</div>
-                                <div class="comment-content">
-                                    <div class="comment-header">
-                                        <div class="comment-author">
-                                            Sarah Miller
-                                        </div>
-                                        <div class="comment-time">
-                                            Yesterday at 3:45 PM
-                                        </div>
-                                    </div>
-                                    <div class="comment-text">
-                                        I found a good library for handling
-                                        OAuth authentication. Let me know if you
-                                        want me to share the documentation.
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="comment">
-                                <div class="comment-avatar">JD</div>
-                                <div class="comment-content">
-                                    <div class="comment-header">
-                                        <div class="comment-author">
-                                            John Doe
-                                        </div>
-                                        <div class="comment-time">
-                                            Yesterday at 4:15 PM
-                                        </div>
-                                    </div>
-                                    <div class="comment-text">
-                                        That would be great, Sarah. Please share
-                                        the link. I'm planning to start
-                                        implementation today.
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="comment">
-                                <div class="comment-avatar">MB</div>
-                                <div class="comment-content">
-                                    <div class="comment-header">
-                                        <div class="comment-author">
-                                            Michael Brown
-                                        </div>
-                                        <div class="comment-time">
-                                            Today at 9:30 AM
-                                        </div>
-                                    </div>
-                                    <div class="comment-text">
-                                        I've completed the database schema. You
-                                        can find it in the shared folder. Let me
-                                        know if you need any changes.
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Add Comment Form -->
-                            <div class="add-comment">
-                                <div class="input-group">
-                                    <input
-                                        type="text"
-                                        class="form-control"
-                                        placeholder="Add a comment..."
-                                    />
-                                    <button
-                                        class="btn btn-primary"
-                                        type="button"
-                                    >
-                                        <i class="fas fa-paper-plane"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Task Details Sidebar -->
-                    <div class="col-md-4">
-                        <div class="task-detail-row">
-                            <div class="task-detail-label">Status</div>
-                            <select class="form-select">
-                                <option value="todo" selected>To Do</option>
-                                <option value="inprogress">In Progress</option>
-                                <option value="review">Review</option>
-                                <option value="done">Done</option>
-                            </select>
-                        </div>
-
-                        <div class="task-detail-row">
-                            <div class="task-detail-label">Priority</div>
-                            <select class="form-select">
-                                <option value="high" selected>High</option>
-                                <option value="medium">Medium</option>
-                                <option value="low">Low</option>
-                            </select>
-                        </div>
-
-                        <div class="task-detail-row">
-                            <div class="task-detail-label">Project</div>
-                            <select class="form-select">
-                                <option value="1" selected>
-                                    Website Redesign
-                                </option>
-                                <option value="2">Mobile App</option>
-                                <option value="3">CRM Implementation</option>
-                            </select>
-                        </div>
-
-                        <div class="task-detail-row">
-                            <div class="task-detail-label">Type</div>
-                            <div class="task-badge badge-feature">Feature</div>
-                        </div>
-
-                        <div class="task-detail-row">
-                            <div class="task-detail-label">Assignees</div>
-                            <div class="d-flex align-items-center">
-                                <div class="avatar-stack me-2">
-                                    <div class="avatar">JD</div>
-                                </div>
-                                <button
-                                    class="btn btn-sm btn-outline-secondary"
-                                >
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="task-detail-row">
-                            <div class="task-detail-label">Due Date</div>
-                            <input
-                                type="date"
-                                class="form-control"
-                                value="2025-04-30"
-                            />
-                        </div>
-
-                        <div class="task-detail-row">
-                            <div class="task-detail-label">Labels</div>
-                            <div>
-                                <span class="task-badge badge-feature"
-                                    >Feature</span
-                                >
-                                <span class="task-badge badge-enhancement"
-                                    >UI</span
-                                >
-                                <button
-                                    class="btn btn-sm btn-outline-secondary"
-                                >
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <hr />
-
-                        <div class="task-detail-row">
-                            <div class="task-detail-label">Attachments</div>
-                            <div class="list-group small">
-                                <a
-                                    href="#"
-                                    class="list-group-item list-group-item-action d-flex align-items-center"
-                                >
-                                    <i class="far fa-file-pdf me-2"></i>
-                                    <div>authentication-flow.pdf</div>
-                                </a>
-                                <a
-                                    href="#"
-                                    class="list-group-item list-group-item-action d-flex align-items-center"
-                                >
-                                    <i class="far fa-file-image me-2"></i>
-                                    <div>mockup-login.png</div>
-                                </a>
-                            </div>
-                            <div class="mt-2">
-                                <button
-                                    class="btn btn-sm btn-outline-secondary"
-                                >
-                                    <i class="fas fa-paperclip me-1"></i> Add
-                                    Attachment
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="modal-body" id="taskDetailContent">
+                <!-- Task details will be loaded here -->
             </div>
             <div class="modal-footer">
-                <div class="dropdown me-auto">
-                    <button
-                        class="btn btn-outline-secondary dropdown-toggle"
-                        type="button"
-                        id="taskActionsDropdown"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false"
-                    >
-                        <i class="fas fa-ellipsis-h"></i> Actions
-                    </button>
-                    <ul
-                        class="dropdown-menu"
-                        aria-labelledby="taskActionsDropdown"
-                    >
-                        <li>
-                            <a class="dropdown-item" href="#"
-                                ><i class="fas fa-copy me-2"></i> Duplicate</a
-                            >
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#"
-                                ><i class="fas fa-link me-2"></i> Copy Link</a
-                            >
-                        </li>
-                        <li><hr class="dropdown-divider" /></li>
-                        <li>
-                            <a class="dropdown-item" href="#"
-                                ><i class="fas fa-archive me-2"></i> Archive</a
-                            >
-                        </li>
-                        <li>
-                            <a class="dropdown-item text-danger" href="#"
-                                ><i class="fas fa-trash-alt me-2"></i> Delete</a
-                            >
-                        </li>
-                    </ul>
-                </div>
-                <button
-                    type="button"
-                    class="btn btn-outline-secondary"
-                    data-bs-dismiss="modal"
-                >
-                    Close
-                </button>
-                <button type="button" class="btn btn-primary">
-                    Save Changes
-                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="editTaskBtn">Edit Task</button>
             </div>
         </div>
     </div>
 </div>
-{% endblock %} {% block extra_js %}
+{% endblock %}
+
+{% block scripts_extra %}
 <script src="https://cdn.jsdelivr.net/npm/dragula@3.7.3/dist/dragula.min.js"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // Initialize dragula for task drag and drop
-        const drake = dragula(
-            [
-                document.getElementById("todo"),
-                document.getElementById("inprogress"),
-                document.getElementById("review"),
-                document.getElementById("done"),
-            ],
-            {
-                moves: function (el, container, handle) {
-                    return !handle.classList.contains("task-add-new");
-                },
-            }
-        );
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded');
+    
+    // Check if dragula is loaded
+    if (typeof dragula === 'undefined') {
+        console.error('Dragula library not loaded!');
+        return;
+    }
+    
+    console.log('Dragula library loaded successfully');
+    console.log('Initializing drag and drop...');
+    
+    // Get all task container elements
+    const containers = [
+        document.getElementById('todo-tasks'),
+        document.getElementById('in-progress-tasks'), 
+        document.getElementById('review-tasks'),
+        document.getElementById('done-tasks')
+    ];
 
-        // Handle drag and drop events
-        drake.on("drop", function (el, target, source, sibling) {
-            // Get task ID and new status
-            const taskId = el.getAttribute("data-task-id");
-            const newStatus = target.id;
-            const oldStatus = source.id;
+    // Check if containers exist
+    console.log('Containers found:', containers.map(c => c ? c.id : 'null'));
 
-            // Update task counts
-            updateColumnCounts();
+    // Filter out null containers
+    const validContainers = containers.filter(c => c !== null);
+    
+    if (validContainers.length === 0) {
+        console.error('No valid containers found for drag and drop');
+        return;
+    }
+    
+    console.log('Valid containers:', validContainers.length);
 
-            // In a real application, you would call an API to update the task status
-            console.log(
-                `Task ${taskId} moved from ${oldStatus} to ${newStatus}`
-            );
-
-            // Example API call (commented out for demo)
-            /*
-            fetch('/api/v1/tasks/update-status', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    taskId: taskId,
-                    status: newStatus
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                // Revert the change if the API call fails
-                drake.cancel(true);
-            });
-            */
-        });
-
-        // Function to update column counts
-        function updateColumnCounts() {
-            const columns = ["todo", "inprogress", "review", "done"];
-
-            columns.forEach((column) => {
-                const columnElement = document.getElementById(column);
-                const taskCount =
-                    columnElement.querySelectorAll(".task-card").length;
-                const countElement =
-                    columnElement.parentElement.querySelector(
-                        ".task-column-count"
-                    );
-
-                countElement.textContent = taskCount;
-            });
-        }
-
-        // Handle task card clicks to show details
-        const taskCards = document.querySelectorAll(".task-card");
-        const taskDetailsModal = new bootstrap.Modal(
-            document.getElementById("taskDetailsModal")
-        );
-
-        taskCards.forEach((card) => {
-            card.addEventListener("click", function () {
-                taskDetailsModal.show();
-            });
-        });
-
-        // Handle filter chip clicks
-        const filterChips = document.querySelectorAll(".filter-chip");
-
-        filterChips.forEach((chip) => {
-            chip.addEventListener("click", function () {
-                // Toggle active state for chips in the same group
-                const parent = this.parentElement;
-
-                // If "All" chip is clicked, deactivate all other chips in the group
-                if (this.textContent.trim() === "All") {
-                    parent.querySelectorAll(".filter-chip").forEach((c) => {
-                        c.classList.remove("active");
-                    });
-                    this.classList.add("active");
-                } else {
-                    // If another chip is clicked, deactivate "All" chip
-                    const allChip = parent.querySelector(
-                        ".filter-chip:first-child"
-                    );
-                    allChip.classList.remove("active");
-
-                    // Toggle the clicked chip
-                    this.classList.toggle("active");
-
-                    // If no specific chips are active, reactivate "All" chip
-                    const activeChips = parent.querySelectorAll(
-                        ".filter-chip.active"
-                    );
-                    if (activeChips.length === 0) {
-                        allChip.classList.add("active");
-                    }
-                }
-
-                // In a real application, you would filter tasks based on the selected filters
-                filterTasks();
-            });
-        });
-
-        // Function to filter tasks based on selected filters
-        function filterTasks() {
-            // Get selected filters
-            const selectedProjects = Array.from(
-                document.querySelectorAll(
-                    ".filter-group:nth-child(1) .filter-chip.active"
-                )
-            ).map((chip) => chip.textContent.trim());
-            const selectedPriorities = Array.from(
-                document.querySelectorAll(
-                    ".filter-group:nth-child(2) .filter-chip.active"
-                )
-            ).map((chip) => chip.textContent.trim());
-            const selectedTypes = Array.from(
-                document.querySelectorAll(
-                    ".filter-group:nth-child(3) .filter-chip.active"
-                )
-            ).map((chip) => chip.textContent.trim());
-            const selectedAssignees = Array.from(
-                document.querySelectorAll(
-                    ".filter-group:nth-child(4) .filter-chip.active"
-                )
-            ).map((chip) => chip.textContent.trim());
-
-            console.log("Filtering tasks with:");
-            console.log("Projects:", selectedProjects);
-            console.log("Priorities:", selectedPriorities);
-            console.log("Types:", selectedTypes);
-            console.log("Assignees:", selectedAssignees);
-
-            // In a real application, you would call an API to filter tasks
-            // For demo purposes, we're just logging the filter criteria
-        }
-
-        // Handle "Add New Task" buttons
-        const addNewTaskButtons = document.querySelectorAll(".task-add-new");
-        const newTaskModal = new bootstrap.Modal(
-            document.getElementById("newTaskModal")
-        );
-
-        addNewTaskButtons.forEach((button) => {
-            button.addEventListener("click", function () {
-                const column = this.parentElement.id;
-                document.getElementById("newTaskForm").reset();
-
-                // Pre-select the status based on the column
-                // In a real application, you would store this to use when saving the task
-
-                newTaskModal.show();
-            });
-        });
-
-        // Handle create task button
-        document
-            .getElementById("createTaskBtn")
-            .addEventListener("click", function () {
-                const form = document.getElementById("newTaskForm");
-
-                // Basic form validation
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return;
-                }
-
-                // Get form values
-                const title = document.getElementById("taskTitle").value;
-                const description =
-                    document.getElementById("taskDescription").value;
-                const project = document.getElementById("taskProject").value;
-                const type = document.getElementById("taskType").value;
-                const priority = document.getElementById("taskPriority").value;
-                const dueDate = document.getElementById("taskDueDate").value;
-                const assignees = Array.from(
-                    document.getElementById("taskAssignees").selectedOptions
-                ).map((option) => option.value);
-
-                // In a real application, you would call an API to create the task
-                console.log("Creating new task:");
-                console.log("Title:", title);
-                console.log("Description:", description);
-                console.log("Project:", project);
-                console.log("Type:", type);
-                console.log("Priority:", priority);
-                console.log("Due Date:", dueDate);
-                console.log("Assignees:", assignees);
-
-                // Add the new task to the To Do column
-                addNewTaskToBoard({
-                    id: "new-" + Date.now(),
-                    title: title,
-                    type: type,
-                    priority: priority,
-                    dueDate: dueDate,
-                    assignees: assignees,
-                });
-
-                // Close modal
-                newTaskModal.hide();
-
+    // Initialize Dragula
+    try {
+        const drake = dragula(validContainers, {
+            moves: function(el, source, handle, sibling) {
+                const canMove = el && el.classList.contains('task-card');
+                console.log('Can move element:', canMove, el);
+                return canMove;
+            },
+            accepts: function(el, target, source, sibling) {
+                const canAccept = target && target.classList.contains('task-column-tasks');
+                console.log('Can accept in target:', canAccept, target);
+                return canAccept;
+            },
+            direction: 'vertical',
+            copy: false,
+            copySortSource: false,
+            revertOnSpill: true,
+            removeOnSpill: false
+        });        console.log('Dragula initialized successfully');
+        
+        // Handle drop event
+        drake.on('drop', function(el, target, source, sibling) {
+            console.log('Drop event triggered');
+            const taskId = el.getAttribute('data-task-id');
+            const sourceColumn = source.closest('.task-column').getAttribute('data-status');
+            const targetColumn = target.closest('.task-column').getAttribute('data-status');
+            
+            console.log(`Moving task ${taskId} from ${sourceColumn} to ${targetColumn}`);
+            
+            if (sourceColumn !== targetColumn) {
+                // Update task count in columns
+                updateTaskCount(sourceColumn, -1);
+                updateTaskCount(targetColumn, 1);
+                
                 // Show success message
-                CSA.showToast(
-                    "Task Created",
-                    "The task has been successfully created",
-                    "success"
-                );
-            });
-
-        // Function to add a new task to the board
-        function addNewTaskToBoard(task) {
-            const todoColumn = document.getElementById("todo");
-            const addNewButton = todoColumn.querySelector(".task-add-new");
-
-            const taskCard = document.createElement("div");
-            taskCard.className = `task-card priority-${task.priority}`;
-            taskCard.setAttribute("data-task-id", task.id);
-
-            // Format due date
-            let dueDateText = "";
-            if (task.dueDate) {
-                const dueDate = new Date(task.dueDate);
-                const today = new Date();
-                const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 1);
-
-                if (dueDate.toDateString() === today.toDateString()) {
-                    dueDateText = "Due today";
-                } else if (dueDate.toDateString() === tomorrow.toDateString()) {
-                    dueDateText = "Due tomorrow";
-                } else {
-                    dueDateText = `Due on ${dueDate.toLocaleDateString(
-                        "en-US",
-                        { month: "short", day: "numeric" }
-                    )}`;
-                }
+                showToast(`Task moved from ${getColumnDisplayName(sourceColumn)} to ${getColumnDisplayName(targetColumn)}`, 'success');
             }
+        });
 
-            let typeBadgeClass = "badge-feature";
-            if (task.type === "bug") typeBadgeClass = "badge-bug";
-            else if (task.type === "docs") typeBadgeClass = "badge-docs";
-            else if (task.type === "enhancement")
-                typeBadgeClass = "badge-enhancement";
+        // Add visual feedback during drag
+        drake.on('drag', function(el, source) {
+            console.log('Drag started for task:', el.getAttribute('data-task-id'));
+            el.classList.add('dragging');
+            document.body.classList.add('dragging-active');
+        });
 
-            taskCard.innerHTML = `
-                <div class="task-card-content">
-                    <span class="task-badge ${typeBadgeClass}">${task.type}</span>
-                    <h6 class="task-card-title">${task.title}</h6>
-                    <div class="due-date">
-                        <i class="far fa-calendar-alt"></i> ${dueDateText}
-                    </div>
-                    <div class="task-card-footer">
-                        <div class="avatar-stack">
-                            <div class="avatar">JD</div>
-                        </div>
-                        <div>
-                            <i class="far fa-comment"></i> 0
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Add click event to show details
-            taskCard.addEventListener("click", function () {
-                taskDetailsModal.show();
+        drake.on('dragend', function(el) {
+            console.log('Drag ended');
+            el.classList.remove('dragging');
+            document.body.classList.remove('dragging-active');
+            
+            // Remove any drag-over classes
+            document.querySelectorAll('.task-column').forEach(column => {
+                column.classList.remove('drag-over');
             });
+        });
 
-            // Insert the new task card after the "Add New Task" button
-            todoColumn.insertBefore(taskCard, addNewButton.nextSibling);
+        drake.on('over', function(el, container, source) {
+            console.log('Drag over container');
+            if (container && container.closest) {
+                container.closest('.task-column').classList.add('drag-over');
+            }
+        });
 
-            // Update column counts
-            updateColumnCounts();
+        drake.on('out', function(el, container, source) {
+            console.log('Drag out of container');
+            if (container && container.closest) {
+                container.closest('.task-column').classList.remove('drag-over');
+            }
+        });
+
+        console.log('All drag and drop events registered');
+        
+    } catch (error) {
+        console.error('Error initializing dragula:', error);
+    }
+
+    // Task click handler for modal
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.task-card') && !document.body.classList.contains('dragging-active')) {
+            const taskCard = e.target.closest('.task-card');
+            const taskId = taskCard.getAttribute('data-task-id');
+            openTaskDetailModal(taskId);
         }
     });
+
+    // Helper functions
+    function updateTaskCount(columnStatus, change) {
+        const column = document.querySelector(`[data-status="${columnStatus}"] .task-count`);
+        if (column) {
+            const currentCount = parseInt(column.textContent) || 0;
+            column.textContent = Math.max(0, currentCount + change);
+        }
+    }
+
+    function getColumnDisplayName(status) {
+        const names = {
+            'todo': 'To Do',
+            'in_progress': 'In Progress',
+            'review': 'Review',
+            'done': 'Done'
+        };
+        return names[status] || status;
+    }
+
+    function showToast(message, type = 'info') {
+        // Simple toast notification
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} position-fixed`;
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 10000; min-width: 300px;';
+        toast.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+        `;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.remove();
+            }
+        }, 3000);
+    }
+
+    function openTaskDetailModal(taskId) {
+        // Mock task detail data - in real app, fetch from API
+        const taskDetails = {
+            id: taskId,
+            title: 'Sample Task Title',
+            description: 'This is a detailed description of the task...',
+            status: 'In Progress',
+            priority: 'High',
+            assignee: 'John Doe',
+            due_date: '2025-06-10',
+            created_date: '2025-06-01'
+        };
+
+        const modalContent = document.getElementById('taskDetailContent');
+        modalContent.innerHTML = `
+            <div class="row">
+                <div class="col-md-8">
+                    <h6>Title</h6>
+                    <p>${taskDetails.title}</p>
+                    
+                    <h6>Description</h6>
+                    <p>${taskDetails.description}</p>
+                </div>
+                <div class="col-md-4">
+                    <h6>Status</h6>
+                    <span class="badge bg-primary">${taskDetails.status}</span>
+                    
+                    <h6 class="mt-3">Priority</h6>
+                    <span class="badge bg-danger">${taskDetails.priority}</span>
+                    
+                    <h6 class="mt-3">Assignee</h6>
+                    <p>${taskDetails.assignee}</p>
+                    
+                    <h6>Due Date</h6>
+                    <p>${taskDetails.due_date}</p>
+                    
+                    <h6>Created</h6>
+                    <p>${taskDetails.created_date}</p>
+                </div>
+            </div>
+        `;
+
+        const modal = new bootstrap.Modal(document.getElementById('taskDetailModal'));
+        modal.show();
+    }
+
+    // function updateTaskStatus(taskId, newStatus) {
+    //     fetch(`/api/v1/tasks/${taskId}`, {
+    //         method: 'PATCH',
+    //         headers: {
+    //             'Content-Type': 'application/json',
+    //         },
+    //         body: JSON.stringify({ status: newStatus })
+    //     })
+    //     .then(response => response.json())
+    //     .then(data => {
+    //         console.log('Task updated:', data);
+    //     })
+    //     .catch(error => {
+    //         console.error('Error updating task:', error);
+    //         showToast('Error updating task', 'danger');
+    //     });
+    // }
+});
 </script>
 {% endblock %}

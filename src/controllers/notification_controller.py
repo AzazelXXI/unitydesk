@@ -16,7 +16,7 @@ class NotificationController:
         # Business logic to create notification
         return {"id": 3, **notification_data, "created_at": "2023-07-01T12:00:00Z"}
     
-    def get_notification(self, notification_id: int):
+    # def get_notification(self, notification_id: int):
         """Get notification by ID"""
         # Business logic to get notification
         return {"id": notification_id, "message": "Notification details", "read": False}

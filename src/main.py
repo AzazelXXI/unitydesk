@@ -14,7 +14,8 @@ import ssl
 import asyncio
 
 # Import all web routers through the centralized import
-from src.apis import web_routers
+from src.apis import web_routers as api_web_routers
+from src.views import web_routers as view_web_routers
 
 # Import centralized API router (includes all API controllers)
 from src.api_router import api_router, ws_router as notification_ws_router
@@ -47,16 +48,14 @@ app = FastAPI(
 )
 
 # Mount static files for each web module
-app.mount("/static", StaticFiles(directory="src/web/core/static"), name="static")
+# Core static files (CSS, JS, images)
+app.mount("/static", StaticFiles(directory="src/views/core/static"), name="static")
+
+# Mount static files for task views
 app.mount(
-    "/meeting/static",
-    StaticFiles(directory="src/web/meeting/static"),
-    name="meeting_static",
-)
-app.mount(
-    "/user/static",
-    StaticFiles(directory="src/web/user/static"),
-    name="user_static",
+    "/tasks/static",
+    StaticFiles(directory="src/views/task/static"),
+    name="task_static",
 )
 
 # Add CORS middleware
@@ -73,8 +72,20 @@ app.middleware("http")(log_exceptions_middleware)
 app.middleware("http")(request_logging_middleware)
 
 # Include all web routers (Jinja templates)
-for router in web_routers:
+for router in api_web_routers:
     app.include_router(router)
+
+# Include all view web routers (Jinja templates)
+for router in view_web_routers:
+    app.include_router(router)
+
+# Include task web router directly to avoid API prefix
+try:
+    from src.views.task.web_routes import task_web_router
+
+    app.include_router(task_web_router)
+except Exception as e:
+    app_logger.error(f"Failed to include task_web_router: {e}")
 
 # Include the centralized API router (which includes all API routes with versioning)
 app.include_router(api_router)

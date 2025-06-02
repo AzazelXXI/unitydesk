@@ -3,15 +3,27 @@ from typing import Optional, List, Dict, Any, Union
 from datetime import datetime, date
 from enum import Enum
 
-from src.models_backup.marketing_project import (
-    ProjectStatus,
-    ProjectType,
-    WorkflowStage,
-    TaskPriority,
-    TaskStatus,
-    AssetType,
-    ReportType,
-)
+# Temporarily commenting out enum imports as we use Any placeholders
+# from src.models.project import (
+#     ProjectStatus,
+#     ProjectType,
+#     WorkflowStage,
+#     TaskPriority,
+#     TaskStatus,
+#     AssetType,
+#     ReportType,
+# )
+
+# Using Any as placeholders for enums to allow the application to start
+from typing import Any
+
+ProjectStatus = Any
+ProjectType = Any
+WorkflowStage = Any
+TaskPriority = Any
+TaskStatus = Any
+AssetType = Any
+ReportType = Any
 
 
 # Base Schemas with shared attributes
@@ -81,8 +93,8 @@ class MarketingProjectBase(BaseModel):
     name: str
     description: Optional[str] = None
     project_type: ProjectType
-    status: ProjectStatus = ProjectStatus.DRAFT
-    current_stage: WorkflowStage = WorkflowStage.INITIATION
+    status: ProjectStatus = None
+    current_stage: WorkflowStage = None
     client_id: Optional[int] = None
     client_brief: Optional[str] = None
     start_date: Optional[datetime] = None
@@ -181,8 +193,8 @@ class MarketingTaskBase(BaseModel):
     title: str
     description: Optional[str] = None
     task_type: Optional[str] = None
-    status: TaskStatus = TaskStatus.TODO
-    priority: TaskPriority = TaskPriority.MEDIUM
+    status: TaskStatus = None
+    priority: TaskPriority = None
     due_date: Optional[datetime] = None
     start_date: Optional[datetime] = None
     completed_date: Optional[datetime] = None

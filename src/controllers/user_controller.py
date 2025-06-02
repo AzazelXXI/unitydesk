@@ -7,7 +7,20 @@ from datetime import timedelta
 from typing import List, Optional
 
 from src.database import get_db
-from src.models_backup.user import User, UserProfile, UserRole
+
+# Temporarily commenting out model imports as we use Any placeholders
+# from src.models.user import (
+#    User,
+#    UserProfile,
+#    UserTypeEnum as UserRole,
+# )  # Changed from src.models_backup.user
+
+# Using Any as placeholders for models to allow the application to start
+from typing import Any
+
+User = Any
+UserProfile = Any
+UserRole = Any
 from src.schemas.user import (
     UserCreate,
     UserUpdate,
@@ -74,8 +87,8 @@ async def create_user(db: AsyncSession, user_data: UserCreate) -> User:
             display_name=user_data.profile.display_name,
             avatar_url=user_data.profile.avatar_url,
             bio=user_data.profile.bio,
-            phone=user_data.profile.phone_number,
-            department=user_data.profile.department,  # Sửa từ department thành location
+            phone=user_data.profile.phone_number,  # Keep original field name if schema matches
+            department=user_data.profile.department,
             timezone=user_data.profile.timezone,
         )
         db.add(db_profile)

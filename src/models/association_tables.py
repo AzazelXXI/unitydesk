@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Table, Integer, UUID
+from sqlalchemy import Column, ForeignKey, Table, Integer, UUID, String
 from .base import Base
 
 # This file use to define association Many-To-Many relationship
@@ -23,3 +23,11 @@ task_attachment_table = Table(
         primary_key=True,
     ),
 )
+
+# team_members_table = Table(
+#     "team_members",
+#     Base.metadata,
+#     Column("team_id", UUID(as_uuid=True), ForeignKey("teams.id", ondelete="CASCADE"), primary_key=True),
+#     Column("user_id", UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+#     Column("role", String(50), default="Member", nullable=False)  # Ví dụ: "Leader", "Member"
+# )

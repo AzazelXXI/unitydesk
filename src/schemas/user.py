@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
 
-from src.models_backup.user import UserRole
+from src.models.user import UserTypeEnum  # Adjusted to new models path
 
 
 # Base user schemas
@@ -55,7 +55,7 @@ class UserBase(BaseModel):
 
     email: EmailStr
     username: str
-    role: UserRole = UserRole.USER
+    role: UserTypeEnum = UserTypeEnum.TEAM_MEMBER
     is_active: bool = True
     is_verified: bool = False
 
@@ -79,7 +79,7 @@ class UserUpdate(BaseModel):
 
     email: Optional[EmailStr] = None
     username: Optional[str] = None
-    role: Optional[UserRole] = None
+    role: Optional[UserTypeEnum] = None
     is_active: Optional[bool] = None
     is_verified: Optional[bool] = None
     profile: Optional[UserProfileUpdate] = None
@@ -112,7 +112,7 @@ class TokenData(BaseModel):
 
     username: Optional[str] = None
     user_id: Optional[int] = None
-    role: Optional[UserRole] = None
+    role: Optional[UserTypeEnum] = None
 
 
 class LoginRequest(BaseModel):
