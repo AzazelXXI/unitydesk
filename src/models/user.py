@@ -1,7 +1,20 @@
 import enum
 import datetime
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Enum as SAEnum
+import uuid
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Enum as SAEnum,
+    Text,
+    UUID,
+)
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship
+
 from .base import Base
 
 
@@ -20,8 +33,8 @@ class UserTypeEnum(str, enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    name = Column(String(255), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
+    username = Column(String(100), unique=True, index=True, nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     status = Column(
@@ -52,28 +65,13 @@ class User(Base):
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
 
     # Relationships
-    # A user could create many Project
-    created_project = relationship(
-        "Project", back_populates="creator", foreign_keys="[Project.creator_id]"
-    )
-
-    # A user could be assigned many Task
-    assigned_tasks = relationship(
-        "Task", back_populates="assignee", foreign_keys="[Task.assignee_id]"
-    )
-
-    # A user could write many Comment
-    comments = relationship(
-        "Comment", back_populates="author", foreign_keys="[Comment.user_id]"
-    )
-
-    # A user could upload many attachment
-    uploaded_attachments = relationship(
-        "Attachment", back_populates="uploader", foreign_keys="[Attachment.user_id]"
-    )
-
-    created_teams = relationship(
-        "Team", back_populates="team_creator", foreign_keys="[Team.user_id]"
+    owned_projects = relationship("Project", back_populates="owner")
+    assigned_tasks = relationship("Task", back_populates="assignee")
+    comments = relationship("Comment", back_populates="author")
+    uploaded_attachments = relationship("Attachment", back_populates="uploader")
+    created_teams = relationship("Team", back_populates="team_creator")
+    calendars = relationship(
+        "Calendar", back_populates="user", cascade="all, delete-orphan"
     )
 
 

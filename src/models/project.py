@@ -1,18 +1,23 @@
 import enum
 import datetime
+import uuid
 from sqlalchemy import (
+    Boolean,
     Column,
-    Float,
+    DateTime,
     ForeignKey,
     Integer,
-    Numeric,
     String,
-    DateTime,
     Enum as SAEnum,
     Text,
+    Float,
+    Numeric,
+    UUID,
 )
 from sqlalchemy.orm import relationship
+
 from .base import Base
+from .association_tables import project_teams_table
 
 
 class ProjectStatusEnum(str, enum.Enum):
@@ -25,8 +30,8 @@ class ProjectStatusEnum(str, enum.Enum):
 class Project(Base):
     __tablename__ = "projects"
 
-    id = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    name = Column(String(255), nullable=False, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
+    name = Column(String(255), nullable=False, unique=True)
     description = Column(Text, nullable=True)
     start_date = Column(DateTime, nullable=True)
     end_date = Column(DateTime, nullable=True)
@@ -46,14 +51,12 @@ class Project(Base):
     )
 
     # Foreign Key
-    creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
 
-    # Relationships
-    # User could create many Project
-    creator = relationship("User", back_populates="created_projects")
-    
-    # A Project has many Tasks
+    # Relationship
+    owner = relationship("User", back_populates="owned_projects")
     tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
-    
-    # Many Team has many Project
-    team_project_created = relationship("Team", back_populates="team_project_creator", foreign_keys="[Team.project_id]")
+    teams = relationship(
+        "Team", secondary=project_teams_table, back_populates="projects"
+    )
+    events = relationship("Event", back_populates="project")
