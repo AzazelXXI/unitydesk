@@ -1,0 +1,580 @@
+.task-board {
+  display: flex;
+  gap: 15px;
+  overflow-x: auto;
+  padding: 10px 0;
+  min-height: calc(100vh - 300px);
+  -webkit-overflow-scrolling: touch; /* Improved touch scrolling */
+  scrollbar-width: thin; /* For Firefox */
+}
+
+/* Custom scrollbar for better UX */
+.task-board::-webkit-scrollbar {
+  height: 8px;
+}
+
+.task-board::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.task-board::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.task-board::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+.task-column {
+  background: #f8f9fa;
+  border-radius: 5px;
+  min-width: 280px;
+  max-width: 350px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+/* Mobile view adjustment */
+@media (max-width: 768px) {
+  .task-column {
+    min-width: 260px;
+  }
+}
+
+.task-column-header {
+  padding: 15px;
+  background-color: var(--secondary-color);
+  color: white;
+  border-radius: 5px 5px 0 0;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.column-todo .task-column-header {
+  background-color: #6c757d;
+}
+
+.column-in-progress .task-column-header {
+  background-color: #007bff;
+}
+
+.column-review .task-column-header {
+  background-color: #fd7e14;
+}
+
+.column-done .task-column-header {
+  background-color: #28a745;
+}
+
+.task-column-body {
+  padding: 15px;
+  flex-grow: 1;
+  overflow-y: auto;
+  max-height: calc(100vh - 400px);
+}
+
+/* Responsive adjustments for task columns */
+@media (max-width: 576px) {
+  .task-column-body {
+    max-height: calc(100vh - 350px);
+    padding: 10px;
+  }
+
+  /* Add visual cue for horizontal scrolling */
+  .task-board::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 50%;
+    width: 30px;
+    height: 50px;
+    background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.1));
+    border-radius: 4px;
+    pointer-events: none;
+    animation: pulse 1.5s infinite alternate;
+    z-index: 5;
+  }
+
+  @keyframes pulse {
+    from {
+      opacity: 0.4;
+    }
+    to {
+      opacity: 0.8;
+    }
+  }
+}
+
+.task-count {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+}
+
+.task-card {
+  background: white;
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  padding: 10px;
+  margin-bottom: 10px;
+  border-left: 3px solid #6c757d;
+  cursor: pointer;
+  transition: all 0.2s;
+  word-wrap: break-word;
+}
+
+.task-card:hover {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .task-card {
+    padding: 8px;
+  }
+
+  /* Add touch feedback for mobile devices */
+  .task-card:active {
+    transform: scale(0.98);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.task-card.priority-high {
+  border-left-color: #dc3545;
+}
+
+.task-card.priority-medium {
+  border-left-color: #fd7e14;
+}
+
+.task-card.priority-low {
+  border-left-color: #28a745;
+}
+
+.task-title {
+  font-weight: 600;
+  margin-bottom: 5px;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.task-description {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 576px) {
+  .task-title {
+    font-size: 0.95rem;
+  }
+
+  .task-description {
+    font-size: 0.8rem;
+    margin-bottom: 6px;
+  }
+}
+
+.task-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.task-due {
+  color: #6c757d;
+  white-space: nowrap;
+}
+
+.task-due.overdue {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+@media (max-width: 320px) {
+  .task-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .task-due {
+    margin-bottom: 4px;
+  }
+
+  .task-assignee {
+    align-self: flex-end;
+  }
+}
+
+.task-assignee {
+  display: flex;
+  align-items: center;
+}
+
+.assignee-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
+.task-filter-row {
+  background-color: #fff;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+  .task-filter-row {
+    padding: 12px;
+    margin-bottom: 15px;
+  }
+
+  .task-filter-row .row {
+    row-gap: 10px !important;
+  }
+
+  .task-filter-row [class^="col-"] {
+    margin-bottom: 10px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  /* Collapse filters into toggle button on very small screens */
+  @media (max-width: 576px) {
+    .task-filter-row {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      background: #f8f9fa;
+      transition: all 0.3s ease;
+      margin-bottom: 5px;
+    }
+
+    /* Hide pseudo-element toggle since we use explicit button now */
+    .task-filter-row::before {
+      display: none;
+    }
+
+    /* Add filter header for better visuals */
+    .filter-header {
+      padding: 10px 12px;
+      background: #f8f9fa;
+      font-weight: bold;
+      border-bottom: 1px solid #dee2e6;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Initially hide filters on mobile */
+    .task-filter-row .row {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+      padding: 0;
+      opacity: 0;
+    }
+
+    /* Show filters when toggle is clicked */
+    .task-filter-row.expanded .row {
+      display: flex;
+      max-height: 500px; /* Adjust as needed */
+      padding: 10px;
+    }
+
+    /* Change toggle button text when expanded */
+    .task-filter-row.expanded::before {
+      content: "Filters ▲";
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    /* Allow vertical wrapping for filter row items */
+    .task-filter-row .row {
+      flex-direction: column;
+    }
+
+    /* Make column sizes appropriate for mobile */
+    .task-filter-row [class^="col-"] {
+      width: 100%;
+      padding-top: 5px;
+      padding-bottom: 5px;
+    }
+  }
+}
+
+/* Filter toggle button for mobile */
+.filter-toggle-btn {
+  display: none; /* Hidden by default, shown on mobile via d-md-none class */
+  padding: 10px 15px;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #495057;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  width: 100%;
+  z-index: 10;
+  position: relative;
+}
+
+.filter-toggle-btn:hover {
+  background-color: #e9ecef;
+}
+
+.filter-toggle-btn:active {
+  background-color: #dee2e6;
+  transform: scale(0.98);
+}
+
+.filter-toggle-btn.expanded {
+  background-color: #e9ecef;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.filter-toggle-btn i {
+  transition: transform 0.3s ease;
+}
+
+.filter-toggle-btn.expanded i.fa-chevron-down {
+  transform: rotate(180deg);
+}
+
+@media (max-width: 767px) {
+  .filter-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .filter-toggle-btn i {
+    transition: transform 0.3s ease;
+  }
+
+  .filter-toggle-btn.expanded i.fa-chevron-down,
+  .filter-toggle-btn.expanded i.fa-chevron-up {
+    transform: rotate(180deg);
+  }
+
+  /* With explicit toggle button, we hide the pseudo-element */
+  .task-filter-row::before {
+    display: none;
+  }
+
+  /* Add better spacing and structure to filter items */
+  .task-filter-row {
+    padding: 15px;
+    margin-top: 0;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    overflow: hidden;
+    opacity: 1; /* Show filters by default */
+    max-height: 1000px; /* Allow filters to be visible */
+    display: block; /* Ensure filters are displayed */
+  }
+
+  /* On small screens, hide by default and show when expanded */
+  @media (max-width: 576px) {
+    .task-filter-row {
+      padding: 0;
+      max-height: 0;
+      opacity: 0;
+    }
+
+    .task-filter-row.expanded {
+      padding: 15px;
+      background-color: #f8f9fa;
+      max-height: 1000px;
+      opacity: 1;
+    }
+  }
+
+  .task-filter-row .row {
+    margin: 0;
+    display: flex;
+  }
+}
+
+.filter-label {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #6c757d;
+  margin-bottom: 5px;
+}
+
+/* Utility class to disable transitions temporarily */
+.no-transition {
+  transition: none !important;
+}
+
+.dashboard-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 576px) {
+  .dashboard-summary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+
+@media (max-width: 400px) {
+  .dashboard-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+.summary-card {
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s ease-in-out;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.summary-icon {
+  font-size: 2rem;
+  margin-right: 15px;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: white;
+}
+
+.summary-icon-blue {
+  background-color: #007bff;
+}
+
+.summary-icon-green {
+  background-color: #28a745;
+}
+
+.summary-icon-orange {
+  background-color: #fd7e14;
+}
+
+.summary-icon-red {
+  background-color: #dc3545;
+}
+
+.summary-content {
+  flex-grow: 1;
+}
+
+.summary-title {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-bottom: 5px;
+}
+
+.summary-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* Responsive Table View */
+@media (max-width: 768px) {
+  #tasksTable {
+    font-size: 0.9rem;
+  }
+
+  #tasksTable th,
+  #tasksTable td {
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  /* Stack the table on small screens */
+  #listView .table-responsive {
+    overflow-x: auto;
+  }
+
+  .btn-group-sm > .btn {
+    padding: 0.25rem 0.4rem;
+  }
+}
+
+/* Modal Responsiveness */
+@media (max-width: 768px) {
+  .modal-body {
+    padding: 1rem;
+  }
+
+  .modal-dialog {
+    margin: 0.5rem;
+  }
+
+  /* Better modal UX on small screens */
+  .modal-content {
+    border-radius: 12px;
+  }
+
+  .modal-header {
+    padding: 12px 15px;
+    align-items: center;
+  }
+
+  .modal-header .btn-close {
+    padding: 10px;
+    margin: -10px;
+  }
+
+  /* Task details modal specific improvements */
+  #taskDetailsModal .card-body {
+    padding: 12px;
+  }
+
+  #taskDetailsModal h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+
+  /* Comment section improvements */
+  #comments {
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+}

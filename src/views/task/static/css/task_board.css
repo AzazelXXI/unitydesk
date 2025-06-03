@@ -1,0 +1,345 @@
+/* Task Board Specific Styles */
+.task-board-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.task-board {
+  display: flex;
+  gap: 12px; /* Reduced from 15px */
+  overflow-x: auto;
+  padding: 12px 0; /* Reduced from 15px */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent; /* Firefox */
+  flex-wrap: wrap; /* Allow wrapping for mobile view */
+}
+
+/* Customize scrollbar for WebKit browsers */
+.task-board::-webkit-scrollbar {
+  height: 6px;
+}
+
+.task-board::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+.task-board::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.task-column {
+  min-width: 200px; /* Reduced from 220px */
+  width: 200px; /* Reduced */
+  flex: 0 0 auto;
+  background-color: #e9ecef;
+  border-radius: 6px; /* Smaller radius */
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 72vh; /* Slightly reduced from 75vh */
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 576px) {
+  .task-column {
+    min-width: 180px; /* Even more compact for small screens */
+    width: 180px;
+  }
+}
+
+.task-column-header {
+  padding: 10px 8px; /* Further reduced for more compact view */
+  background-color: #dee2e6;
+  border-radius: 6px 6px 0 0; /* Smaller radius to match column */
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem; /* Slightly smaller font */
+}
+
+.task-column-tasks {
+  flex: 1;
+  padding: 8px; /* Reduced from 10px */
+  overflow-y: auto;
+  min-height: 180px; /* Reduced from 200px */
+}
+
+.task-card {
+  background: white;
+  border-radius: 6px;
+  padding: 8px; /* Reduced from 10px */
+  margin-bottom: 6px; /* Reduced from 8px */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  border-left: 4px solid;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative; /* Required for absolute positioning of the icon */
+}
+
+@media (max-width: 576px) {
+  .task-card {
+    padding: 6px; /* Even smaller padding for mobile */
+    margin-bottom: 5px;
+    border-radius: 5px;
+  }
+}
+
+.task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  background-color: #f8f9fa;
+}
+
+/* Add a visual indicator for clickable cards */
+.task-card::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3.5a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5H4a.5.5 0 0 1 0-1h3.5V4a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M7.5 8a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1H8.5V12a.5.5 0 0 1-1 0V8z"/></svg>');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.task-card:hover::after {
+  opacity: 0.8;
+}
+
+.task-card.priority-high {
+  border-left-color: #dc3545;
+}
+
+.task-card.priority-medium {
+  border-left-color: #ffc107;
+}
+
+.task-card.priority-low {
+  border-left-color: #28a745;
+}
+
+.task-card-title {
+  font-weight: 600;
+  margin-bottom: 6px; /* Reduced from 8px */
+  font-size: 13px; /* Reduced from 14px */
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Limit to 2 lines */
+  line-clamp: 2; /* Standard property */
+  -webkit-box-orient: vertical;
+}
+
+.task-card-description {
+  font-size: 12px;
+  line-height: 1.4;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Limit description to 2 lines */
+  line-clamp: 2; /* Standard property */
+  -webkit-box-orient: vertical;
+}
+
+.task-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px; /* Reduced from 12px */
+  color: #6c757d;
+  margin-top: 6px; /* Reduced from 8px */
+}
+
+.task-assignee {
+  background-color: #007bff;
+  color: white;
+  border-radius: 50%;
+  width: 22px; /* Reduced from 24px */
+  height: 22px; /* Reduced from 24px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.task-due-date {
+  font-size: 11px;
+}
+
+.task-due-date.overdue {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+/* Column specific colors */
+.column-todo .task-column-header {
+  background-color: #6c757d;
+  color: white;
+}
+
+.column-in-progress .task-column-header {
+  background-color: #007bff;
+  color: white;
+}
+
+.column-review .task-column-header {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.column-done .task-column-header {
+  background-color: #28a745;
+  color: white;
+}
+
+.task-count {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+/* Dragula specific styles */
+.gu-mirror {
+  position: fixed !important;
+  margin: 0 !important;
+  z-index: 9999 !important;
+  opacity: 0.8;
+  transform: rotate(5deg);
+}
+
+.gu-hide {
+  display: none !important;
+}
+
+.gu-unselectable {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+.gu-transit {
+  opacity: 0.2;
+}
+
+.task-column.drag-over {
+  background-color: #d1ecf1;
+  border: 2px dashed #bee5eb;
+}
+
+/* Mobile Responsive Styles */
+/* Tablet view */
+@media (max-width: 992px) {
+  .task-column {
+    min-width: 220px; /* Even smaller */
+    width: 220px;
+  }
+
+  /* Adjust header title and buttons */
+  .task-board-container h2 {
+    font-size: 1.6rem;
+  }
+
+  /* Make columns slightly shorter */
+  .task-column {
+    max-height: 70vh;
+  }
+}
+
+/* Mobile landscape and small tablet view */
+@media (max-width: 768px) {
+  /* Begin vertical stacking at this breakpoint */
+  .task-board {
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden; /* No need for horizontal scroll when stacked */
+    overflow-y: auto;
+    gap: 15px;
+  }
+
+  .task-column {
+    min-width: 100%; /* Full width in column layout */
+    width: 100%;
+    max-width: 500px; /* Limit maximum width */
+    max-height: none; /* Don't limit height when stacked */
+  }
+
+  .task-column-tasks {
+    max-height: 300px; /* Limit height of task container when stacked */
+  }
+
+  .task-board-container {
+    padding: 10px;
+  }
+
+  /* Make header stack on smaller screens */
+  .task-board-container .d-flex.justify-content-between {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+
+  /* No need for horizontal scroll indicators when stacked */
+  .task-board:after {
+    display: none;
+  }
+
+  /* Remove horizontal scroll indicator text at bottom */
+  .task-board-container:after {
+    display: none;
+  }
+
+  /* Improve the task column header */
+  .task-column-header {
+    padding: 10px;
+    font-size: 14px;
+  }
+}
+
+/* Small mobile view */
+@media (max-width: 576px) {
+  .task-column {
+    min-width: 100%; /* Full width */
+    width: 100%;
+    margin: 0 0 15px 0; /* Add bottom margin instead of gap */
+  }
+
+  .task-card {
+    padding: 8px;
+  }
+
+  .task-card-description {
+    font-size: 12px;
+  }
+
+  /* Add touch feedback for mobile devices */
+  .task-card:active {
+    transform: scale(0.98);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Make sure buttons stack nicely */
+  .task-board-container .btn {
+    margin-top: 5px;
+    margin-right: 0 !important;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 400px) {
+  .task-column-tasks {
+    max-height: 250px; /* Even more compact on very small screens */
+  }
+}

@@ -1,0 +1,545 @@
+/* Additional responsive styles for task board view */
+
+/* Better touch interaction for mobile devices */
+@media (hover: none) {
+  .task-card {
+    cursor: pointer;
+  }
+
+  /* Clearer touch feedback */
+  .task-card:active {
+    background-color: rgba(0, 123, 255, 0.05);
+  }
+
+  /* Make scroll indicator more visible on touch devices */
+  .task-board-scroll-indicator {
+    display: block;
+  }
+}
+
+/* Extra small devices (portrait phones) */
+@media (max-width: 415px) {
+  /* Make status badges more readable on small screens */
+  .task-card .badge {
+    display: inline-block;
+    margin-bottom: 4px;
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+
+  /* Optimize task card meta info for very small screens */
+  .task-card-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .task-card-meta > div {
+    margin-top: 4px;
+    width: 100%;
+  }
+
+  /* Reduce column padding to fit more content */
+  .task-column-tasks {
+    padding: 5px;
+  }
+
+  /* Minimize top level padding */
+  .task-board-container {
+    padding: 10px 5px;
+  }
+}
+
+/* Handle landscape orientation on mobile devices */
+@media (max-height: 500px) and (orientation: landscape) {
+  .task-column {
+    max-height: 70vh; /* Less height in landscape */
+  }
+
+  /* More compact cards in landscape */
+  .task-card {
+    margin-bottom: 5px;
+    padding: 6px;
+  }
+
+  /* Hide less important content */
+  .task-card-description {
+    max-height: 2.4em;
+    overflow: hidden;
+  }
+}
+
+/* Show loading indicator when tasks are being loaded */
+.loading-tasks {
+  padding: 20px;
+  text-align: center;
+  color: #6c757d;
+}
+
+.loading-tasks i {
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Improved accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .task-card,
+  .task-column-header,
+  .task-column {
+    transition: none !important;
+  }
+
+  .loading-tasks i {
+    animation: none;
+  }
+}
+
+/* Better scrollbars for Firefox */
+@supports (scrollbar-width: thin) {
+  .task-column-tasks {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  }
+}
+
+/* Better scrollbars for Chrome/Safari */
+.task-column-tasks::-webkit-scrollbar {
+  width: 5px;
+}
+
+.task-column-tasks::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.task-column-tasks::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+/* Focus states for accessibility */
+.task-card:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* Column adjustment for different screen sizes */
+@media (min-width: 1400px) {
+  .task-board {
+    justify-content: center;
+  }
+
+  .task-column {
+    min-width: 300px; /* Slightly smaller than before */
+    width: 300px;
+  }
+}
+
+/* Vertical stacked layout styling */
+@media (max-width: 768px) {
+  /* Change task board to vertical layout on mobile */
+  .task-board {
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden; /* Disable horizontal scroll when stacked */
+    overflow-y: auto;
+    gap: 15px;
+    padding-bottom: 65px; /* Add space for column navigation pills */
+  }
+
+  /* Make columns full width in stacked layout */
+  .task-column {
+    min-width: 100%;
+    width: 100%;
+    max-width: 500px; /* Limit max width for better readability */
+    margin-bottom: 15px;
+    border-bottom: 3px dashed #dee2e6;
+    padding-bottom: 5px;
+    position: relative;
+    scroll-margin-top: 20px; /* For scroll-to functionality */
+  }
+
+  .task-column:last-child {
+    border-bottom: none;
+    margin-bottom: 40px; /* Extra space at the bottom */
+  }
+
+  /* Improve column header appearance in stacked view */
+  .task-column-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+    text-align: center;
+    padding: 12px 15px;
+    font-size: 1rem;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    background-color: inherit;
+    z-index: 5;
+    border-radius: 6px 6px 0 0;
+  }
+
+  /* Add visual ID for each column to match with navigation pills */
+  .task-column::after {
+    content: attr(data-status);
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0;
+    opacity: 0;
+    border-radius: 50%;
+    width: 5px;
+    height: 5px;
+    pointer-events: none;
+  }
+
+  /* Show collapse/expand controls for columns */
+  .task-column-header {
+    cursor: pointer;
+    position: relative;
+  }
+
+  .task-column-header:after {
+    content: "\f107"; /* Font Awesome chevron-down */
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    position: absolute;
+    right: 15px;
+    transition: transform 0.3s ease;
+  }
+
+  .task-column.collapsed .task-column-header:after {
+    transform: rotate(-180deg);
+  }
+
+  /* Add animation for collapsing/expanding */
+  .task-column-tasks {
+    transition: max-height 0.3s ease;
+    overflow: hidden;
+  }
+
+  .task-column.collapsed .task-column-tasks {
+    max-height: 0 !important;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    opacity: 0;
+  }
+}
+
+/* Scroll indicators for mobile */
+.task-board-scroll-indicator {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  -webkit-tap-highlight-color: rgba(
+    0,
+    0,
+    0,
+    0
+  ); /* Remove tap highlight on mobile */
+}
+
+.task-board-scroll-indicator:hover {
+  background-color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.task-board-scroll-indicator:active {
+  transform: translateY(-50%) scale(0.95);
+  background-color: #f0f0f0;
+}
+
+.task-board-scroll-indicator.left {
+  left: 10px;
+}
+
+.task-board-scroll-indicator.right {
+  right: 10px;
+}
+
+.task-board-scroll-indicator i {
+  color: #007bff;
+}
+
+@media (max-width: 576px) {
+  .task-board-scroll-indicator {
+    width: 35px;
+    height: 35px;
+    background-color: rgba(255, 255, 255, 0.95);
+  }
+
+  .task-board-scroll-indicator.left {
+    left: 5px;
+  }
+
+  .task-board-scroll-indicator.right {
+    right: 5px;
+  }
+}
+
+/* Column selector for small screens */
+.column-select-group {
+  margin-bottom: 10px;
+  background-color: #f8f9fa;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+/* Enhanced column pills navigation for mobile */
+.column-pill-nav {
+  position: fixed;
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 50px;
+  padding: 8px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  max-width: 90vw;
+  overflow-x: auto;
+  z-index: 1000;
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+  -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
+}
+
+.column-pill-nav::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome/Safari/Opera */
+}
+
+.column-pill-nav .btn {
+  white-space: nowrap;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 50px;
+  transition: all 0.2s ease;
+  margin: 0 2px;
+}
+
+.column-pill-nav .btn .badge {
+  transition: all 0.2s ease;
+}
+
+.column-pill-nav .btn.active {
+  transform: scale(1.05);
+}
+
+.column-pill-nav .btn:focus {
+  box-shadow: 0 0 0 0.25rem rgba(49, 132, 253, 0.2);
+}
+
+/* Ensure task board container is positioned relatively for scroll indicators */
+.task-board-container {
+  position: relative;
+}
+
+/* Transition styles for switching between layouts */
+@media (max-width: 768px) {
+  /* Stacked layout container styles */
+  .task-board {
+    transition: all 0.3s ease;
+  }
+
+  /* Style the collapsed columns indicator */
+  .task-column.collapsed .task-column-header {
+    background-color: rgba(0, 0, 0, 0.1);
+    margin-bottom: 0;
+  }
+
+  /* Add visual hint that columns can be expanded/collapsed */
+  .task-column-header {
+    position: relative;
+  }
+
+  .task-column-header:before {
+    content: "Tap to " attr(data-action); /* Will be dynamically set by JS */
+    position: absolute;
+    right: 30px;
+    font-size: 10px;
+    opacity: 0.7;
+    font-weight: normal;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  /* Add hover effect for column headers */
+  .task-column-header:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  /* Add icon and text indicating column state */
+  .task-column .task-column-header[data-action="collapse"]:before {
+    content: "Tap to collapse";
+  }
+
+  .task-column.collapsed .task-column-header[data-action="expand"]:before {
+    content: "Tap to expand";
+  }
+}
+
+/* Column action indicators for mobile */
+.column-action-indicator {
+  display: none; /* Hidden by default, shown in mobile view via JS */
+  margin-left: 8px;
+  font-size: 12px;
+  transition: transform 0.3s ease;
+}
+
+.task-column.collapsed .column-action-indicator i {
+  transform: rotate(180deg);
+}
+
+/* Stacked layout specific styles */
+.task-board.stacked-layout .task-column {
+  transition: margin 0.3s ease, max-height 0.3s ease;
+}
+
+.task-board.stacked-layout .task-column.collapsed {
+  margin-bottom: 10px;
+}
+
+.task-board.stacked-layout .task-column-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Add active state styling to expand/collapse headers */
+.task-board.stacked-layout .task-column-header:active {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Make task columns more visually distinct in stacked view */
+@media (max-width: 768px) {
+  .task-board.stacked-layout .task-column {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .task-board.stacked-layout .task-column-header {
+    border-radius: 8px 8px 0 0;
+  }
+}
+
+/* Animations for better mobile user experience */
+@keyframes pulse {
+  0% {
+    background-color: inherit;
+  }
+  50% {
+    background-color: rgba(0, 123, 255, 0.1);
+  }
+  100% {
+    background-color: inherit;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .task-column {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+
+  .task-column.collapsed {
+    animation: none;
+  }
+
+  .task-card {
+    animation: slideIn 0.2s ease-out forwards;
+    animation-delay: calc(var(--card-order, 0) * 0.05s);
+  }
+
+  /* Improve animation performance */
+  .task-card {
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  /* Filter section animation */
+  .task-filter-row.expanded {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+
+  /* Staggered animation for column pill navigation */
+  .column-pill-nav button {
+    animation: slideIn 0.2s ease-out forwards;
+    animation-delay: calc(var(--button-order, 0) * 0.05s);
+  }
+}
+
+/* Better loading states for mobile */
+.task-column.loading::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.task-column.loading::before {
+  content: "";
+  width: 30px;
+  height: 30px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #007bff;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-top: -15px;
+  margin-left: -15px;
+  animation: spin 1s linear infinite;
+  z-index: 11;
+}

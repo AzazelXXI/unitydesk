@@ -1,0 +1,87 @@
+/* Additional responsive enhancements for task list view */
+
+/* For extra small devices */
+@media (max-width: 420px) {
+  /* Make action buttons more compact */
+  .btn-sm {
+    font-size: 0.75rem;
+  }
+
+  /* Make cards stack well */
+  .task-stats-card {
+    padding: 0.75rem;
+  }
+
+  /* Optimize header space */
+  .task-details-header h2 {
+    font-size: 1.5rem;
+  }
+
+  /* Further optimize table */
+  .table td,
+  .table th {
+    padding: 0.4rem 0.2rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .btn,
+  .page-link,
+  .task-filter-section,
+  .dropdown-toggle {
+    display: none !important;
+  }
+
+  .card {
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .task-details-header {
+    border-bottom: 1px solid #000 !important;
+  }
+
+  .table th {
+    background-color: #f1f1f1 !important;
+    color: #000 !important;
+  }
+
+  .task-stats-card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) {
+  .btn {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .dropdown-item {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  /* Increase spacing between interactive elements */
+  .nav-link {
+    padding: 0.6rem 1rem;
+  }
+}
+
+/* Fix iOS Safari issues */
+@supports (-webkit-touch-callout: none) {
+  /* Fix for iOS input zoom */
+  input,
+  select {
+    font-size: 16px !important;
+  }
+
+  /* Fix for iOS momentum scroll */
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+  }
+}

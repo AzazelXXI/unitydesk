@@ -1,0 +1,131 @@
+/* Responsive utility classes for the task management application */
+
+/* Improved spacing on mobile */
+@media (max-width: 576px) {
+  .mb-sm-2 {
+    margin-bottom: 0.5rem !important;
+  }
+
+  .mb-sm-3 {
+    margin-bottom: 1rem !important;
+  }
+
+  .px-sm-2 {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+}
+
+/* Adjust font sizes on smaller devices */
+@media (max-width: 768px) {
+  .h1,
+  h1 {
+    font-size: 1.8rem;
+  }
+  .h2,
+  h2 {
+    font-size: 1.6rem;
+  }
+  .h3,
+  h3 {
+    font-size: 1.4rem;
+  }
+  .h4,
+  h4 {
+    font-size: 1.2rem;
+  }
+  .h5,
+  h5 {
+    font-size: 1.1rem;
+  }
+}
+
+/* Fix overflow issues */
+.overflow-auto-x {
+  overflow-x: auto;
+}
+
+/* Improve touch targets for mobile */
+@media (max-width: 768px) {
+  .btn {
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+  }
+
+  .form-control,
+  .form-select {
+    min-height: 38px;
+  }
+}
+
+/* Improved modal sizing for mobile devices */
+@media (max-width: 576px) {
+  .modal-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .modal-footer > .btn {
+    margin-bottom: 0.5rem;
+  }
+
+  .modal-footer > .btn:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/* Better modals on mobile */
+@media (max-width: 768px) {
+  .modal-dialog.modal-lg {
+    max-width: 100%;
+    margin: 0.5rem;
+  }
+
+  #taskDetailsModal .row {
+    flex-direction: column;
+  }
+
+  #taskDetailsModal .col-md-8,
+  #taskDetailsModal .col-md-4 {
+    width: 100%;
+  }
+
+  #taskDetailsModal .col-md-4 {
+    margin-top: 1rem;
+  }
+}
+
+/* Responsive form layouts */
+@media (max-width: 768px) {
+  #taskForm .row,
+  #createTaskForm .row {
+    margin-bottom: 0 !important;
+  }
+
+  #taskForm [class^="col-"],
+  #createTaskForm [class^="col-"] {
+    margin-bottom: 1rem;
+  }
+
+  /* Improve form controls on mobile */
+  .form-control,
+  .form-select {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+    padding: 10px;
+  }
+
+  /* Make buttons more tappable */
+  .btn {
+    min-height: 44px; /* Apple's recommended minimum touch target size */
+  }
+
+  /* Fix padding in containers */
+  .container {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .task-container {
+    padding: 15px !important;
+  }
+}

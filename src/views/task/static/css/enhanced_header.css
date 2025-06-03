@@ -1,0 +1,64 @@
+/* Enhanced header for mobile responsiveness */
+
+@media (max-width: 768px) {
+  /* Header styling */
+  .navbar-brand {
+    font-size: 1.25rem;
+    max-width: 65%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Header actions */
+  .btn-toolbar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 5px;
+    -webkit-overflow-scrolling: touch;
+    margin-right: -5px;
+  }
+
+  .btn-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .btn-toolbar .btn-group {
+    flex-shrink: 0;
+  }
+
+  .btn-toolbar .btn {
+    white-space: nowrap;
+  }
+
+  /* Improved touch targets */
+  .btn-sm {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  /* Main layout spacing */
+  .container,
+  .container-fluid {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* Improve top margin for main content */
+  #main-content {
+    margin-top: 10px;
+  }
+}
+
+/* Sticky header for better mobile UX */
+@media (max-width: 576px) {
+  .navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+  }
+
+  body {
+    padding-top: 0;
+  }
+}

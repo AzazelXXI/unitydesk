@@ -1,522 +1,203 @@
-{% extends "core/templates/base.html" %}
-{% block title %}Task Board - CSA Platform{% endblock %}
-
-{% block head_extra %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dragula@3.7.3/dist/dragula.min.css" />
+{% extends "core/templates/base.html" %} {% block title %}Task Board - CSA
+Platform{% endblock %} {% block head_extra %}
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+/>
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/dragula@3.7.3/dist/dragula.min.css"
+/>
 <link rel="stylesheet" href="/tasks/static/task.css" />
-<style>
-/* Task Board Specific Styles */
-.task-board-container {
-    padding: 20px;
-    background-color: #f8f9fa;
-    min-height: 100vh;
-}
-
-.task-board {
-    display: flex;
-    gap: 20px;
-    overflow-x: auto;
-    padding: 20px 0;
-}
-
-.task-column {
-    min-width: 280px;
-    background-color: #e9ecef;
-    border-radius: 8px;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    max-height: 80vh;
-}
-
-.task-column-header {
-    padding: 15px;
-    background-color: #dee2e6;
-    border-radius: 8px 8px 0 0;
-    font-weight: 600;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.task-column-tasks {
-    flex: 1;
-    padding: 10px;
-    overflow-y: auto;
-    min-height: 200px;
-}
-
-.task-card {
-    background: white;
-    border-radius: 6px;
-    padding: 12px;
-    margin-bottom: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    cursor: move;
-    border-left: 4px solid;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.task-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-.task-card.priority-high {
-    border-left-color: #dc3545;
-}
-
-.task-card.priority-medium {
-    border-left-color: #ffc107;
-}
-
-.task-card.priority-low {
-    border-left-color: #28a745;
-}
-
-.task-card-title {
-    font-weight: 600;
-    margin-bottom: 8px;
-    font-size: 14px;
-}
-
-.task-card-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 12px;
-    color: #6c757d;
-    margin-top: 8px;
-}
-
-.task-assignee {
-    background-color: #007bff;
-    color: white;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    font-weight: 600;
-}
-
-.task-due-date {
-    font-size: 11px;
-}
-
-.task-due-date.overdue {
-    color: #dc3545;
-    font-weight: 600;
-}
-
-/* Dragula specific styles */
-.gu-mirror {
-    position: fixed !important;
-    margin: 0 !important;
-    z-index: 9999 !important;
-    opacity: 0.8;
-    transform: rotate(5deg);
-}
-
-.gu-hide {
-    display: none !important;
-}
-
-.gu-unselectable {
-    -webkit-user-select: none !important;
-    -moz-user-select: none !important;
-    -ms-user-select: none !important;
-    user-select: none !important;
-}
-
-.gu-transit {
-    opacity: 0.2;
-}
-
-.task-column.drag-over {
-    background-color: #d1ecf1;
-    border: 2px dashed #bee5eb;
-}
-
-/* Column specific colors */
-.column-todo .task-column-header {
-    background-color: #6c757d;
-    color: white;
-}
-
-.column-in-progress .task-column-header {
-    background-color: #007bff;
-    color: white;
-}
-
-.column-review .task-column-header {
-    background-color: #ffc107;
-    color: #212529;
-}
-
-.column-done .task-column-header {
-    background-color: #28a745;
-    color: white;
-}
-
-.task-count {
-    background-color: rgba(255,255,255,0.3);
-    border-radius: 12px;
-    padding: 2px 8px;
-    font-size: 12px;
-}
-</style>
-{% endblock %}
-
-{% block content %}
+<link rel="stylesheet" href="/tasks/static/css/task_common.css" />
+<link rel="stylesheet" href="/tasks/static/css/task_board.css" />
+<link rel="stylesheet" href="/tasks/static/css/responsive_helpers.css" />
+<link rel="stylesheet" href="/tasks/static/css/task_board_responsive.css" />
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+/>
+{% endblock %} {% block content %}
 <div class="task-board-container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="fas fa-columns me-2"></i>Task Board</h2>
-        <div>
-            <a href="/tasks" class="btn btn-outline-secondary me-2">
-                <i class="fas fa-list me-1"></i>List View
-            </a>
-            <a href="/tasks/create" class="btn btn-primary">
-                <i class="fas fa-plus me-1"></i>New Task
-            </a>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-columns me-2"></i>Task Board</h2>
+    <div>
+      <a href="/tasks" class="btn btn-outline-secondary me-2">
+        <i class="fas fa-list me-1"></i>List View
+      </a>
+      <a href="/tasks/create" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>New Task
+      </a>
+    </div>
+  </div>
+
+  <div class="task-board">
+    <!-- TODO Column -->
+    <div class="task-column column-todo" data-status="todo">
+      <div class="task-column-header">
+        <span>To Do</span>
+        <span class="task-count"
+          >{{ columns.todo|length if columns.todo else 0 }}</span
+        >
+      </div>
+      <div class="task-column-tasks" id="todo-tasks">
+        {% for task in columns.todo %}
+        <div
+          class="task-card priority-{{ task.priority }}"
+          data-task-id="{{ task.id }}"
+        >
+          <div class="task-card-title">{{ task.title }}</div>
+          <div class="task-card-description">
+            {{ task.description[:50] }}{% if task.description|length > 50
+            %}...{% endif %}
+          </div>
+          <div class="task-card-meta">
+            <div class="task-assignee">{{ task.assignee.initials }}</div>
+            <div
+              class="task-due-date {% if task.is_overdue %}overdue{% endif %}"
+            >
+              <i class="fas fa-calendar-alt me-1"></i>{{ task.due_date }}
+            </div>
+          </div>
         </div>
+        {% endfor %}
+      </div>
     </div>
 
-    <div class="task-board">
-        <!-- TODO Column -->
-        <div class="task-column column-todo" data-status="todo">
-            <div class="task-column-header">
-                <span>To Do</span>
-                <span class="task-count">{{ columns.todo|length if columns.todo else 0 }}</span>
+    <!-- IN PROGRESS Column -->
+    <div class="task-column column-in-progress" data-status="in_progress">
+      <div class="task-column-header">
+        <span>In Progress</span>
+        <span class="task-count"
+          >{{ columns.in_progress|length if columns.in_progress else 0 }}</span
+        >
+      </div>
+      <div class="task-column-tasks" id="in-progress-tasks">
+        {% for task in columns.in_progress %}
+        <div
+          class="task-card priority-{{ task.priority }}"
+          data-task-id="{{ task.id }}"
+        >
+          <div class="task-card-title">{{ task.title }}</div>
+          <div class="task-card-description">
+            {{ task.description[:50] }}{% if task.description|length > 50
+            %}...{% endif %}
+          </div>
+          <div class="task-card-meta">
+            <div class="task-assignee">{{ task.assignee.initials }}</div>
+            <div
+              class="task-due-date {% if task.is_overdue %}overdue{% endif %}"
+            >
+              <i class="fas fa-calendar-alt me-1"></i>{{ task.due_date }}
             </div>
-            <div class="task-column-tasks" id="todo-tasks">
-                {% for task in columns.todo %}
-                <div class="task-card priority-{{ task.priority }}" data-task-id="{{ task.id }}">
-                    <div class="task-card-title">{{ task.title }}</div>
-                    <div class="task-card-description">{{ task.description[:50] }}{% if task.description|length > 50 %}...{% endif %}</div>
-                    <div class="task-card-meta">
-                        <div class="task-assignee">{{ task.assignee.initials }}</div>
-                        <div class="task-due-date {% if task.is_overdue %}overdue{% endif %}">
-                            <i class="fas fa-calendar-alt me-1"></i>{{ task.due_date }}
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
+          </div>
         </div>
-
-        <!-- IN PROGRESS Column -->
-        <div class="task-column column-in-progress" data-status="in_progress">
-            <div class="task-column-header">
-                <span>In Progress</span>
-                <span class="task-count">{{ columns.in_progress|length if columns.in_progress else 0 }}</span>
-            </div>
-            <div class="task-column-tasks" id="in-progress-tasks">
-                {% for task in columns.in_progress %}
-                <div class="task-card priority-{{ task.priority }}" data-task-id="{{ task.id }}">
-                    <div class="task-card-title">{{ task.title }}</div>
-                    <div class="task-card-description">{{ task.description[:50] }}{% if task.description|length > 50 %}...{% endif %}</div>
-                    <div class="task-card-meta">
-                        <div class="task-assignee">{{ task.assignee.initials }}</div>
-                        <div class="task-due-date {% if task.is_overdue %}overdue{% endif %}">
-                            <i class="fas fa-calendar-alt me-1"></i>{{ task.due_date }}
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- REVIEW Column -->
-        <div class="task-column column-review" data-status="review">
-            <div class="task-column-header">
-                <span>Review</span>
-                <span class="task-count">{{ columns.review|length if columns.review else 0 }}</span>
-            </div>
-            <div class="task-column-tasks" id="review-tasks">
-                {% for task in columns.review %}
-                <div class="task-card priority-{{ task.priority }}" data-task-id="{{ task.id }}">
-                    <div class="task-card-title">{{ task.title }}</div>
-                    <div class="task-card-description">{{ task.description[:50] }}{% if task.description|length > 50 %}...{% endif %}</div>
-                    <div class="task-card-meta">
-                        <div class="task-assignee">{{ task.assignee.initials }}</div>
-                        <div class="task-due-date {% if task.is_overdue %}overdue{% endif %}">
-                            <i class="fas fa-calendar-alt me-1"></i>{{ task.due_date }}
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- DONE Column -->
-        <div class="task-column column-done" data-status="done">
-            <div class="task-column-header">
-                <span>Done</span>
-                <span class="task-count">{{ columns.done|length if columns.done else 0 }}</span>
-            </div>
-            <div class="task-column-tasks" id="done-tasks">
-                {% for task in columns.done %}
-                <div class="task-card priority-{{ task.priority }}" data-task-id="{{ task.id }}">
-                    <div class="task-card-title">{{ task.title }}</div>
-                    <div class="task-card-description">{{ task.description[:50] }}{% if task.description|length > 50 %}...{% endif %}</div>
-                    <div class="task-card-meta">
-                        <div class="task-assignee">{{ task.assignee.initials }}</div>
-                        <div class="task-due-date {% if task.is_overdue %}overdue{% endif %}">
-                            <i class="fas fa-calendar-alt me-1"></i>{{ task.due_date }}
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
+        {% endfor %}
+      </div>
     </div>
+
+    <!-- REVIEW Column -->
+    <div class="task-column column-review" data-status="review">
+      <div class="task-column-header">
+        <span>Review</span>
+        <span class="task-count"
+          >{{ columns.review|length if columns.review else 0 }}</span
+        >
+      </div>
+      <div class="task-column-tasks" id="review-tasks">
+        {% for task in columns.review %}
+        <div
+          class="task-card priority-{{ task.priority }}"
+          data-task-id="{{ task.id }}"
+        >
+          <div class="task-card-title">{{ task.title }}</div>
+          <div class="task-card-description">
+            {{ task.description[:50] }}{% if task.description|length > 50
+            %}...{% endif %}
+          </div>
+          <div class="task-card-meta">
+            <div class="task-assignee">{{ task.assignee.initials }}</div>
+            <div
+              class="task-due-date {% if task.is_overdue %}overdue{% endif %}"
+            >
+              <i class="fas fa-calendar-alt me-1"></i>{{ task.due_date }}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- DONE Column -->
+    <div class="task-column column-done" data-status="done">
+      <div class="task-column-header">
+        <span>Done</span>
+        <span class="task-count"
+          >{{ columns.done|length if columns.done else 0 }}</span
+        >
+      </div>
+      <div class="task-column-tasks" id="done-tasks">
+        {% for task in columns.done %}
+        <div
+          class="task-card priority-{{ task.priority }}"
+          data-task-id="{{ task.id }}"
+        >
+          <div class="task-card-title">{{ task.title }}</div>
+          <div class="task-card-description">
+            {{ task.description[:50] }}{% if task.description|length > 50
+            %}...{% endif %}
+          </div>
+          <div class="task-card-meta">
+            <div class="task-assignee">{{ task.assignee.initials }}</div>
+            <div
+              class="task-due-date {% if task.is_overdue %}overdue{% endif %}"
+            >
+              <i class="fas fa-calendar-alt me-1"></i>{{ task.due_date }}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Task Detail Modal -->
-<div class="modal fade" id="taskDetailModal" tabindex="-1" aria-labelledby="taskDetailModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="taskDetailModalLabel">Task Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="taskDetailContent">
-                <!-- Task details will be loaded here -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="editTaskBtn">Edit Task</button>
-            </div>
-        </div>
+<div
+  class="modal fade"
+  id="taskDetailModal"
+  tabindex="-1"
+  aria-labelledby="taskDetailModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="taskDetailModalLabel">Task Details</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body" id="taskDetailContent">
+        <!-- Task details will be loaded here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Close
+        </button>
+        <button type="button" class="btn btn-primary" id="editTaskBtn">
+          Edit Task
+        </button>
+      </div>
     </div>
+  </div>
 </div>
-{% endblock %}
-
-{% block scripts_extra %}
+{% endblock %} {% block scripts_extra %}
 <script src="https://cdn.jsdelivr.net/npm/dragula@3.7.3/dist/dragula.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM Content Loaded');
-    
-    // Check if dragula is loaded
-    if (typeof dragula === 'undefined') {
-        console.error('Dragula library not loaded!');
-        return;
-    }
-    
-    console.log('Dragula library loaded successfully');
-    console.log('Initializing drag and drop...');
-    
-    // Get all task container elements
-    const containers = [
-        document.getElementById('todo-tasks'),
-        document.getElementById('in-progress-tasks'), 
-        document.getElementById('review-tasks'),
-        document.getElementById('done-tasks')
-    ];
-
-    // Check if containers exist
-    console.log('Containers found:', containers.map(c => c ? c.id : 'null'));
-
-    // Filter out null containers
-    const validContainers = containers.filter(c => c !== null);
-    
-    if (validContainers.length === 0) {
-        console.error('No valid containers found for drag and drop');
-        return;
-    }
-    
-    console.log('Valid containers:', validContainers.length);
-
-    // Initialize Dragula
-    try {
-        const drake = dragula(validContainers, {
-            moves: function(el, source, handle, sibling) {
-                const canMove = el && el.classList.contains('task-card');
-                console.log('Can move element:', canMove, el);
-                return canMove;
-            },
-            accepts: function(el, target, source, sibling) {
-                const canAccept = target && target.classList.contains('task-column-tasks');
-                console.log('Can accept in target:', canAccept, target);
-                return canAccept;
-            },
-            direction: 'vertical',
-            copy: false,
-            copySortSource: false,
-            revertOnSpill: true,
-            removeOnSpill: false
-        });        console.log('Dragula initialized successfully');
-        
-        // Handle drop event
-        drake.on('drop', function(el, target, source, sibling) {
-            console.log('Drop event triggered');
-            const taskId = el.getAttribute('data-task-id');
-            const sourceColumn = source.closest('.task-column').getAttribute('data-status');
-            const targetColumn = target.closest('.task-column').getAttribute('data-status');
-            
-            console.log(`Moving task ${taskId} from ${sourceColumn} to ${targetColumn}`);
-            
-            if (sourceColumn !== targetColumn) {
-                // Update task count in columns
-                updateTaskCount(sourceColumn, -1);
-                updateTaskCount(targetColumn, 1);
-                
-                // Show success message
-                showToast(`Task moved from ${getColumnDisplayName(sourceColumn)} to ${getColumnDisplayName(targetColumn)}`, 'success');
-            }
-        });
-
-        // Add visual feedback during drag
-        drake.on('drag', function(el, source) {
-            console.log('Drag started for task:', el.getAttribute('data-task-id'));
-            el.classList.add('dragging');
-            document.body.classList.add('dragging-active');
-        });
-
-        drake.on('dragend', function(el) {
-            console.log('Drag ended');
-            el.classList.remove('dragging');
-            document.body.classList.remove('dragging-active');
-            
-            // Remove any drag-over classes
-            document.querySelectorAll('.task-column').forEach(column => {
-                column.classList.remove('drag-over');
-            });
-        });
-
-        drake.on('over', function(el, container, source) {
-            console.log('Drag over container');
-            if (container && container.closest) {
-                container.closest('.task-column').classList.add('drag-over');
-            }
-        });
-
-        drake.on('out', function(el, container, source) {
-            console.log('Drag out of container');
-            if (container && container.closest) {
-                container.closest('.task-column').classList.remove('drag-over');
-            }
-        });
-
-        console.log('All drag and drop events registered');
-        
-    } catch (error) {
-        console.error('Error initializing dragula:', error);
-    }
-
-    // Task click handler for modal
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.task-card') && !document.body.classList.contains('dragging-active')) {
-            const taskCard = e.target.closest('.task-card');
-            const taskId = taskCard.getAttribute('data-task-id');
-            openTaskDetailModal(taskId);
-        }
-    });
-
-    // Helper functions
-    function updateTaskCount(columnStatus, change) {
-        const column = document.querySelector(`[data-status="${columnStatus}"] .task-count`);
-        if (column) {
-            const currentCount = parseInt(column.textContent) || 0;
-            column.textContent = Math.max(0, currentCount + change);
-        }
-    }
-
-    function getColumnDisplayName(status) {
-        const names = {
-            'todo': 'To Do',
-            'in_progress': 'In Progress',
-            'review': 'Review',
-            'done': 'Done'
-        };
-        return names[status] || status;
-    }
-
-    function showToast(message, type = 'info') {
-        // Simple toast notification
-        const toast = document.createElement('div');
-        toast.className = `alert alert-${type} position-fixed`;
-        toast.style.cssText = 'top: 20px; right: 20px; z-index: 10000; min-width: 300px;';
-        toast.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
-        `;
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            if (toast.parentElement) {
-                toast.remove();
-            }
-        }, 3000);
-    }
-
-    function openTaskDetailModal(taskId) {
-        // Mock task detail data - in real app, fetch from API
-        const taskDetails = {
-            id: taskId,
-            title: 'Sample Task Title',
-            description: 'This is a detailed description of the task...',
-            status: 'In Progress',
-            priority: 'High',
-            assignee: 'John Doe',
-            due_date: '2025-06-10',
-            created_date: '2025-06-01'
-        };
-
-        const modalContent = document.getElementById('taskDetailContent');
-        modalContent.innerHTML = `
-            <div class="row">
-                <div class="col-md-8">
-                    <h6>Title</h6>
-                    <p>${taskDetails.title}</p>
-                    
-                    <h6>Description</h6>
-                    <p>${taskDetails.description}</p>
-                </div>
-                <div class="col-md-4">
-                    <h6>Status</h6>
-                    <span class="badge bg-primary">${taskDetails.status}</span>
-                    
-                    <h6 class="mt-3">Priority</h6>
-                    <span class="badge bg-danger">${taskDetails.priority}</span>
-                    
-                    <h6 class="mt-3">Assignee</h6>
-                    <p>${taskDetails.assignee}</p>
-                    
-                    <h6>Due Date</h6>
-                    <p>${taskDetails.due_date}</p>
-                    
-                    <h6>Created</h6>
-                    <p>${taskDetails.created_date}</p>
-                </div>
-            </div>
-        `;
-
-        const modal = new bootstrap.Modal(document.getElementById('taskDetailModal'));
-        modal.show();
-    }
-
-    // function updateTaskStatus(taskId, newStatus) {
-    //     fetch(`/api/v1/tasks/${taskId}`, {
-    //         method: 'PATCH',
-    //         headers: {
-    //             'Content-Type': 'application/json',
-    //         },
-    //         body: JSON.stringify({ status: newStatus })
-    //     })
-    //     .then(response => response.json())
-    //     .then(data => {
-    //         console.log('Task updated:', data);
-    //     })
-    //     .catch(error => {
-    //         console.error('Error updating task:', error);
-    //         showToast('Error updating task', 'danger');
-    //     });
-    // }
-});
-</script>
+<script src="/tasks/static/js/task_common.js"></script>
+<script src="/tasks/static/js/task_board.js"></script>
+<script src="/tasks/static/js/task_board_responsive.js"></script>
 {% endblock %}
