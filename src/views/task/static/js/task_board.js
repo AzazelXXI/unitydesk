@@ -514,4 +514,26 @@ document.addEventListener("DOMContentLoaded", function () {
       window.location.href = `/tasks/edit/${task.id}`;
     };
   }
+
+  // Ẩn filter row nếu có (nếu bạn có filter row cũ, thêm class d-none d-md-block để chỉ hiện trên desktop)
+  // Xử lý filter mobile
+  const filterFormMobile = document.getElementById("taskFilterFormMobile");
+  if (filterFormMobile) {
+    filterFormMobile.addEventListener("submit", function (e) {
+      e.preventDefault();
+      // Lấy giá trị filter
+      const project = document.getElementById("projectFilterMobile").value;
+      const assignee = document.getElementById("assigneeFilterMobile").value;
+      const priority = document.getElementById("priorityFilterMobile").value;
+      const dueDate = document.getElementById("dueDateFilterMobile").value;
+      // Build query string
+      const params = new URLSearchParams();
+      if (project) params.append("project_id", project);
+      if (assignee) params.append("assignee_id", assignee);
+      if (priority) params.append("priority", priority);
+      if (dueDate) params.append("due_date", dueDate);
+      // Redirect với filter
+      window.location.href = `/tasks/board?${params.toString()}`;
+    });
+  }
 });

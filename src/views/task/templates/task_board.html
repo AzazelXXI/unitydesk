@@ -28,6 +28,16 @@ Platform{% endblock %} {% block head_extra %}
       <a href="/tasks/create" class="btn btn-primary">
         <i class="fas fa-plus me-1"></i>New Task
       </a>
+      <!-- Nút Filter chỉ hiện trên mobile -->
+      <button
+        class="btn btn-outline-primary d-inline-block d-md-none ms-2"
+        type="button"
+        data-bs-toggle="offcanvas"
+        data-bs-target="#filterOffcanvas"
+        aria-controls="filterOffcanvas"
+      >
+        <i class="fas fa-filter me-1"></i>Filter
+      </button>
     </div>
   </div>
 
@@ -193,6 +203,62 @@ Platform{% endblock %} {% block head_extra %}
         </button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Offcanvas Filter Panel (chỉ hiện trên mobile) -->
+<div
+  class="offcanvas offcanvas-end"
+  tabindex="-1"
+  id="filterOffcanvas"
+  aria-labelledby="filterOffcanvasLabel"
+>
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="filterOffcanvasLabel">Filter Tasks</h5>
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="offcanvas"
+      aria-label="Close"
+    ></button>
+  </div>
+  <div class="offcanvas-body">
+    <!-- Các filter, có thể copy từ filter row hiện tại hoặc tuỳ chỉnh -->
+    <form id="taskFilterFormMobile">
+      <div class="mb-3">
+        <label for="projectFilterMobile" class="form-label">Project</label>
+        <select class="form-select" id="projectFilterMobile" name="project">
+          <option value="">All Projects</option>
+          <!-- TODO: Render project options bằng server-side hoặc JS nếu cần -->
+        </select>
+      </div>
+      <div class="mb-3">
+        <label for="assigneeFilterMobile" class="form-label">Assignee</label>
+        <select class="form-select" id="assigneeFilterMobile" name="assignee">
+          <option value="">All Assignees</option>
+          <!-- TODO: Render assignee options bằng server-side hoặc JS nếu cần -->
+        </select>
+      </div>
+      <div class="mb-3">
+        <label for="priorityFilterMobile" class="form-label">Priority</label>
+        <select class="form-select" id="priorityFilterMobile" name="priority">
+          <option value="">All Priorities</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label for="dueDateFilterMobile" class="form-label">Due Date</label>
+        <input
+          type="date"
+          class="form-control"
+          id="dueDateFilterMobile"
+          name="due_date"
+        />
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+    </form>
   </div>
 </div>
 {% endblock %} {% block scripts_extra %}

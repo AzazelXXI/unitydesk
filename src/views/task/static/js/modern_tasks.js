@@ -436,18 +436,20 @@ document.addEventListener("DOMContentLoaded", function () {
     const mockTask = {
       id: taskId,
       title: "Thiết kế giao diện dashboard",
-      description: "Thiết kế giao diện dashboard cho dự án quản lý công việc. Bao gồm các widget thống kê, biểu đồ tiến độ và danh sách task.",
+      description:
+        "Thiết kế giao diện dashboard cho dự án quản lý công việc. Bao gồm các widget thống kê, biểu đồ tiến độ và danh sách task.",
       status: "in_progress",
       priority: "high",
       due_date: "2025-06-10",
       created_at: "2025-05-20",
       project: { name: "CSA Platform" },
-      assignee: { name: "Nguyễn Văn A", initials: "NA" }
+      assignee: { name: "Nguyễn Văn A", initials: "NA" },
     };
 
     // Fill in task details
     document.getElementById("detailsTitle").textContent = mockTask.title;
-    document.getElementById("detailsDescription").textContent = mockTask.description;
+    document.getElementById("detailsDescription").textContent =
+      mockTask.description;
 
     // Update status badge
     const statusBadge = document.getElementById("detailsStatus");
@@ -456,28 +458,45 @@ document.addEventListener("DOMContentLoaded", function () {
       .replace(/\b\w/g, (c) => c.toUpperCase());
     statusBadge.className = "badge float-end";
     if (mockTask.status === "todo") statusBadge.classList.add("bg-secondary");
-    else if (mockTask.status === "in_progress") statusBadge.classList.add("bg-primary");
-    else if (mockTask.status === "review") statusBadge.classList.add("bg-warning");
-    else if (mockTask.status === "done") statusBadge.classList.add("bg-success");
+    else if (mockTask.status === "in_progress")
+      statusBadge.classList.add("bg-primary");
+    else if (mockTask.status === "review")
+      statusBadge.classList.add("bg-warning");
+    else if (mockTask.status === "done")
+      statusBadge.classList.add("bg-success");
 
     // Update priority badge
     const priorityBadge = document.getElementById("detailsPriority");
-    priorityBadge.textContent = mockTask.priority.charAt(0).toUpperCase() + mockTask.priority.slice(1);
+    priorityBadge.textContent =
+      mockTask.priority.charAt(0).toUpperCase() + mockTask.priority.slice(1);
     priorityBadge.className = "badge float-end";
     if (mockTask.priority === "high") priorityBadge.classList.add("bg-danger");
-    else if (mockTask.priority === "medium") priorityBadge.classList.add("bg-warning");
-    else if (mockTask.priority === "low") priorityBadge.classList.add("bg-success");
+    else if (mockTask.priority === "medium")
+      priorityBadge.classList.add("bg-warning");
+    else if (mockTask.priority === "low")
+      priorityBadge.classList.add("bg-success");
 
     // Fill other details
-    document.getElementById("detailsDueDate").textContent = formatDate(mockTask.due_date);
-    document.getElementById("detailsCreated").textContent = formatDate(mockTask.created_at);
-    document.getElementById("detailsProject").textContent = mockTask.project.name;
-    document.getElementById("detailsAssignee").textContent = mockTask.assignee.name;
-    document.getElementById("detailsAssigneeAvatar").textContent = mockTask.assignee.initials;
+    document.getElementById("detailsDueDate").textContent = formatDate(
+      mockTask.due_date
+    );
+    document.getElementById("detailsCreated").textContent = formatDate(
+      mockTask.created_at
+    );
+    document.getElementById("detailsProject").textContent =
+      mockTask.project.name;
+    document.getElementById("detailsAssignee").textContent =
+      mockTask.assignee.name;
+    document.getElementById("detailsAssigneeAvatar").textContent =
+      mockTask.assignee.initials;
 
     // Set task ID for action buttons
-    document.getElementById("editTaskFromDetails").setAttribute("data-task-id", mockTask.id);
-    document.getElementById("deleteTaskFromDetails").setAttribute("data-task-id", mockTask.id);
+    document
+      .getElementById("editTaskFromDetails")
+      .setAttribute("data-task-id", mockTask.id);
+    document
+      .getElementById("deleteTaskFromDetails")
+      .setAttribute("data-task-id", mockTask.id);
 
     // Xóa comment cũ và hiển thị comment mẫu
     const commentsContainer = document.getElementById("comments");

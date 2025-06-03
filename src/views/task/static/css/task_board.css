@@ -343,3 +343,91 @@
     max-height: 250px; /* Even more compact on very small screens */
   }
 }
+
+/* Responsive filter row: luôn hiển thị, dọc trên mobile */
+.task-filter-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 767.98px) {
+  .task-filter-row {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 8px 0;
+    display: flex !important;
+  }
+  .task-filter-row > * {
+    width: 100% !important;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .task-filter-row form,
+  .task-filter-row .task-filter-form {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    position: static !important;
+  }
+
+  .row.g-3 {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    position: static !important;
+  }
+  .row.g-3.d-none {
+    display: flex !important;
+  }
+  .row.g-3[style*="display: none"] {
+    display: flex !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .row.g-3,
+  .row.g-3.d-none,
+  .row.g-3[style*="display: none"],
+  .task-filter-row,
+  .task-filter-row.d-none,
+  .task-filter-row[style*="display: none"] {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    position: static !important;
+  }
+  .task-filter-row *[class*="d-none"],
+  .task-filter-row *[style*="display: none"] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    position: static !important;
+  }
+}
+
+/* Nếu có rule nào ẩn filter row trên mobile, hãy override lại */
+@media (max-width: 767.98px) {
+  .task-filter-row {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .offcanvas#filterOffcanvas {
+    display: none !important;
+  }
+}
