@@ -23,6 +23,8 @@
 - Easy filtering and sorting options
 - Notification system for task updates
 
+---
+
 ## 2. Calendar Module
 
 ### Functionality Requirements
@@ -42,6 +44,8 @@
 - Easy event creation with quick-add functionality
 - Drag-and-drop event scheduling and duration adjustment
 - Customizable view preferences
+
+---
 
 ## 3. Project Module
 
@@ -63,18 +67,6 @@
 - Customizable project views (Kanban, list, timeline)
 - Easy navigation between projects
 - Progress indicators and reporting tools
-
-## 4. Target Audience
-- Marketing teams:
-    - Content creation tasks (e.g, blog posts, social media updates, email newsletters)
-    - Campaign management (e.g, planning, execution, tracking)
-    - Event planning (e.g, webinars, conferences, product launches)
-    - Collaboration on creative projects (e.g, graphic design, video production)
-    - Basic approval workflows (e.g, content review, design feedback)
-    - Task prioritization and assignment
-    - Time tracking for marketing activities
-
----
 
 ## Cross-Module Relationships
 
@@ -104,58 +96,62 @@
 
 ---
 
-## Stakeholder Analysis
+## 4. Stakeholder
 
 ### Project Managers
 
-**Responsibilities:**
+- **Planning**:
+  - Determine project scope and objectives, timeline, and resources.
+  - Scope in this context mean ?
+    - What the project will deliver, including features, functionalities, and deliverables.
+    - Final result of the project, including the product or service to be delivered.  
+- **Assignment**:
+  - Assign tasks to team members (developer, designer, tester) based on skills and availability, ensure that everybody understands the role and workflow.
+- **Progress Tracking**:
+  - Monitor task completion, project milestones, and overall progress and detect problems.
+- **Communication**:
+  - Facilitate communication between team members, stakeholders, and clients.
+- **Reporting**:
+  - Generate reports on project status, resource utilization, and task completion.
+- **Risk Management**:
+  - Identify potential risks and develop mitigation strategies.
 
-- Project Management: Create, edit, delete projects and define scope
-- Planning: Build timelines, set milestones and deadlines
-- Task Assignment: Create and assign tasks to appropriate team members
-- Progress Tracking: Monitor completion rates and update project status
-- Resource Management: Allocate and adjust resources across projects
-- Risk Management: Identify, assess, and reduce risks throughout projects
-- Reporting: Create and share performance and progress reports
+### Team Leader
+- **Task Breakdown**:
+  - Receive tasks from project managers and break them down into actionable items for team members.
+  - Assign tasks to team members based on their skills and workload.
+  - Ensure that team members understand their tasks and deadlines.
+- **Technical Guidance**:
+  - Technically guide team members, provide support, and resolve issues.
+  - Ensure the solutions are fit for purpose of the project.
+- **Quality Control**:
+  - Review code, designs and check the quality of product before report it to project managers.
+- **Reporting**:
+  - Report progress to project managers, including any issues or delays.
 
-**System Interactions:**
+### Team Member
+### Developers
+- **Task Execution**:
+  - Implement features, fix bugs, and complete tasks assigned by team leaders.
+- **Collaboration**:
+  - Participate in code reviews, design discussions, and team meetings.
+  - Communicate progress, dependencies, and blockers to team leaders.
+- **Documentation**:
+  - Document code, architecture decisions, and implementation details.
+### Testers
+- **Testing**:
+  - Execute test cases, report bugs, and verify fixes.
+  - Ensure that the product meets quality standards and requirements.
+  - Collaborate with developers to resolve issues.
+### UI/UX Designers
+- **Design**:
+  - Create user interfaces and experiences that are intuitive and visually appealing.
+  - Collaborate with developers to ensure designs are implemented correctly.
+  - Update designs based on user feedback and testing results.
+### System Administrators
+- Responsible for maintaining the infrastructure, ensuring that the development and production environments are stable and secure.
 
-- Use Gantt charts to manage timelines
-- Apply project templates for quick project initialization
-- Create and analyze project performance reports
-- Manage project budgets and expenses
-- Track resource allocation on calendars
-
-### Team Members
-
-**Responsibilities:**
-
-- Task Management: View, accept, and update status of assigned tasks
-- Time Tracking: Record and report time spent on each task
-- Collaboration: Add comments, share documents, and provide feedback on tasks
-- Personal Planning: Organize personal work based on priorities and deadlines
-- Issue Reporting: Report obstacles or dependencies affecting task progress
-
-**System Interactions:**
-
-- Use task filters to view assigned tasks
-- Update task status (todo, in progress, review, done)
-- Use time tracking to record working hours
-- Attach documents to tasks
-- Receive notifications when tasks or projects are updated
-
-### Clients/Members
-
-**Responsibilities:**
-
-- Progress Tracking: View reports and updates about their projects
-- Approval: Review and approve deliverables or milestones
-- Feedback Provision: Provide feedback on completed tasks
-- Change Requests: Propose changes or adjustments to project scope
-
-**System Interactions:**
-
-- Limited access to dashboard overview of project status
-- View shared progress reports
-- Receive notifications about important milestones
-- Approve or reject deliverables
+### Client
+- Provide business requirements and expectations.
+- Review project progress and provide feedback.
+- Approve final deliverables and ensure they meet business needs.
