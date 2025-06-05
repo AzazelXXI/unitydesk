@@ -150,8 +150,3 @@
   - Update designs based on user feedback and testing results.
 ### System Administrators
 - Responsible for maintaining the infrastructure, ensuring that the development and production environments are stable and secure.
-
-### Client
-- Provide business requirements and expectations.
-- Review project progress and provide feedback.
-- Approve final deliverables and ensure they meet business needs.
