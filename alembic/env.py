@@ -1,16 +1,25 @@
-from logging.config import fileConfig
-import os
 import sys
+import os
+from pathlib import Path
+from logging.config import fileConfig
+
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
+
 from alembic import context
 
-# Thêm thư mục gốc của dự án (chứa thư mục 'src') vào sys.path
-# __file__ là alembic/env.py
-# os.path.dirname(__file__) là alembic/
-# os.path.dirname(os.path.dirname(__file__)) là thư mục gốc của dự án
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(project_root)  # Để có thể import từ src.models
+# Thêm src vào Python path
+root_path = Path(__file__).parent.parent
+sys.path.append(str(root_path / "src"))
+
+# Import tất cả models
+from src.models.base import Base
+from src.models.user import User
+from src.models.project import Project
+from src.models.task import Task
+from src.models.comment import Comment
+from src.models.attachment import Attachment
+from src.models.notification import Notification
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -18,47 +27,16 @@ config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-if config.attributes.get("configure_logger", True):
+if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-from src.models.base import Base  # Import Base từ src.models.base
-
-# Import tất cả các model của bạn để Base.metadata biết về chúng
-# và Alembic có thể tự động phát hiện thay đổi.
-# Đảm bảo rằng các file model này đã import Base và định nghĩa các table.
-import src.models.user
-import src.models.project
-import src.models.task
-import src.models.team
-import src.models.calendar
-import src.models.event
-
-# Bảng association_tables cũng cần được import nếu chúng định nghĩa Table objects
-# trực tiếp với Base.metadata
-import src.models.association_tables
-
+# Set target_metadata
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
-
-
-def get_url():
-    from dotenv import load_dotenv
-
-    # Đường dẫn đến file .env ở thư mục gốc của dự án
-    dotenv_path = os.path.join(project_root, ".env")
-    load_dotenv(dotenv_path=dotenv_path)
-    db_url = os.getenv("SQLALCHEMY_DATABASE_URL")
-    if not db_url:
-        raise ValueError("SQLALCHEMY_DATABASE_URL is not set in .env file for Alembic.")
-    return db_url
 
 
 def run_migrations_offline() -> None:
@@ -73,7 +51,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = get_url()
+    url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -92,10 +70,11 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    # Thay thế phần cấu hình engine mặc định bằng cách lấy URL từ get_url()
-    from sqlalchemy import create_engine
-
-    connectable = create_engine(get_url())
+    connectable = engine_from_config(
+        config.get_section(config.config_ini_section, {}),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
 
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)
