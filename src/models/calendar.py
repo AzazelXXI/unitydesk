@@ -1,8 +1,6 @@
 import enum
 import datetime
-import uuid
 from sqlalchemy import (
-    UUID,
     Column,
     DateTime,
     Integer,
@@ -26,7 +24,7 @@ class CalendarViewEnum(str, enum.Enum):
 class Calendar(Base):
     __tablename__ = "calendars"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     color_code = Column(String(7), nullable=True)  # Example: #RRGGBB
@@ -39,7 +37,7 @@ class Calendar(Base):
     )
 
     # Foreign Key
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     # Relationships
     user = relationship("User", back_populates="calendars")

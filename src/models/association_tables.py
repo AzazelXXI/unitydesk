@@ -1,33 +1,46 @@
-from sqlalchemy import Column, ForeignKey, Table, Integer, UUID, String
+from sqlalchemy import Column, ForeignKey, Table, Integer, String, DateTime
+from datetime import datetime
 from .base import Base
 
-# This file use to define association Many-To-Many relationship
+# Association tables for Many-To-Many relationships
 
-project_teams_table = Table(
-    "project_teams",
+# Project members - replaces project_teams
+project_members = Table(
+    "project_members",
     Base.metadata,
-    Column(
-        "project_id", UUID(as_uuid=True), ForeignKey("projects.id"), primary_key=True
-    ),
-    Column("team_id", UUID(as_uuid=True), ForeignKey("teams.id"), primary_key=True),
+    Column("project_id", Integer, ForeignKey("projects.id"), primary_key=True),
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
+    Column("role", String(50), default="Member", nullable=False),  # Member, Lead, etc.
+    Column("joined_at", DateTime, default=datetime.utcnow),
 )
 
-task_attachment_table = Table(
+# Task assignees - many users can be assigned to one task
+task_assignees = Table(
+    "task_assignees",
+    Base.metadata,
+    Column("task_id", Integer, ForeignKey("tasks.id"), primary_key=True),
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
+    Column("assigned_at", DateTime, default=datetime.utcnow),
+)
+
+# Task attachments - many tasks can have many attachments
+task_attachments = Table(
     "task_attachments",
     Base.metadata,
-    Column("task_id", UUID(as_uuid=True), ForeignKey("tasks.id"), primary_key=True),
-    Column(
-        "attachment_id",
-        UUID(as_uuid=True),
-        ForeignKey("attachments.id"),
-        primary_key=True,
-    ),
+    Column("task_id", Integer, ForeignKey("tasks.id"), primary_key=True),
+    Column("attachment_id", Integer, ForeignKey("attachments.id"), primary_key=True),
+    Column("attached_at", DateTime, default=datetime.utcnow),
 )
 
-# team_members_table = Table(
-#     "team_members",
-#     Base.metadata,
-#     Column("team_id", UUID(as_uuid=True), ForeignKey("teams.id", ondelete="CASCADE"), primary_key=True),
-#     Column("user_id", UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
-#     Column("role", String(50), default="Member", nullable=False)  # Ví dụ: "Leader", "Member"
-# )
+# Task dependencies - a task can depend on other tasks
+task_dependencies = Table(
+    "task_dependencies",
+    Base.metadata,
+    Column(
+        "task_id", Integer, ForeignKey("tasks.id"), primary_key=True
+    ),  # The task that depends
+    Column(
+        "depends_on_task_id", Integer, ForeignKey("tasks.id"), primary_key=True
+    ),  # The task it depends on
+    Column("created_at", DateTime, default=datetime.utcnow),
+)

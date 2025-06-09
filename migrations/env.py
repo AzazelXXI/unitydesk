@@ -33,12 +33,17 @@ from src.models.base import Base  # Import Base từ src.models.base
 import src.models.user
 import src.models.project
 import src.models.task
-import src.models.team
+import src.models.comment
+import src.models.attachment
+import src.models.milestone
+import src.models.risk
+import src.models.notification
 import src.models.calendar
 import src.models.event
 
 # Bảng association_tables cũng cần được import nếu chúng định nghĩa Table objects
 # trực tiếp với Base.metadata
+import src.models.association_tables
 import src.models.association_tables
 
 target_metadata = Base.metadata

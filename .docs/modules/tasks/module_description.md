@@ -55,7 +55,6 @@
 - Set project start/end dates and milestones
 - Assign team members and define roles
 - Track project progress and status
-- Create project templates for reuse
 - Support for project documentation
 - Budget and resource allocation tracking
 - Risk management capabilities
@@ -104,7 +103,7 @@
   - Determine project scope and objectives, timeline, and resources.
   - Scope in this context mean ?
     - What the project will deliver, including features, functionalities, and deliverables.
-    - Final result of the project, including the product or service to be delivered.  
+    - Final result of the project, including the product or service to be delivered.
 - **Assignment**:
   - Assign tasks to team members (developer, designer, tester) based on skills and availability, ensure that everybody understands the role and workflow.
 - **Progress Tracking**:
@@ -117,6 +116,7 @@
   - Identify potential risks and develop mitigation strategies.
 
 ### Team Leader
+
 - **Task Breakdown**:
   - Receive tasks from project managers and break them down into actionable items for team members.
   - Assign tasks to team members based on their skills and workload.
@@ -130,7 +130,9 @@
   - Report progress to project managers, including any issues or delays.
 
 ### Team Member
+
 ### Developers
+
 - **Task Execution**:
   - Implement features, fix bugs, and complete tasks assigned by team leaders.
 - **Collaboration**:
@@ -138,15 +140,62 @@
   - Communicate progress, dependencies, and blockers to team leaders.
 - **Documentation**:
   - Document code, architecture decisions, and implementation details.
+
 ### Testers
+
 - **Testing**:
   - Execute test cases, report bugs, and verify fixes.
   - Ensure that the product meets quality standards and requirements.
   - Collaborate with developers to resolve issues.
+
 ### UI/UX Designers
+
 - **Design**:
   - Create user interfaces and experiences that are intuitive and visually appealing.
   - Collaborate with developers to ensure designs are implemented correctly.
   - Update designs based on user feedback and testing results.
+
 ### System Administrators
+
 - Responsible for maintaining the infrastructure, ensuring that the development and production environments are stable and secure.
+
+## 5. Scenarios
+
+### Starting situation
+
+- A project manager creates a new project and defines its scope, objectives, and timeline.
+- The project manager assigns a team leader to oversee the project execution.
+- The team leader breaks down the project into tasks and assigns them to team members based on their skills and availability.
+- Team members start working on their assigned tasks, collaborating with each other and the team leader as needed.
+
+### Normal flow events
+
+- The project manager monitors the project's progress, checking task completion and milestones.
+- Team members complete their tasks, updating their status and providing feedback to the team leader.
+- The team leader reviews the completed tasks, provides feedback, and ensures quality control.
+- The project manager generates reports on project status, resource utilization, and task completion.
+- The project manager communicates with stakeholders, providing updates and addressing any concerns.
+- The developer completes a task, updates its status, and notifies the team leader.
+- The team leader reviews the task, provides feedback, and ensures it meets quality standards.
+- The tester executes test cases for the completed task, reports any bugs, and verifies fixes.
+- The UI/UX designer updates the design based on user feedback and testing results.
+
+### Description of what can go wrong
+
+- A team member encounters a blocker or dependency that prevents them from completing their task.
+- A task takes longer than expected, causing delays in the project timeline.
+- Team leader or project manager identifies a risk that could impact the project.
+- Team leader miscommunicates to team members, leading to confusion or misalignment on tasks.
+- A critical bug is discovered during testing, requiring immediate attention from developers.
+
+### Information about other concurrent actitivities
+
+- Developer is working on a feature while the tester is executing test cases for a previous task.
+- UX/UI Designer progress on task based on tasks that are completed by developers.
+
+### Descripion of the end state
+
+- The project is completed, meeting the defined scope, objectives, and timeline.
+- All tasks are completed, tested, and verified.
+- The project manager generates a final report, summarizing the project's success, challenges, and lessons learned.
+- The project is delivered to stakeholders, and feedback is collected for future improvements.

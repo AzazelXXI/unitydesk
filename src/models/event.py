@@ -1,6 +1,5 @@
-import uuid
 import datetime
-from sqlalchemy import Column, ForeignKey, String, Text, DateTime, Boolean, UUID
+from sqlalchemy import Column, ForeignKey, String, Text, DateTime, Boolean, Integer
 from sqlalchemy.orm import relationship
 from .base import Base
 
@@ -8,7 +7,7 @@ from .base import Base
 class Event(Base):
     __tablename__ = "events"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     start_date = Column(DateTime, nullable=False)
@@ -26,9 +25,9 @@ class Event(Base):
     )
 
     # Foreign Keys
-    calendar_id = Column(UUID(as_uuid=True), ForeignKey("calendars.id"), nullable=False)
+    calendar_id = Column(Integer, ForeignKey("calendars.id"), nullable=False)
     project_id = Column(
-        UUID(as_uuid=True),
+        Integer,
         ForeignKey("projects.id", ondelete="SET NULL"),
         nullable=True,
     )

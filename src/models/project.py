@@ -1,6 +1,5 @@
 import enum
 import datetime
-import uuid
 from sqlalchemy import (
     Boolean,
     Column,
@@ -12,12 +11,10 @@ from sqlalchemy import (
     Text,
     Float,
     Numeric,
-    UUID,
 )
 from sqlalchemy.orm import relationship
 
 from .base import Base
-from .association_tables import project_teams_table
 
 
 class ProjectStatusEnum(str, enum.Enum):
@@ -30,7 +27,7 @@ class ProjectStatusEnum(str, enum.Enum):
 class Project(Base):
     __tablename__ = "projects"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=False, unique=True)
     description = Column(Text, nullable=True)
     start_date = Column(DateTime, nullable=True)
@@ -51,12 +48,18 @@ class Project(Base):
     )
 
     # Foreign Key
-    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-
-    # Relationship
+    owner_id = Column(
+        Integer, ForeignKey("users.id"), nullable=False
+    )  # Relationships - Align with Class Diagram
     owner = relationship("User", back_populates="owned_projects")
     tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
-    teams = relationship(
-        "Team", secondary=project_teams_table, back_populates="projects"
+    milestones = relationship(
+        "Milestone", back_populates="project", cascade="all, delete-orphan"
     )
+    risks = relationship("Risk", back_populates="project", cascade="all, delete-orphan")
+    documents = relationship("Attachment", back_populates="project")
     events = relationship("Event", back_populates="project")
+    # Many-to-many relationship for team members
+    team_members = relationship(
+        "User", secondary="project_members", back_populates="member_projects"
+    )
