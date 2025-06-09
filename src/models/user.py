@@ -21,6 +21,17 @@ class UserStatusEnum(str, enum.Enum):
     IDLE = "Idle"
 
 
+class UserTypeEnum(str, enum.Enum):
+    USER = "user"
+    PROJECT_MANAGER = "project_manager"
+    TEAM_LEADER = "team_leader"
+    DEVELOPER = "developer"
+    TESTER = "tester"
+    DESIGNER = "designer"
+    SYSTEM_ADMIN = "system_admin"
+    TEAM_MEMBER = "team_member"  # Generic team member
+
+
 class User(Base):
     __tablename__ = "users"
 
