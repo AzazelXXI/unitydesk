@@ -1,3 +1,6 @@
+// Task Board JavaScript - Board View Functionality
+console.log("🚨 JavaScript file loaded!");
+
 document.addEventListener("DOMContentLoaded", function () {
   console.log("DOM Content Loaded");
 
@@ -33,14 +36,36 @@ document.addEventListener("DOMContentLoaded", function () {
   if (validContainers.length === 0) {
     console.error("No valid containers found for drag and drop");
     return;
-  }  console.log("Valid containers:", validContainers.length);
-  
+  }
+  console.log("Valid containers:", validContainers.length);
+
+  // IMMEDIATE TEST: Add simple click handler to test if clicks work at all
+  document.addEventListener("click", function (e) {
+    console.log("CLICK TEST: Something was clicked!", e.target);
+    if (e.target.closest(".task-card")) {
+      const taskCard = e.target.closest(".task-card");
+      const taskId = taskCard.getAttribute("data-task-id");
+      alert(`🎉 BASIC CLICK WORKS! Task ID: ${taskId}`);
+      console.log("Task card clicked via document listener:", taskCard);
+    }
+  });
   // Add click event to all task cards to show details
+  console.log("🔍 About to call addTaskCardClickListeners()");
   addTaskCardClickListeners();
+  console.log("✅ addTaskCardClickListeners() called");
 
   // Add a test to see if any task cards exist at all
   const allTaskCards = document.querySelectorAll(".task-card");
-  console.log("Total task cards found:", allTaskCards.length);// Initialize Dragula - temporarily commented out for testing
+  console.log("Total task cards found:", allTaskCards.length);
+
+  // Log each task card found for debugging
+  allTaskCards.forEach((card, index) => {
+    console.log(`Task card ${index}:`, card);
+    console.log(
+      `  - Has task-card class: ${card.classList.contains("task-card")}`
+    );
+    console.log(`  - data-task-id: ${card.getAttribute("data-task-id")}`);
+  }); // Initialize Dragula - temporarily commented out for testing
   /*
   try {
     const drake = dragula(validContainers, {
@@ -336,7 +361,7 @@ document.addEventListener("DOMContentLoaded", function () {
       console.error("API request error:", error);
       throw error;
     }
-  }  // Function to add click event listeners to task cards
+  } // Function to add click event listeners to task cards
   function addTaskCardClickListeners() {
     const taskCards = document.querySelectorAll(".task-card");
     console.log(`Found ${taskCards.length} task cards for click listeners`);
@@ -344,14 +369,9 @@ document.addEventListener("DOMContentLoaded", function () {
     taskCards.forEach((card, index) => {
       const taskId = card.getAttribute("data-task-id");
       console.log(`Task card ${index}: ID = ${taskId}`);
-      
       card.addEventListener("click", function (e) {
         console.log("Task card clicked:", taskId);
-        
-        // SIMPLE TEST: Show alert to verify click is working
-        const clickedTaskId = this.getAttribute("data-task-id");
-        alert(`✅ Click detected! Task ID: ${clickedTaskId}`);
-        
+
         // Don't trigger click during drag operations
         if (
           this.classList.contains("gu-mirror") ||
@@ -362,11 +382,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         console.log("Processing click for task ID:", clickedTaskId);
-        
+
+        const clickedTaskId = this.getAttribute("data-task-id");
         if (clickedTaskId) {
-          // Comment out the modal for now to test just the click
-          // fetchTaskDetails(clickedTaskId);
-          console.log("Would fetch task details for:", clickedTaskId);
+          // Now that click is working, enable the modal
+          fetchTaskDetails(clickedTaskId);
+          console.log("Fetching task details for:", clickedTaskId);
         } else {
           console.error("No task ID found on clicked element");
         }
@@ -376,14 +397,14 @@ document.addEventListener("DOMContentLoaded", function () {
   // Function to fetch task details and populate modal
   function fetchTaskDetails(taskId) {
     console.log("fetchTaskDetails called with taskId:", taskId);
-    
+
     // Show loading state
     const taskDetailContent = document.getElementById("taskDetailContent");
     if (!taskDetailContent) {
       console.error("taskDetailContent element not found!");
       return;
     }
-    
+
     taskDetailContent.innerHTML =
       '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><div class="mt-2">Loading task details...</div></div>';
 
@@ -393,10 +414,10 @@ document.addEventListener("DOMContentLoaded", function () {
       console.error("taskDetailModal element not found!");
       return;
     }
-    
+
     const taskDetailModal = new bootstrap.Modal(taskDetailModalElement);
     console.log("Showing modal...");
-    taskDetailModal.show();    // Try different API endpoints for task details
+    taskDetailModal.show(); // Try different API endpoints for task details
     const endpoints = [
       `/api/tasks/${taskId}`, // This should work now with our simple_task_api
       `/api/v1/api/tasks/${taskId}`, // API v1 endpoint
