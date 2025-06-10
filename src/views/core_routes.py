@@ -68,14 +68,17 @@ async def login_submit(
                     "request": request,
                     "error_message": "Incorrect username or password. Please try again.",
                 },
-            )
-        # Successful login - redirect to tasks
+            )  # Successful login - redirect to tasks
         response = RedirectResponse(url="/tasks", status_code=303)
-        # You can set cookies here if needed for remember_me functionality
+        # Set cookie for web authentication
+        response.set_cookie(
+            "remember_token", token.access_token, max_age=7 * 24 * 3600  # 7 days
+        )
+        # Extended cookie for remember_me functionality
         if remember_me:
             response.set_cookie(
-                "remember_token", token.access_token, max_age=30 * 24 * 3600
-            )  # 30 days
+                "remember_token", token.access_token, max_age=30 * 24 * 3600  # 30 days
+            )
         return response
 
     except Exception as e:

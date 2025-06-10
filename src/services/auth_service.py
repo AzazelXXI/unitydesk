@@ -121,13 +121,20 @@ async def verify_token(token: str, token_type: str = "access") -> Optional[Token
         token_type: The expected token type ("access" or "refresh")
     """
     try:
+        logger.info(
+            f"Attempting to verify token (length: {len(token) if token else 0})"
+        )
+        logger.info(f"Using SECRET_KEY (length: {len(SECRET_KEY)})")
+
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        logger.info(f"Token payload decoded successfully: {payload}")
+
         username: str = payload.get("sub")
         user_id: int = payload.get("id")
         role: str = payload.get("role")
         actual_token_type: str = payload.get(
             "token_type", "access"
-        )  # Default for backward compatibility
+        )  # Default for backward compatibility        logger.info(f"Token claims - username: {username}, user_id: {user_id}, role: {role}, token_type: {actual_token_type}")
 
         # Validate required fields
         if username is None or user_id is None:
@@ -141,7 +148,18 @@ async def verify_token(token: str, token_type: str = "access") -> Optional[Token
             )
             return None
 
-        return TokenData(username=username, user_id=user_id, role=role)
+        # Convert role string to enum if role is present
+        from src.models.user import UserTypeEnum
+
+        role_enum = None
+        if role:
+            try:
+                role_enum = UserTypeEnum(role)  # Convert string to enum
+            except ValueError:
+                logger.warning(f"Invalid role value in token: {role}")
+
+        logger.info("Token validation successful")
+        return TokenData(username=username, user_id=user_id, role=role_enum)
     except jwt.ExpiredSignatureError:
         logger.info("Token validation failed: Token has expired")
         return None

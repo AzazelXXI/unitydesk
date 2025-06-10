@@ -730,3 +730,27 @@ class TaskController:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to delete comment: {str(e)}",
             )
+
+    @staticmethod
+    async def get_users_for_assignment(db: AsyncSession):
+        """
+        Get all users that can be assigned to tasks.
+
+        Args:
+            db: Database session
+
+        Returns:
+            List of users
+        """
+        from sqlalchemy.future import select
+        from src.models.user import User
+
+        try:
+            query = select(User).order_by(User.name)
+            result = await db.execute(query)
+            users = result.scalars().all()
+
+            return users
+        except Exception as e:
+            print(f"Error fetching users for assignment: {e}")
+            return []

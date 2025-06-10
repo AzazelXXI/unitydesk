@@ -198,7 +198,8 @@ async def login_for_access_token(
         return None
 
     # Create token with user info (using correct field names: name, user_type)
-    token_data = {"sub": user.name, "id": user.id, "role": user.user_type}
+    # Create token data with enum value, not enum name
+    token_data = {"sub": user.name, "id": user.id, "role": user.user_type.value}
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     refresh_token_expires = timedelta(days=7)  # You can make this configurable

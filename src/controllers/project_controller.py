@@ -210,6 +210,32 @@ class ProjectController:
 
         return True
 
+    @staticmethod
+    async def get_user_projects(user_id: int, db):
+        """
+        Get projects that a user has access to.
+
+        Args:
+            user_id: ID of the user
+            db: Database session
+
+        Returns:
+            List of projects the user can access
+        """
+        from sqlalchemy.future import select
+        from src.models.project import Project
+
+        try:
+            # For now, get all projects - in a real app you'd filter by user permissions
+            query = select(Project).order_by(Project.name)
+            result = await db.execute(query)
+            projects = result.scalars().all()
+
+            return projects
+        except Exception as e:
+            print(f"Error fetching user projects: {e}")
+            return []
+
 
 # Create the router
 router = APIRouter(

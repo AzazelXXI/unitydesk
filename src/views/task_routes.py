@@ -7,8 +7,18 @@ This module contains all task-related web routes for the CSA Platform, including
 - Task creation and editing interfaces
 """
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
+
+from src.database import get_db
+from src.middleware.auth_middleware import get_current_user_web
+from src.models.user import User
+from src.modules.tasks.task.service import TaskService
+from src.modules.tasks.project.service import ProjectService
+from src.controllers.task_controller import TaskController
+from src.controllers.project_controller import ProjectController
 
 # Create router for task web routes
 router = APIRouter(
@@ -22,124 +32,139 @@ templates = Jinja2Templates(directory="src/views")
 
 
 @router.get("/")
-async def tasks_home(request: Request):
-    """Tasks home page"""
-    # Sample data for task board view
-    task_stats = {"total": 48, "in_progress": 12, "overdue": 5, "completed": 23}
+async def tasks_home(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+    project_id: Optional[int] = None,
+):
+    """Tasks home page with real database data"""
+    try:
+        # Get tasks from database
+        tasks_data = await TaskService.get_tasks(
+            user_id=current_user.id, project_id=project_id, db=db
+        )
 
-    # Sample projects for filters
-    projects = [
-        {"id": 1, "name": "Website Redesign"},
-        {"id": 2, "name": "Mobile App Development"},
-        {"id": 3, "name": "Marketing Campaign"},
-    ]
+        # Get projects and users for filters
+        projects = await ProjectController.get_user_projects(current_user.id, db)
+        users = await TaskController.get_users_for_assignment(db)
 
-    # Sample users for filters and assignments
-    users = [
-        {"id": 1, "name": "John Smith"},
-        {"id": 2, "name": "Jane Doe"},
-        {"id": 3, "name": "Bob Johnson"},
-    ]
+        # Get task statistics
+        task_stats = await TaskService.get_task_stats(
+            user_id=current_user.id, project_id=project_id, db=db
+        )
 
-    # Sample tasks organized by status columns
-    columns = {
-        "todo": [
-            {
-                "id": 1,
-                "title": "Design homepage mockup",
-                "description": "Create wireframes for the new homepage",
-                "priority": "high",
-                "due_date": "May 5, 2025",
-                "is_overdue": False,
-                "assignee": {"name": "Jane Doe", "initials": "JD"},
-            },
-            {
-                "id": 2,
-                "title": "Research competitors",
-                "description": "Analyze top 5 competitor websites",
-                "priority": "medium",
-                "due_date": "May 8, 2025",
-                "is_overdue": False,
-                "assignee": {"name": "John Smith", "initials": "JS"},
-            },
-        ],
-        "in_progress": [
-            {
-                "id": 3,
-                "title": "Develop API endpoints",
-                "description": "Implement REST API for user authentication",
-                "priority": "high",
-                "due_date": "April 30, 2025",
-                "is_overdue": True,
-                "assignee": {"name": "Bob Johnson", "initials": "BJ"},
-            },
-            {
-                "id": 4,
-                "title": "Create dashboard layout",
-                "description": "Implement responsive dashboard layout",
-                "priority": "medium",
-                "due_date": "May 3, 2025",
-                "is_overdue": False,
-                "assignee": {"name": "Jane Doe", "initials": "JD"},
-            },
-        ],
-        "review": [
-            {
-                "id": 5,
-                "title": "User feedback integration",
-                "description": "Implement changes based on user testing",
-                "priority": "medium",
-                "due_date": "May 2, 2025",
-                "is_overdue": False,
-                "assignee": {"name": "John Smith", "initials": "JS"},
+        # Organize tasks by status for kanban board
+        columns = {"todo": [], "in_progress": [], "review": [], "done": []}
+
+        # Map database task statuses to board columns
+        status_mapping = {
+            "Not Started": "todo",
+            "In Progress": "in_progress",
+            "Completed": "done",
+            "Blocked": "review",  # Blocked tasks go to review column
+            "Cancelled": "done",  # Cancelled tasks go to done column
+        }
+
+        for task in tasks_data:
+            # Get task status
+            task_status = (
+                task.status.value if hasattr(task.status, "value") else task.status
+            )
+            column = status_mapping.get(task_status, "todo")
+
+            # Transform task for template compatibility
+            task_item = {
+                "id": task.id,
+                "title": (
+                    task.name
+                    if task.name and task.name.strip()
+                    else f"Untitled Task {task.id}"
+                ),
+                "description": task.description or "No description provided",
+                "priority": (
+                    task.priority.value.lower()
+                    if hasattr(task.priority, "value")
+                    else str(task.priority).lower()
+                ),
+                "due_date": (
+                    task.due_date.strftime("%B %d, %Y")
+                    if task.due_date
+                    else "No due date"
+                ),
+                "is_overdue": False,  # Will calculate this properly
+                "assignee": {
+                    "name": (
+                        f"User {task.assignee_count}"
+                        if task.assignee_count > 0
+                        else "Unassigned"
+                    ),
+                    "initials": "U",  # Will improve with real user data
+                },
+                "project_name": task.project_name or "Unknown Project",
             }
-        ],
-        "done": [
-            {
-                "id": 6,
-                "title": "Project kickoff meeting",
-                "description": "Initial meeting with stakeholders",
-                "priority": "low",
-                "due_date": "April 25, 2025",
-                "is_overdue": False,
-                "assignee": {"name": "Jane Doe", "initials": "JD"},
-            },
-            {
-                "id": 7,
-                "title": "Requirements gathering",
-                "description": "Document project requirements",
-                "priority": "medium",
-                "due_date": "April 27, 2025",
-                "is_overdue": False,
-                "assignee": {"name": "Bob Johnson", "initials": "BJ"},
-            },
-        ],
-    }
-    # Combine all tasks for list view
-    all_tasks = []
-    for status, tasks in columns.items():
-        for task in tasks:
-            task_copy = task.copy()
-            task_copy["status"] = status
-            task_copy["project"] = {"name": "Website Redesign"}  # Sample project name
-            all_tasks.append(task_copy)
 
-    return templates.TemplateResponse(
-        request=request,
-        name="task/templates/modern_tasks.html",
-        context={
-            "request": request,
-            "task_stats": task_stats,
-            "projects": projects,
-            "users": users,
-            "columns": columns,
-            "all_tasks": all_tasks,
-        },
-    )
+            # Check if task is overdue
+            if task.due_date and task_status not in ["Completed", "Cancelled"]:
+                from datetime import datetime
+
+                task_item["is_overdue"] = task.due_date < datetime.now()
+
+            columns[column].append(task_item)
+
+        # Combine all tasks for list view
+        all_tasks = []
+        for status, tasks in columns.items():
+            for task in tasks:
+                task_copy = task.copy()
+                task_copy["status"] = status
+                all_tasks.append(task_copy)
+
+        return templates.TemplateResponse(
+            request=request,
+            name="task/templates/modern_tasks.html",
+            context={
+                "request": request,
+                "task_stats": task_stats,
+                "projects": projects,
+                "users": users,
+                "columns": columns,
+                "all_tasks": all_tasks,
+                "current_user": current_user,
+            },
+        )
+
+    except Exception as e:
+        # Fallback to empty data if database query fails
+        empty_columns = {"todo": [], "in_progress": [], "review": [], "done": []}
+        return templates.TemplateResponse(
+            request=request,
+            name="task/templates/modern_tasks.html",
+            context={
+                "request": request,
+                "task_stats": {
+                    "total": 0,
+                    "in_progress": 0,
+                    "overdue": 0,
+                    "completed": 0,
+                },
+                "projects": [],
+                "users": [],
+                "columns": empty_columns,
+                "all_tasks": [],
+                "current_user": current_user,
+                "error": f"Failed to load tasks: {str(e)}",
+            },
+        )
 
 
 @router.get("/{task_id}")
-async def task_details(request: Request, task_id: int):
+async def task_details(
+    request: Request,
+    task_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+):
     """Task details page"""
     # In a real application, you would fetch the task from a database
     task = {
@@ -151,22 +176,59 @@ async def task_details(request: Request, task_id: int):
     return templates.TemplateResponse(
         request=request,
         name="task/templates/task_details.html",
-        context={"request": request, "title": "Task Details", "task": task},
+        context={
+            "request": request,
+            "title": "Task Details",
+            "task": task,
+            "current_user": current_user,
+        },
     )
 
 
 @router.get("/new")
-async def new_task(request: Request):
+async def new_task(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+):
     """Create new task page"""
-    return templates.TemplateResponse(
-        request=request,
-        name="task/templates/new_task.html",
-        context={"request": request, "title": "Create New Task"},
-    )
+    try:
+        projects = await ProjectController.get_user_projects(current_user.id, db)
+        users = await TaskController.get_users_for_assignment(db)
+
+        return templates.TemplateResponse(
+            request=request,
+            name="task/templates/new_task.html",
+            context={
+                "request": request,
+                "title": "Create New Task",
+                "projects": projects,
+                "users": users,
+                "current_user": current_user,
+            },
+        )
+    except Exception as e:
+        return templates.TemplateResponse(
+            request=request,
+            name="task/templates/new_task.html",
+            context={
+                "request": request,
+                "title": "Create New Task",
+                "projects": [],
+                "users": [],
+                "current_user": current_user,
+                "error": "Failed to load form data",
+            },
+        )
 
 
 @router.get("/{task_id}/edit")
-async def edit_task(request: Request, task_id: int):
+async def edit_task(
+    request: Request,
+    task_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+):
     """Edit task page"""
     # In a real application, you would fetch the task from a database
     task = {
@@ -178,5 +240,10 @@ async def edit_task(request: Request, task_id: int):
     return templates.TemplateResponse(
         request=request,
         name="edit_task.html",
-        context={"request": request, "title": "Edit Task", "task": task},
+        context={
+            "request": request,
+            "title": "Edit Task",
+            "task": task,
+            "current_user": current_user,
+        },
     )

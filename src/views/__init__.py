@@ -26,7 +26,7 @@ web_routers = [
     # meeting_router,  # Hidden for now, will be developed later
     calendar_router,
     projects_router,
-    task_router,
+    task_router,  # Now uses real database data
     user_router,
     public_user_router,  # /public-user prefix
     project_controller_router,  # Modern project templates
