@@ -33,14 +33,15 @@ document.addEventListener("DOMContentLoaded", function () {
   if (validContainers.length === 0) {
     console.error("No valid containers found for drag and drop");
     return;
-  }
-
-  console.log("Valid containers:", validContainers.length);
-
+  }  console.log("Valid containers:", validContainers.length);
+  
   // Add click event to all task cards to show details
   addTaskCardClickListeners();
 
-  // Initialize Dragula
+  // Add a test to see if any task cards exist at all
+  const allTaskCards = document.querySelectorAll(".task-card");
+  console.log("Total task cards found:", allTaskCards.length);// Initialize Dragula - temporarily commented out for testing
+  /*
   try {
     const drake = dragula(validContainers, {
       moves: function (el, source, handle, sibling) {
@@ -128,6 +129,7 @@ document.addEventListener("DOMContentLoaded", function () {
   } catch (error) {
     console.error("Error initializing dragula:", error);
   }
+  */
   // Task click handler is handled by addTaskCardClickListeners()
   // Mobile-specific enhancements
   if (isMobile) {
@@ -334,84 +336,153 @@ document.addEventListener("DOMContentLoaded", function () {
       console.error("API request error:", error);
       throw error;
     }
-  }
-
-  // Function to add click event listeners to task cards
+  }  // Function to add click event listeners to task cards
   function addTaskCardClickListeners() {
     const taskCards = document.querySelectorAll(".task-card");
+    console.log(`Found ${taskCards.length} task cards for click listeners`);
 
-    taskCards.forEach((card) => {
+    taskCards.forEach((card, index) => {
+      const taskId = card.getAttribute("data-task-id");
+      console.log(`Task card ${index}: ID = ${taskId}`);
+      
       card.addEventListener("click", function (e) {
+        console.log("Task card clicked:", taskId);
+        
+        // SIMPLE TEST: Show alert to verify click is working
+        const clickedTaskId = this.getAttribute("data-task-id");
+        alert(`✅ Click detected! Task ID: ${clickedTaskId}`);
+        
         // Don't trigger click during drag operations
         if (
           this.classList.contains("gu-mirror") ||
           this.classList.contains("gu-transit")
         ) {
+          console.log("Click ignored - drag operation in progress");
           return;
         }
 
-        const taskId = this.getAttribute("data-task-id");
-        if (taskId) {
-          fetchTaskDetails(taskId);
+        console.log("Processing click for task ID:", clickedTaskId);
+        
+        if (clickedTaskId) {
+          // Comment out the modal for now to test just the click
+          // fetchTaskDetails(clickedTaskId);
+          console.log("Would fetch task details for:", clickedTaskId);
+        } else {
+          console.error("No task ID found on clicked element");
         }
       });
     });
   }
-
   // Function to fetch task details and populate modal
   function fetchTaskDetails(taskId) {
+    console.log("fetchTaskDetails called with taskId:", taskId);
+    
     // Show loading state
     const taskDetailContent = document.getElementById("taskDetailContent");
+    if (!taskDetailContent) {
+      console.error("taskDetailContent element not found!");
+      return;
+    }
+    
     taskDetailContent.innerHTML =
       '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><div class="mt-2">Loading task details...</div></div>';
 
     // Initialize Bootstrap modal
-    const taskDetailModal = new bootstrap.Modal(
-      document.getElementById("taskDetailModal")
-    );
-    taskDetailModal.show();
+    const taskDetailModalElement = document.getElementById("taskDetailModal");
+    if (!taskDetailModalElement) {
+      console.error("taskDetailModal element not found!");
+      return;
+    }
+    
+    const taskDetailModal = new bootstrap.Modal(taskDetailModalElement);
+    console.log("Showing modal...");
+    taskDetailModal.show();    // Try different API endpoints for task details
+    const endpoints = [
+      `/api/tasks/${taskId}`, // This should work now with our simple_task_api
+      `/api/v1/api/tasks/${taskId}`, // API v1 endpoint
+      `/tasks/${taskId}/api`, // fallback if needed
+    ];
 
-    // Fetch the task details
-    fetch(`/api/v1/tasks/${taskId}`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        return response.json();
-      })
-      .then((task) => {
-        // Once we have the task data, populate the modal
-        populateTaskDetailModal(task);
-      })
-      .catch((error) => {
-        console.error("Error fetching task details:", error);
+    async function tryFetchTask(endpointIndex = 0) {
+      if (endpointIndex >= endpoints.length) {
+        // All endpoints failed, show error
         taskDetailContent.innerHTML = `<div class="alert alert-danger">
-          <i class="fas fa-exclamation-triangle me-2"></i>Error loading task details. Please try again.
+          <i class="fas fa-exclamation-triangle me-2"></i>Unable to load task details. Please try again later.
         </div>`;
-      });
+        return;
+      }
+
+      try {
+        const response = await fetch(endpoints[endpointIndex], {
+          headers: {
+            Accept: "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+          },
+          credentials: "same-origin",
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const task = await response.json();
+        populateTaskDetailModal(task);
+      } catch (error) {
+        console.warn(`Endpoint ${endpoints[endpointIndex]} failed:`, error);
+        // Try next endpoint
+        tryFetchTask(endpointIndex + 1);
+      }
+    }
+
+    tryFetchTask();
   }
 
   // Function to populate the modal with task details
   function populateTaskDetailModal(task) {
     const detailContent = document.getElementById("taskDetailContent");
 
+    // Handle different API response formats
+    const taskData = {
+      id: task.id,
+      title: task.title || task.name || `Task ${task.id}`,
+      description: task.description || "No description provided",
+      status: task.status || "unknown",
+      priority: task.priority || "medium",
+      due_date: task.due_date || null,
+      created_at: task.created_at || null,
+      assignee: task.assignee || { name: "Unassigned", initials: "?" },
+      project: task.project || { name: "Unknown Project" },
+    };
+
     // Format dates
-    const dueDate = new Date(task.due_date).toLocaleDateString();
-    const createdDate = new Date(task.created_at).toLocaleDateString();
+    const dueDate = taskData.due_date
+      ? new Date(taskData.due_date).toLocaleDateString()
+      : "No due date";
+    const createdDate = taskData.created_at
+      ? new Date(taskData.created_at).toLocaleDateString()
+      : "Unknown";
 
     // Determine status badge class
     let statusBadgeClass = "";
-    switch (task.status) {
+    const status = String(taskData.status).toLowerCase();
+    switch (status) {
       case "todo":
+      case "not_started":
+      case "pending":
         statusBadgeClass = "bg-secondary";
         break;
       case "in_progress":
+      case "active":
+      case "working":
         statusBadgeClass = "bg-primary";
         break;
       case "review":
+      case "blocked":
         statusBadgeClass = "bg-warning";
         break;
       case "done":
+      case "completed":
+      case "finished":
         statusBadgeClass = "bg-success";
         break;
       default:
@@ -420,7 +491,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Determine priority badge class
     let priorityBadgeClass = "";
-    switch (task.priority) {
+    const priority = String(taskData.priority).toLowerCase();
+    switch (priority) {
       case "high":
         priorityBadgeClass = "bg-danger";
         break;
@@ -435,16 +507,17 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Format status and priority for display
-    const statusDisplay = task.status
-      .replace("_", " ")
+    const statusDisplay = String(taskData.status)
+      .replace(/[_-]/g, " ")
       .replace(/\b\w/g, (c) => c.toUpperCase());
     const priorityDisplay =
-      task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
+      String(taskData.priority).charAt(0).toUpperCase() +
+      String(taskData.priority).slice(1);
 
     // Create HTML for task details
     detailContent.innerHTML = `
       <div class="task-detail">
-        <h3>${task.title}</h3>
+        <h3>${taskData.title}</h3>
         <div class="row mb-4">
           <div class="col-md-6 mb-2">
             <span class="badge ${statusBadgeClass}">${statusDisplay}</span>
@@ -460,9 +533,7 @@ document.addEventListener("DOMContentLoaded", function () {
             <i class="fas fa-align-left me-2"></i>Description
           </div>
           <div class="card-body">
-            <p class="card-text">${
-              task.description || "No description provided."
-            }</p>
+            <p class="card-text">${taskData.description}</p>
           </div>
         </div>
         
@@ -485,9 +556,13 @@ document.addEventListener("DOMContentLoaded", function () {
               <div class="card-body">
                 <div class="d-flex align-items-center">
                   <div class="assignee-avatar me-2">
-                    ${task.assignee.initials}
+                    ${
+                      taskData.assignee.initials ||
+                      taskData.assignee.name?.charAt(0) ||
+                      "?"
+                    }
                   </div>
-                  <span>${task.assignee.name}</span>
+                  <span>${taskData.assignee.name || "Unassigned"}</span>
                 </div>
               </div>
             </div>
@@ -499,7 +574,9 @@ document.addEventListener("DOMContentLoaded", function () {
             <i class="fas fa-project-diagram me-2"></i>Project
           </div>
           <div class="card-body">
-            <p class="card-text">${task.project.name}</p>
+            <p class="card-text">${
+              taskData.project.name || "Unknown Project"
+            }</p>
           </div>
         </div>
       </div>
@@ -507,12 +584,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Set the task ID on the edit button
     const editTaskBtn = document.getElementById("editTaskBtn");
-    editTaskBtn.setAttribute("data-task-id", task.id);
+    if (editTaskBtn) {
+      editTaskBtn.setAttribute("data-task-id", taskData.id);
 
-    // Add click handler for edit button
-    editTaskBtn.onclick = function () {
-      window.location.href = `/tasks/edit/${task.id}`;
-    };
+      // Add click handler for edit button
+      editTaskBtn.onclick = function () {
+        // Check if there's an edit route available
+        const editUrl = `/tasks/${taskData.id}/edit`;
+        window.location.href = editUrl;
+      };
+    }
   }
 
   // Ẩn filter row nếu có (nếu bạn có filter row cũ, thêm class d-none d-md-block để chỉ hiện trên desktop)
@@ -526,14 +607,21 @@ document.addEventListener("DOMContentLoaded", function () {
       const assignee = document.getElementById("assigneeFilterMobile").value;
       const priority = document.getElementById("priorityFilterMobile").value;
       const dueDate = document.getElementById("dueDateFilterMobile").value;
+
       // Build query string
       const params = new URLSearchParams();
-      if (project) params.append("project_id", project);
-      if (assignee) params.append("assignee_id", assignee);
+      if (project) params.append("project", project);
+      if (assignee) params.append("assignee", assignee);
       if (priority) params.append("priority", priority);
       if (dueDate) params.append("due_date", dueDate);
-      // Redirect với filter
-      window.location.href = `/tasks/board?${params.toString()}`;
+
+      // Redirect with filters
+      const queryString = params.toString();
+      if (queryString) {
+        window.location.href = `/tasks?${queryString}`;
+      } else {
+        window.location.href = "/tasks";
+      }
     });
   }
 });

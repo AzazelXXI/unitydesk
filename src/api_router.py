@@ -15,8 +15,9 @@ from src.apis.core_views import router as core_router
 # from src.apis.meeting_views import router as meeting_router
 from src.apis.notification_views import router as notification_router
 from src.apis.notification_views import ws_router as notification_ws_router
-from src.apis.task_views import router as task_router
+from src.apis.task_views import task_router
 from src.apis.project_views import router as project_router
+from src.apis.simple_task_api import router as simple_task_router
 
 # Import new modular task and project API
 from src.modules.tasks.project import router as project_module_router
@@ -41,7 +42,7 @@ api_router_v1.include_router(core_router, prefix="/core")
 # Meeting module will be developed later
 # api_router_v1.include_router(meeting_router, prefix="/meetings")
 api_router_v1.include_router(notification_router)
-api_router_v1.include_router(task_router, prefix="/tasks")
+api_router_v1.include_router(task_router)
 api_router_v1.include_router(project_router, prefix="/projects")
 
 # Include NEW modular task and project APIs
@@ -58,6 +59,10 @@ api_router_v1.include_router(calendar_router)
 
 # Include the v1 router in the main API router
 api_router.include_router(api_router_v1)
+
+# Include task_router directly in main api_router to provide /api/tasks endpoints
+api_router.include_router(task_router)
+api_router.include_router(simple_task_router)
 
 # Include web routers
 # Don't include task_web_router in api_router, it will be included directly in main app

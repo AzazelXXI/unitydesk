@@ -138,8 +138,18 @@ endblock %} {% block header %}{% endblock %} {% block head_extra %}
               </thead>
               <tbody>
                 {% for task in tasks %}
-                <tr>
-                  <td><input type="checkbox" class="form-check-input" /></td>
+                <tr
+                  class="task-row"
+                  data-task-id="{{ task.id }}"
+                  style="cursor: pointer"
+                >
+                  <td>
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      onclick="event.stopPropagation();"
+                    />
+                  </td>
                   <td>{{ task.title }}</td>
                   <td>{{ task.project }}</td>
                   <td>{{ task.assignee }}</td>
@@ -159,7 +169,7 @@ endblock %} {% block header %}{% endblock %} {% block head_extra %}
                     </span>
                   </td>
                   <td>
-                    <div class="dropdown">
+                    <div class="dropdown" onclick="event.stopPropagation();">
                       <button
                         class="btn btn-sm btn-outline-secondary dropdown-toggle"
                         type="button"
@@ -194,8 +204,14 @@ endblock %} {% block header %}{% endblock %} {% block head_extra %}
                 {% endfor %}
                 <!-- Sample tasks if no data provided -->
                 {% if not tasks %}
-                <tr>
-                  <td><input type="checkbox" class="form-check-input" /></td>
+                <tr class="task-row" data-task-id="1" style="cursor: pointer">
+                  <td>
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      onclick="event.stopPropagation();"
+                    />
+                  </td>
                   <td>Complete project proposal</td>
                   <td>Website Redesign</td>
                   <td>Jane Doe</td>
@@ -203,7 +219,7 @@ endblock %} {% block header %}{% endblock %} {% block head_extra %}
                   <td>Apr 26, 2025</td>
                   <td><span class="badge bg-danger">High</span></td>
                   <td>
-                    <div class="dropdown">
+                    <div class="dropdown" onclick="event.stopPropagation();">
                       <button
                         class="btn btn-sm btn-outline-secondary dropdown-toggle"
                         type="button"
@@ -231,8 +247,14 @@ endblock %} {% block header %}{% endblock %} {% block head_extra %}
                     </div>
                   </td>
                 </tr>
-                <tr>
-                  <td><input type="checkbox" class="form-check-input" /></td>
+                <tr class="task-row" data-task-id="2" style="cursor: pointer">
+                  <td>
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      onclick="event.stopPropagation();"
+                    />
+                  </td>
                   <td>Schedule team meeting</td>
                   <td>Mobile App Development</td>
                   <td>John Smith</td>
@@ -242,7 +264,7 @@ endblock %} {% block header %}{% endblock %} {% block head_extra %}
                     <span class="badge bg-warning text-dark">Medium</span>
                   </td>
                   <td>
-                    <div class="dropdown">
+                    <div class="dropdown" onclick="event.stopPropagation();">
                       <button
                         class="btn btn-sm btn-outline-secondary dropdown-toggle"
                         type="button"
@@ -301,6 +323,41 @@ endblock %} {% block header %}{% endblock %} {% block head_extra %}
     </div>
   </div>
 </div>
+
+<!-- Task Detail Modal -->
+<div
+  class="modal fade"
+  id="taskDetailModal"
+  tabindex="-1"
+  aria-labelledby="taskDetailModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="taskDetailModalLabel">Task Details</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body" id="taskDetailContent">
+        <!-- Task details will be loaded here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Close
+        </button>
+        <button type="button" class="btn btn-primary" id="editTaskBtn">
+          Edit Task
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %} {% block scripts_extra %}
 <script src="/tasks/static/js/task_common.js"></script>
 <script src="/tasks/static/js/task_list.js"></script>
