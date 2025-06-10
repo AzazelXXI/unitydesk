@@ -99,11 +99,7 @@ async def task_list(
 
             task = {
                 "id": row.id,
-                "title": (
-                    row.title
-                    if row.title and row.title.strip()
-                    else f"Untitled Task {row.id}"
-                ),
+                "title": row.title if row.title and row.title.strip() else f"Untitled Task {row.id}",
                 "project": row.project_name or "Unknown Project",
                 "assignee": row.assignee_name or "Unassigned",
                 "status": status_display,
@@ -232,14 +228,12 @@ async def task_board(
                 "created_at": row.created_at,
                 "updated_at": row.updated_at,
                 "project_id": row.project_id,
-                "assignee": (
-                    {
-                        "id": row.assignee_id,
-                        "name": row.assignee_name,
-                    }
-                    if row.assignee_id
-                    else None
-                ),
+                "assignee": {
+                    "id": row.assignee_id,
+                    "name": row.assignee_name,
+                }
+                if row.assignee_id
+                else None,
             }
             tasks.append(task)
 
@@ -290,7 +284,7 @@ async def task_board(
                 "all_tasks": all_tasks,
                 "total_tasks": len(tasks),
                 "projects": [],  # Empty for now
-                "users": [],  # Empty for now
+                "users": [],     # Empty for now
             },
         )
 

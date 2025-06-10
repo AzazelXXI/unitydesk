@@ -1,5 +1,5 @@
 {% extends "core/templates/base.html" %} {% block title %}Task Board - CSA
-Platform{% endblock %} {% block head_extra %}
+Platform{% endblock %} {% block header %}{% endblock %} {% block head_extra %}
 <meta
   name="viewport"
   content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
@@ -10,6 +10,7 @@ Platform{% endblock %} {% block head_extra %}
 />
 <link rel="stylesheet" href="/tasks/static/task.css" />
 <link rel="stylesheet" href="/tasks/static/css/task_common.css" />
+<link rel="stylesheet" href="/tasks/static/css/task_list.css" />
 <link rel="stylesheet" href="/tasks/static/css/task_board.css" />
 <link rel="stylesheet" href="/tasks/static/css/responsive_helpers.css" />
 <link rel="stylesheet" href="/tasks/static/css/task_board_responsive.css" />
@@ -18,74 +19,96 @@ Platform{% endblock %} {% block head_extra %}
   content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
 />
 {% endblock %} {% block content %}
-<div class="task-board-container">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="fas fa-tasks me-2"></i>Task Management</h2>
-    <div>
-      <a href="/tasks/list" class="btn btn-outline-secondary me-2">
-        <i class="fas fa-list me-1"></i>List View
-      </a>
-      <a href="/tasks/new" class="btn btn-primary">
-        <i class="fas fa-plus me-1"></i>New Task
-      </a>
-      <!-- Nút Filter chỉ hiện trên mobile -->
-      <button
-        class="btn btn-outline-primary d-inline-block d-md-none ms-2"
-        type="button"
-        data-bs-toggle="offcanvas"
-        data-bs-target="#filterOffcanvas"
-        aria-controls="filterOffcanvas"
+<div class="container task-container mt-4">
+  <div class="row mb-4">
+    <div class="col">
+      <div
+        class="d-flex justify-content-between align-items-center task-details-header"
       >
-        <i class="fas fa-filter me-1"></i>Filter
-      </button>
+        <h2><i class="fas fa-tasks me-2"></i>Task Management</h2>
+        <a href="/tasks/new" class="btn btn-primary btn-task-primary">
+          <i class="fas fa-plus me-1"></i> Create New Task
+        </a>      </div>
     </div>
   </div>
 
   <!-- Task Statistics -->
   <div class="row mb-4">
     <div class="col-6 col-md-3 mb-3 mb-md-0">
-      <div class="task-stats-card bg-white p-3 rounded shadow-sm">
+      <div class="task-stats-card bg-white">
         <i
           class="fas fa-clipboard-list text-primary"
           style="font-size: 1.5rem"
         ></i>
-        <div class="task-stats-number h4 mb-0 mt-2">
-          {{ task_stats.total if task_stats else 0 }}
-        </div>
-        <div class="task-stats-label text-muted">Total Tasks</div>
+        <div class="task-stats-number">{{ task_stats.total }}</div>
+        <div class="task-stats-label">Total Tasks</div>
       </div>
     </div>
     <div class="col-6 col-md-3 mb-3 mb-md-0">
-      <div class="task-stats-card bg-white p-3 rounded shadow-sm">
+      <div class="task-stats-card bg-white">
         <i class="fas fa-spinner text-warning" style="font-size: 1.5rem"></i>
-        <div class="task-stats-number h4 mb-0 mt-2">
-          {{ task_stats.in_progress if task_stats else 0 }}
-        </div>
-        <div class="task-stats-label text-muted">In Progress</div>
+        <div class="task-stats-number">{{ task_stats.in_progress }}</div>
+        <div class="task-stats-label">In Progress</div>
       </div>
     </div>
     <div class="col-6 col-md-3">
-      <div class="task-stats-card bg-white p-3 rounded shadow-sm">
+      <div class="task-stats-card bg-white">
         <i
           class="fas fa-exclamation-circle text-danger"
           style="font-size: 1.5rem"
         ></i>
-        <div class="task-stats-number h4 mb-0 mt-2">
-          {{ task_stats.overdue if task_stats else 0 }}
-        </div>
-        <div class="task-stats-label text-muted">Overdue</div>
+        <div class="task-stats-number">{{ task_stats.overdue }}</div>
+        <div class="task-stats-label">Overdue</div>
       </div>
     </div>
     <div class="col-6 col-md-3">
-      <div class="task-stats-card bg-white p-3 rounded shadow-sm">
+      <div class="task-stats-card bg-white">
         <i
           class="fas fa-check-circle text-success"
           style="font-size: 1.5rem"
         ></i>
-        <div class="task-stats-number h4 mb-0 mt-2">
-          {{ task_stats.completed if task_stats else 0 }}
+        <div class="task-stats-number">{{ task_stats.completed }}</div>
+        <div class="task-stats-label">Completed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task Filters -->
+  <div class="row mb-4">
+    <div class="col-12 task-filter-section">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <select class="form-select">
+            <option selected>All Projects</option>
+            {% for project in projects %}
+            <option value="{{ project.id }}">{{ project.name }}</option>
+            {% endfor %}
+          </select>
         </div>
-        <div class="task-stats-label text-muted">Completed</div>
+        <div class="col-md-3">
+          <select class="form-select">
+            <option selected>All Assignees</option>
+            {% for user in users %}
+            <option value="{{ user.id }}">{{ user.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select">
+            <option selected>All Statuses</option>
+            <option>Not Started</option>
+            <option>In Progress</option>
+            <option>Under Review</option>
+            <option>Completed</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Search tasks..."
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -101,11 +124,13 @@ Platform{% endblock %} {% block head_extra %}
           <a class="nav-link active" href="/tasks">Board View</a>
         </li>
       </ul>
-    </div>
-  </div>
+    </div>  </div>
 
-  <div class="task-board">
-    <!-- TODO Column -->
+  <!-- Task Board -->
+  <div class="row">
+    <div class="col-12">
+      <div class="task-board">
+        <!-- TODO Column -->
     <div class="task-column column-todo" data-status="todo">
       <div class="task-column-header">
         <span>To Do</span>
@@ -229,8 +254,9 @@ Platform{% endblock %} {% block head_extra %}
             </div>
           </div>
         </div>
-        {% endfor %}
-      </div>
+        {% endfor %}      </div>
+    </div>
+  </div>
     </div>
   </div>
 </div>
@@ -264,6 +290,8 @@ Platform{% endblock %} {% block head_extra %}
         <button type="button" class="btn btn-primary" id="editTaskBtn">
           Edit Task
         </button>
+      </div>
+    </div>        </div>
       </div>
     </div>
   </div>
