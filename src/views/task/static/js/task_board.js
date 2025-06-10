@@ -1,20 +1,11 @@
 // Task Board JavaScript - Board View Functionality
-console.log("🚨 JavaScript file loaded!");
-
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("DOM Content Loaded");
-
   // Check if we're on a mobile device
-  const isMobile = isMobileDevice();
-
-  // Check if dragula is loaded
+  const isMobile = isMobileDevice();  // Check if dragula is loaded
   if (typeof dragula === "undefined") {
-    console.error("Dragula library not loaded!");
+    alert("⚠️ Drag and drop functionality is not available. Please refresh the page.");
     return;
   }
-
-  console.log("Dragula library loaded successfully");
-  console.log("Initializing drag and drop...");
 
   // Get all task container elements
   const containers = [
@@ -23,62 +14,22 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("review-tasks"),
     document.getElementById("done-tasks"),
   ];
-
-  // Check if containers exist
-  console.log(
-    "Containers found:",
-    containers.map((c) => (c ? c.id : "null"))
-  );
-
   // Filter out null containers
   const validContainers = containers.filter((c) => c !== null);
-
   if (validContainers.length === 0) {
-    console.error("No valid containers found for drag and drop");
+    alert("⚠️ Task board is not properly initialized. Please refresh the page.");
     return;
   }
-  console.log("Valid containers:", validContainers.length);
 
-  // IMMEDIATE TEST: Add simple click handler to test if clicks work at all
-  document.addEventListener("click", function (e) {
-    console.log("CLICK TEST: Something was clicked!", e.target);
-    if (e.target.closest(".task-card")) {
-      const taskCard = e.target.closest(".task-card");
-      const taskId = taskCard.getAttribute("data-task-id");
-      alert(`🎉 BASIC CLICK WORKS! Task ID: ${taskId}`);
-      console.log("Task card clicked via document listener:", taskCard);
-    }
-  });
   // Add click event to all task cards to show details
-  console.log("🔍 About to call addTaskCardClickListeners()");
-  addTaskCardClickListeners();
-  console.log("✅ addTaskCardClickListeners() called");
-
-  // Add a test to see if any task cards exist at all
-  const allTaskCards = document.querySelectorAll(".task-card");
-  console.log("Total task cards found:", allTaskCards.length);
-
-  // Log each task card found for debugging
-  allTaskCards.forEach((card, index) => {
-    console.log(`Task card ${index}:`, card);
-    console.log(
-      `  - Has task-card class: ${card.classList.contains("task-card")}`
-    );
-    console.log(`  - data-task-id: ${card.getAttribute("data-task-id")}`);
-  }); // Initialize Dragula - temporarily commented out for testing
-  /*
+  addTaskCardClickListeners();  // Initialize Dragula for drag and drop functionality
   try {
     const drake = dragula(validContainers, {
       moves: function (el, source, handle, sibling) {
-        const canMove = el && el.classList.contains("task-card");
-        console.log("Can move element:", canMove, el);
-        return canMove;
+        return el && el.classList.contains("task-card");
       },
       accepts: function (el, target, source, sibling) {
-        const canAccept =
-          target && target.classList.contains("task-column-tasks");
-        console.log("Can accept in target:", canAccept, target);
-        return canAccept;
+        return target && target.classList.contains("task-column-tasks");
       },
       direction: "vertical",
       copy: false,
@@ -86,11 +37,9 @@ document.addEventListener("DOMContentLoaded", function () {
       revertOnSpill: true,
       removeOnSpill: false,
     });
-    console.log("Dragula initialized successfully");
 
     // Handle drop event
     drake.on("drop", function (el, target, source, sibling) {
-      console.log("Drop event triggered");
       const taskId = el.getAttribute("data-task-id");
       const sourceColumn = source
         .closest(".task-column")
@@ -98,10 +47,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const targetColumn = target
         .closest(".task-column")
         .getAttribute("data-status");
-
-      console.log(
-        `Moving task ${taskId} from ${sourceColumn} to ${targetColumn}`
-      );
 
       if (sourceColumn !== targetColumn) {
         // Update task count in columns
@@ -120,13 +65,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Add visual feedback during drag
     drake.on("drag", function (el, source) {
-      console.log("Drag started for task:", el.getAttribute("data-task-id"));
       el.classList.add("dragging");
       document.body.classList.add("dragging-active");
     });
 
     drake.on("dragend", function (el) {
-      console.log("Drag ended");
       el.classList.remove("dragging");
       document.body.classList.remove("dragging-active");
 
@@ -137,24 +80,18 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     drake.on("over", function (el, container, source) {
-      console.log("Drag over container");
       if (container && container.closest) {
         container.closest(".task-column").classList.add("drag-over");
       }
     });
 
     drake.on("out", function (el, container, source) {
-      console.log("Drag out of container");
       if (container && container.closest) {
         container.closest(".task-column").classList.remove("drag-over");
       }
-    });
-
-    console.log("All drag and drop events registered");
-  } catch (error) {
-    console.error("Error initializing dragula:", error);
+    });  } catch (error) {
+    alert("⚠️ Drag and drop functionality could not be initialized. Please refresh the page.");
   }
-  */
   // Task click handler is handled by addTaskCardClickListeners()
   // Mobile-specific enhancements
   if (isMobile) {
@@ -219,15 +156,11 @@ document.addEventListener("DOMContentLoaded", function () {
         const currentStatus = card
           .closest(".task-column")
           .getAttribute("data-status");
-        let targetStatus = "";
-
-        if (swipeDistance > 0) {
+        let targetStatus = "";        if (swipeDistance > 0) {
           // Right swipe - move to previous column
-          console.log("Right swipe detected");
           targetStatus = getPreviousStatus(currentStatus);
         } else {
           // Left swipe - move to next column
-          console.log("Left swipe detected");
           targetStatus = getNextStatus(currentStatus);
         }
 
@@ -354,54 +287,40 @@ document.addEventListener("DOMContentLoaded", function () {
         response.headers.get("Content-Length") === "0"
       ) {
         return true;
-      }
-
-      return await response.json();
+      }      return await response.json();
     } catch (error) {
-      console.error("API request error:", error);
+      // Show user-friendly error message
+      showToast("Network error: Unable to connect to server", "danger");
       throw error;
     }
-  } // Function to add click event listeners to task cards
+  }  // Function to add click event listeners to task cards
   function addTaskCardClickListeners() {
     const taskCards = document.querySelectorAll(".task-card");
-    console.log(`Found ${taskCards.length} task cards for click listeners`);
 
-    taskCards.forEach((card, index) => {
-      const taskId = card.getAttribute("data-task-id");
-      console.log(`Task card ${index}: ID = ${taskId}`);
+    taskCards.forEach((card) => {
       card.addEventListener("click", function (e) {
-        console.log("Task card clicked:", taskId);
-
         // Don't trigger click during drag operations
         if (
           this.classList.contains("gu-mirror") ||
           this.classList.contains("gu-transit")
         ) {
-          console.log("Click ignored - drag operation in progress");
           return;
         }
 
-        console.log("Processing click for task ID:", clickedTaskId);
-
-        const clickedTaskId = this.getAttribute("data-task-id");
-        if (clickedTaskId) {
-          // Now that click is working, enable the modal
-          fetchTaskDetails(clickedTaskId);
-          console.log("Fetching task details for:", clickedTaskId);
-        } else {
-          console.error("No task ID found on clicked element");
+        const taskId = this.getAttribute("data-task-id");
+        if (taskId) {
+          fetchTaskDetails(taskId);
         }
       });
     });
   }
+
   // Function to fetch task details and populate modal
   function fetchTaskDetails(taskId) {
-    console.log("fetchTaskDetails called with taskId:", taskId);
-
     // Show loading state
     const taskDetailContent = document.getElementById("taskDetailContent");
     if (!taskDetailContent) {
-      console.error("taskDetailContent element not found!");
+      alert("⚠️ Task detail modal is not available. Please refresh the page.");
       return;
     }
 
@@ -411,51 +330,36 @@ document.addEventListener("DOMContentLoaded", function () {
     // Initialize Bootstrap modal
     const taskDetailModalElement = document.getElementById("taskDetailModal");
     if (!taskDetailModalElement) {
-      console.error("taskDetailModal element not found!");
+      alert("⚠️ Task detail modal is not available. Please refresh the page.");
       return;
     }
 
     const taskDetailModal = new bootstrap.Modal(taskDetailModalElement);
-    console.log("Showing modal...");
-    taskDetailModal.show(); // Try different API endpoints for task details
-    const endpoints = [
-      `/api/tasks/${taskId}`, // This should work now with our simple_task_api
-      `/api/v1/api/tasks/${taskId}`, // API v1 endpoint
-      `/tasks/${taskId}/api`, // fallback if needed
-    ];
+    taskDetailModal.show();
 
-    async function tryFetchTask(endpointIndex = 0) {
-      if (endpointIndex >= endpoints.length) {
-        // All endpoints failed, show error
-        taskDetailContent.innerHTML = `<div class="alert alert-danger">
-          <i class="fas fa-exclamation-triangle me-2"></i>Unable to load task details. Please try again later.
-        </div>`;
-        return;
-      }
-
-      try {
-        const response = await fetch(endpoints[endpointIndex], {
-          headers: {
-            Accept: "application/json",
-            "X-Requested-With": "XMLHttpRequest",
-          },
-          credentials: "same-origin",
-        });
-
+    // Fetch task details from API
+    fetch(`/api/tasks/${taskId}`, {
+      headers: {
+        Accept: "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      credentials: "same-origin",
+    })
+      .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
-
-        const task = await response.json();
+        return response.json();
+      })
+      .then((task) => {
         populateTaskDetailModal(task);
-      } catch (error) {
-        console.warn(`Endpoint ${endpoints[endpointIndex]} failed:`, error);
-        // Try next endpoint
-        tryFetchTask(endpointIndex + 1);
-      }
-    }
-
-    tryFetchTask();
+      })      .catch((error) => {
+        // Show user-friendly error message instead of console error
+        showToast("Unable to load task details. Please try again.", "danger");
+        taskDetailContent.innerHTML = `<div class="alert alert-danger">
+          <i class="fas fa-exclamation-triangle me-2"></i>Unable to load task details. Please try again later.
+        </div>`;
+      });
   }
 
   // Function to populate the modal with task details

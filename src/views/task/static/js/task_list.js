@@ -89,15 +89,12 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   // Listen for window resize events to adjust responsive behavior
   window.addEventListener("resize", adjustLayout);
-
   // Function to add click event listeners to task rows
   function addTaskRowClickListeners() {
     const taskRows = document.querySelectorAll(".task-row");
-    console.log(`Found ${taskRows.length} task rows for click listeners`);
 
-    taskRows.forEach((row, index) => {
+    taskRows.forEach((row) => {
       const taskId = row.getAttribute("data-task-id");
-      console.log(`Task row ${index}: ID = ${taskId}`);
       
       row.addEventListener("click", function (e) {
         // Don't trigger click if clicking on checkboxes or action buttons
@@ -106,71 +103,59 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         const clickedTaskId = this.getAttribute("data-task-id");
-        
-        // SIMPLE TEST: Show alert to verify click is working
-        alert(`✅ List View Click detected! Task ID: ${clickedTaskId}`);
-        
-        console.log("Task row clicked:", clickedTaskId);
 
         if (clickedTaskId) {
-          // Comment out the modal for now to test just the click
-          // fetchTaskDetails(clickedTaskId);
-          console.log("Would fetch task details for:", clickedTaskId);
+          fetchTaskDetails(clickedTaskId);
         }
       });
     });
   }
-
   // Function to fetch task details and populate modal
   function fetchTaskDetails(taskId) {
     // Show loading state
     const taskDetailContent = document.getElementById("taskDetailContent");
+    if (!taskDetailContent) {
+      alert("⚠️ Task detail modal is not available. Please refresh the page.");
+      return;
+    }
+
     taskDetailContent.innerHTML =
       '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><div class="mt-2">Loading task details...</div></div>';
 
     // Initialize Bootstrap modal
-    const taskDetailModal = new bootstrap.Modal(
-      document.getElementById("taskDetailModal")
-    );
-    taskDetailModal.show();    // Try different API endpoints for task details
-    const endpoints = [
-      `/api/tasks/${taskId}`, // This should work now with our simple_task_api
-      `/api/v1/api/tasks/${taskId}`, // API v1 endpoint
-      `/tasks/${taskId}/api`, // fallback if needed
-    ];
+    const taskDetailModalElement = document.getElementById("taskDetailModal");
+    if (!taskDetailModalElement) {
+      alert("⚠️ Task detail modal is not available. Please refresh the page.");
+      return;
+    }
 
-    async function tryFetchTask(endpointIndex = 0) {
-      if (endpointIndex >= endpoints.length) {
-        // All endpoints failed, show error
-        taskDetailContent.innerHTML = `<div class="alert alert-danger">
-          <i class="fas fa-exclamation-triangle me-2"></i>Unable to load task details. Please try again later.
-        </div>`;
-        return;
-      }
+    const taskDetailModal = new bootstrap.Modal(taskDetailModalElement);
+    taskDetailModal.show();
 
-      try {
-        const response = await fetch(endpoints[endpointIndex], {
-          headers: {
-            Accept: "application/json",
-            "X-Requested-With": "XMLHttpRequest",
-          },
-          credentials: "same-origin",
-        });
-
+    // Fetch task details from API
+    fetch(`/api/tasks/${taskId}`, {
+      headers: {
+        Accept: "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      credentials: "same-origin",
+    })
+      .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
-
-        const task = await response.json();
+        return response.json();
+      })
+      .then((task) => {
         populateTaskDetailModal(task);
-      } catch (error) {
-        console.warn(`Endpoint ${endpoints[endpointIndex]} failed:`, error);
-        // Try next endpoint
-        tryFetchTask(endpointIndex + 1);
-      }
-    }
-
-    tryFetchTask();
+      })
+      .catch((error) => {
+        // Show user-friendly error message
+        showToast("Unable to load task details. Please try again.", "danger");
+        taskDetailContent.innerHTML = `<div class="alert alert-danger">
+          <i class="fas fa-exclamation-triangle me-2"></i>Unable to load task details. Please try again later.
+        </div>`;
+      });
   }
 
   // Function to populate the modal with task details
