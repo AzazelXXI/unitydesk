@@ -36,7 +36,8 @@ logger = logging.getLogger(__name__)
 async def create_user(db: AsyncSession, user_data: UserCreate) -> User:
     """
     Create a new user
-    """  # Check if name or email already exists (User model uses 'name' not 'username')
+    """
+    # Check if name or email already exists (User model uses 'name' not 'username')
     query = await db.execute(
         select(
             exists().where(
@@ -52,19 +53,21 @@ async def create_user(db: AsyncSession, user_data: UserCreate) -> User:
             detail="Username or email already registered",
         )
 
-    # Create user with hashed password (User model uses 'password_hash' not 'hashed_password')
+    # Create user with hashed password
     hashed_password = get_password_hash(user_data.password)
 
     db_user = User(
         email=user_data.email,
-        name=user_data.name,  # Now matches schema field name
-        password_hash=hashed_password,  # User model uses 'password_hash' instead of 'hashed_password'
-        user_type=user_data.user_type.value,  # User model uses 'user_type' and needs enum value
-        status=user_data.status,  # User model uses 'status' instead of is_active/is_verified
+        name=user_data.name,
+        password_hash=hashed_password,
+        user_type=user_data.user_type,  # Use enum directly, not .value
+        status=user_data.status,
     )
 
     db.add(db_user)
-    await db.flush()  # Create profile if provided
+    await db.flush()
+
+    # Create profile if provided
     if user_data.profile:
         db_profile = UserProfile(
             user_id=db_user.id,
@@ -73,8 +76,8 @@ async def create_user(db: AsyncSession, user_data: UserCreate) -> User:
             display_name=user_data.profile.display_name,
             avatar_url=user_data.profile.avatar_url,
             bio=user_data.profile.bio,
-            phone=user_data.profile.phone_number,  # Schema uses phone_number, model uses phone
-            location=user_data.profile.department,  # Schema uses department, model uses location
+            phone=user_data.profile.phone_number,
+            location=user_data.profile.department,
             timezone=user_data.profile.timezone,
         )
         db.add(db_profile)
@@ -197,12 +200,16 @@ async def login_for_access_token(
         logger.info(f"Failed login attempt for username: {username}")
         return None
 
-    # Create token with user info (using correct field names: name, user_type)
-    # Create token data with enum value, not enum name
-    token_data = {"sub": user.name, "id": user.id, "role": user.user_type.value}
+    # Create token with user info - handle user_type properly
+    # Check if user_type is already a string or if it's an enum
+    role_value = (
+        user.user_type.value if hasattr(user.user_type, "value") else user.user_type
+    )
+    token_data = {"sub": user.name, "id": user.id, "role": role_value}
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    refresh_token_expires = timedelta(days=7)  # You can make this configurable
+    refresh_token_expires = timedelta(days=7)
+
     access_token = await create_access_token(
         data=token_data, expires_delta=access_token_expires
     )

@@ -134,7 +134,11 @@ async def verify_token(token: str, token_type: str = "access") -> Optional[Token
         role: str = payload.get("role")
         actual_token_type: str = payload.get(
             "token_type", "access"
-        )  # Default for backward compatibility        logger.info(f"Token claims - username: {username}, user_id: {user_id}, role: {role}, token_type: {actual_token_type}")
+        )  # Default for backward compatibility
+
+        logger.info(
+            f"Token claims - username: {username}, user_id: {user_id}, role: {role}, token_type: {actual_token_type}"
+        )
 
         # Validate required fields
         if username is None or user_id is None:

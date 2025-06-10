@@ -18,6 +18,71 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/users/auth/login")
 logger = logging.getLogger(__name__)
 
 
+async def get_current_user_web(
+    request: Request, db: AsyncSession = Depends(get_db)
+) -> User:
+    """
+    Get the current user from cookie-based authentication for web routes.
+    This function checks for the token in cookies instead of Authorization headers.
+    """
+    credentials_exception = HTTPException(
+        status_code=HTTP_401_UNAUTHORIZED,
+        detail="Not authenticated",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        # Try to get token from cookie first
+        token = request.cookies.get("remember_token")
+        logger.debug(f"Cookie token found: {token is not None}")
+
+        if not token:
+            # If no cookie token, try Authorization header as fallback
+            authorization = request.headers.get("Authorization")
+            if authorization and authorization.startswith("Bearer "):
+                token = authorization.split(" ")[1]
+                logger.debug("Using Authorization header token")
+            else:
+                logger.debug("No token found in cookies or headers")
+                raise credentials_exception
+
+        logger.debug("Attempting to verify token")
+        token_data = await verify_token(token)
+        if token_data is None:
+            logger.warning("Token verification failed")
+            raise credentials_exception
+
+        logger.debug(f"Token verified for user_id: {token_data.user_id}")
+
+        # Query DB for user using proper SQLAlchemy async syntax
+        result = await db.execute(select(User).where(User.id == token_data.user_id))
+        user = result.scalar_one_or_none()
+
+        if user is None:
+            logger.warning("User not found in database")
+            raise credentials_exception
+
+        # Check if user is not offline - allow ONLINE and IDLE status
+        if user.status == UserStatusEnum.OFFLINE:
+            logger.warning(f"User is offline, status: {user.status}")
+            raise HTTPException(
+                status_code=HTTP_403_FORBIDDEN, detail="User is offline"
+            )
+
+        logger.debug(f"Successfully authenticated user: {user.name}")
+        return user
+
+    except JWTError as e:
+        logger.warning(f"JWT validation error in web auth: {e}")
+        raise credentials_exception
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as e:
+        logger.error(f"Error in web authentication: {e}", exc_info=True)
+        raise credentials_exception
+
+
 async def get_current_user(
     token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
 ) -> User:
@@ -41,9 +106,11 @@ async def get_current_user(
         if user is None:
             raise credentials_exception
 
-        # Check if user is still active using status field
-        if user.status == UserStatusEnum.DEACTIVATED:
-            raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Inactive user")
+        # Check if user is not offline
+        if user.status == UserStatusEnum.OFFLINE:
+            raise HTTPException(
+                status_code=HTTP_403_FORBIDDEN, detail="User is offline"
+            )
 
         return user
     except JWTError:
@@ -105,64 +172,3 @@ non_guest = role_required(
         UserRole.TESTER,
     ]
 )
-
-
-async def get_current_user_web(
-    request: Request, db: AsyncSession = Depends(get_db)
-) -> User:
-    """
-    Get the current user from cookie-based authentication for web routes.
-    This function checks for the token in cookies instead of Authorization headers.
-    """
-    credentials_exception = HTTPException(
-        status_code=HTTP_401_UNAUTHORIZED,
-        detail="Not authenticated",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    try:
-        # Try to get token from cookie first
-        token = request.cookies.get("remember_token")
-        logger.info(f"Cookie token found: {token is not None}")
-
-        if not token:
-            # If no cookie token, try Authorization header as fallback
-            authorization = request.headers.get("Authorization")
-            if authorization and authorization.startswith("Bearer "):
-                token = authorization.split(" ")[1]
-                logger.info("Using Authorization header token")
-            else:
-                logger.info("No token found in cookies or headers")
-                raise credentials_exception
-
-        logger.info("Attempting to verify token")
-        token_data = await verify_token(token)
-        if token_data is None:
-            logger.error("Token verification failed")
-            raise credentials_exception
-
-        logger.info(f"Token verified for user_id: {token_data.user_id}")
-        # Query DB for user using proper SQLAlchemy async syntax
-        result = await db.execute(select(User).where(User.id == token_data.user_id))
-        user = result.scalar_one_or_none()
-
-        if user is None:
-            logger.error("User not found in database")
-            raise credentials_exception
-
-        # Check if user is still active using status field
-        if user.status == UserStatusEnum.DEACTIVATED:
-            logger.error("User is deactivated")
-            raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Inactive user")
-
-        logger.info(f"Successfully authenticated user: {user.name}")
-        return user
-    except JWTError as e:
-        logger.error(f"JWT validation error in web auth: {e}", exc_info=True)
-        raise credentials_exception
-    except HTTPException:
-        # Re-raise HTTP exceptions as-is
-        raise
-    except Exception as e:
-        logger.error(f"Error in web authentication: {e}", exc_info=True)
-        raise credentials_exception

@@ -16,11 +16,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_db
 from fastapi import Depends
 import os
+import logging
 
 # Create router for core web routes
 router = APIRouter(
     tags=["web-core"], responses={404: {"description": "Page not found"}}
 )
+
+# Logger
+logger = logging.getLogger(__name__)
 
 # Templates - Use user templates for login/register
 user_templates_path = os.path.join(os.path.dirname(__file__), "user", "templates")
@@ -55,36 +59,49 @@ async def login_submit(
     """
     Handle login form submission
     """
-    # Import here to avoid circular imports
     from src.controllers.user_controller import login_for_access_token
 
     try:
+        logger.info(f"Login attempt for username: {username}")
+
         # Attempt to login
         token = await login_for_access_token(db, username, password)
         if not token:
+            logger.warning(f"Login failed for username: {username}")
             return user_templates.TemplateResponse(
                 "login.html",
                 {
                     "request": request,
                     "error_message": "Incorrect username or password. Please try again.",
+                    "username": username,  # Keep the username in the form
                 },
-            )  # Successful login - redirect to tasks
-        response = RedirectResponse(url="/tasks", status_code=303)
-        # Set cookie for web authentication
-        response.set_cookie(
-            "remember_token", token.access_token, max_age=7 * 24 * 3600  # 7 days
-        )
-        # Extended cookie for remember_me functionality
-        if remember_me:
-            response.set_cookie(
-                "remember_token", token.access_token, max_age=30 * 24 * 3600  # 30 days
             )
+
+        # Successful login - redirect to tasks
+        logger.info(f"Login successful for username: {username}")
+        response = RedirectResponse(url="/tasks", status_code=303)
+
+        # Set cookie for web authentication
+        max_age = 30 * 24 * 3600 if remember_me else 7 * 24 * 3600  # 30 days or 7 days
+        response.set_cookie(
+            "remember_token",
+            token.access_token,
+            max_age=max_age,
+            httponly=True,
+            secure=False,  # Set to True in production with HTTPS
+        )
+
         return response
 
     except Exception as e:
+        logger.error(f"Login error for username {username}: {str(e)}", exc_info=True)
         return user_templates.TemplateResponse(
             "login.html",
-            {"request": request, "error_message": "Login failed. Please try again."},
+            {
+                "request": request,
+                "error_message": "Login failed. Please try again.",
+                "username": username,
+            },
         )
 
 
@@ -113,11 +130,13 @@ async def register_submit(
     """
     Handle registration form submission
     """
-    # Import here to avoid circular imports
     from src.controllers.user_controller import create_user
     from src.schemas.user import UserCreate
+    from src.models.user import UserTypeEnum, UserStatusEnum
 
     try:
+        logger.info(f"Registration attempt for username: {username}, email: {email}")
+
         if not agree_terms:
             return user_templates.TemplateResponse(
                 "register.html",
@@ -130,23 +149,26 @@ async def register_submit(
         # Create user data
         user_data = UserCreate(
             email=email,
-            name=username,  # Use 'name' field instead of 'username'
+            name=username,
             password=password,
-            user_type="user",  # Default user type
+            user_type=UserTypeEnum.TEAM_MEMBER,  # Default user type
+            status=UserStatusEnum.ONLINE,  # Use ONLINE instead of ACTIVE
             profile=(
                 {
                     "first_name": first_name,
                     "last_name": last_name,
                     "display_name": f"{first_name} {last_name}",
-                    "phone": phone_number,
+                    "phone_number": phone_number,
+                    "department": department,
                 }
-                if first_name or last_name or phone_number
+                if first_name or last_name or phone_number or department
                 else None
             ),
         )
 
         # Create the user
         user = await create_user(db, user_data)
+        logger.info(f"User created successfully: {user.name}")
 
         # Successful registration - redirect to login with success message
         return RedirectResponse(
@@ -155,10 +177,12 @@ async def register_submit(
         )
 
     except HTTPException as e:
+        logger.warning(f"Registration failed for {username}: {e.detail}")
         return user_templates.TemplateResponse(
             "register.html", {"request": request, "error_message": str(e.detail)}
         )
     except Exception as e:
+        logger.error(f"Registration error for {username}: {str(e)}", exc_info=True)
         return user_templates.TemplateResponse(
             "register.html",
             {
