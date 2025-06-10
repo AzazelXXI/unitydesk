@@ -99,11 +99,11 @@ function getInitials(name) {
 }
 
 // Authentication and security utilities
-window.isAuthenticationError = function(status) {
+window.isAuthenticationError = function (status) {
   return status === 401 || status === 403;
-}
+};
 
-window.redirectToLogin = function() {
+window.redirectToLogin = function () {
   // Clear any existing authentication data
   document.cookie =
     "remember_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -115,18 +115,22 @@ window.redirectToLogin = function() {
   setTimeout(() => {
     window.location.href = "/login";
   }, 2000);
-}
+};
 
-window.handleAuthenticationError = function(response) {
+window.handleAuthenticationError = function (response) {
   if (window.isAuthenticationError(response.status)) {
     window.redirectToLogin();
     return true; // Indicates authentication error was handled
   }
   return false; // Not an authentication error
-}
+};
 
 // Enhanced API request function with authentication handling
-window.authenticatedApiRequest = async function(url, method = "GET", data = null) {
+window.authenticatedApiRequest = async function (
+  url,
+  method = "GET",
+  data = null
+) {
   try {
     const options = {
       method: method,
@@ -141,7 +145,7 @@ window.authenticatedApiRequest = async function(url, method = "GET", data = null
       options.body = JSON.stringify(data);
     }
 
-    const response = await fetch(url, options);    // Check for authentication errors first
+    const response = await fetch(url, options); // Check for authentication errors first
     if (window.handleAuthenticationError(response)) {
       throw new Error("Authentication failed");
     }
@@ -166,4 +170,4 @@ window.authenticatedApiRequest = async function(url, method = "GET", data = null
     }
     throw error;
   }
-}
+};
