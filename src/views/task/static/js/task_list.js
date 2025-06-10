@@ -127,11 +127,9 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!taskDetailModalElement) {
       alert("⚠️ Task detail modal is not available. Please refresh the page.");
       return;
-    }
-
-    const taskDetailModal = new bootstrap.Modal(taskDetailModalElement);
+    }    const taskDetailModal = new bootstrap.Modal(taskDetailModalElement);
     taskDetailModal.show();    // Fetch task details from API with authentication handling
-    fetch(`/api/tasks/${taskId}`, {
+    fetch(`/api/simple-tasks/${taskId}`, {
       headers: {
         Accept: "application/json",
         "X-Requested-With": "XMLHttpRequest",

@@ -4,7 +4,7 @@ from sqlalchemy import text
 
 from src.database import get_db
 
-router = APIRouter(prefix="/api/tasks", tags=["simple-tasks"])
+router = APIRouter(prefix="/api/simple-tasks", tags=["simple-tasks"])
 
 
 @router.get("/{task_id}")
@@ -32,30 +32,29 @@ async def get_task_details(task_id: int, db: AsyncSession = Depends(get_db)):
             LEFT JOIN projects p ON t.project_id = p.id
             WHERE t.id = :task_id
         """)
-        
         result = await db.execute(task_query, {"task_id": task_id})
-        task_row = result.fetchone()
+        task_row = result.mappings().fetchone()
         
         if not task_row:
             raise HTTPException(status_code=404, detail="Task not found")
 
-        # Extract data from the row result using column indices or names
+        # Extract data from the row result using dictionary-like access
         task_data = {
-            "id": task_row[0] if task_row[0] is not None else task_id,
-            "title": task_row[1] or f"Task {task_id}",
-            "name": task_row[1] or f"Task {task_id}",
-            "description": task_row[2] or "No description provided",
-            "status": task_row[3] or "unknown",
-            "priority": task_row[4] or "medium",
-            "due_date": task_row[5].isoformat() if task_row[5] else None,
-            "created_at": task_row[6].isoformat() if task_row[6] else None,
-            "updated_at": task_row[7].isoformat() if task_row[7] else None,
-            "estimated_hours": task_row[8],
-            "actual_hours": task_row[9],
+            "id": task_row["id"] if task_row["id"] is not None else task_id,
+            "title": task_row["name"] or f"Task {task_id}",
+            "name": task_row["name"] or f"Task {task_id}",
+            "description": task_row["description"] or "No description provided",
+            "status": task_row["status"] or "unknown",
+            "priority": task_row["priority"] or "medium",
+            "due_date": task_row["due_date"].isoformat() if task_row["due_date"] else None,
+            "created_at": task_row["created_at"].isoformat() if task_row["created_at"] else None,
+            "updated_at": task_row["updated_at"].isoformat() if task_row["updated_at"] else None,
+            "estimated_hours": task_row["estimated_hours"],
+            "actual_hours": task_row["actual_hours"],
             "assignee": {"id": None, "name": "Unassigned", "initials": "??"},
             "project": {
-                "id": task_row[10],
-                "name": task_row[11] or "Unknown Project"
+                "id": task_row["project_id"],
+                "name": task_row["project_name"] or "Unknown Project"
             }
         }
 
