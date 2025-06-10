@@ -19,6 +19,8 @@ import logging
 from src.database import get_db
 from src.middleware.auth_middleware import get_current_user_web
 from src.models.user import User
+from src.controllers.task_controller import TaskController
+from src.controllers.project_controller import ProjectController
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -31,6 +33,141 @@ router = APIRouter(
 # Templates - use absolute path to avoid issues
 templates_path = "src/views"
 templates = Jinja2Templates(directory=templates_path)
+
+
+@router.get("/tasks/list", response_class=HTMLResponse)
+async def task_list(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+):
+    """
+    Display the task list view with all tasks in a table format
+    """
+    try:
+        print(f"=== TASK LIST ACCESS ===")
+        print(f"User: {current_user.name} (ID: {current_user.id})")
+        print(f"User Type: {current_user.user_type}")
+
+        # Query all tasks directly from database (managers can see all tasks)
+        query = text(
+            """
+            SELECT 
+                t.id,
+                t.name as title,
+                t.description,
+                t.status,
+                t.priority,
+                t.estimated_hours,
+                t.actual_hours,
+                t.start_date,
+                t.due_date,
+                t.completed_date,
+                t.created_at,
+                t.updated_at,
+                t.project_id,
+                ta.user_id as assignee_id,
+                u.name as assignee_name,
+                p.name as project_name
+            FROM tasks t
+            LEFT JOIN task_assignees ta ON t.id = ta.task_id
+            LEFT JOIN users u ON ta.user_id = u.id
+            LEFT JOIN projects p ON t.project_id = p.id
+            ORDER BY t.created_at DESC
+        """
+        )
+
+        result = await db.execute(query)
+        task_rows = result.fetchall()
+
+        print(f"Found {len(task_rows)} tasks in database")
+
+        # Convert to task objects for list view
+        tasks = []
+        for row in task_rows:
+            # Format due date
+            due_date_formatted = "No due date"
+            if row.due_date:
+                due_date_formatted = row.due_date.strftime("%b %d, %Y")
+
+            # Format status for display
+            status = str(row.status).upper()
+            status_display = status.replace("_", " ").title()
+
+            # Format priority
+            priority = str(row.priority).lower() if row.priority else "medium"
+
+            task = {
+                "id": row.id,
+                "title": (
+                    row.title
+                    if row.title and row.title.strip()
+                    else f"Untitled Task {row.id}"
+                ),
+                "project": row.project_name or "Unknown Project",
+                "assignee": row.assignee_name or "Unassigned",
+                "status": status_display,
+                "due_date": due_date_formatted,
+                "priority": priority.title(),
+                "description": row.description or "No description provided",
+                "estimated_hours": row.estimated_hours,
+                "actual_hours": row.actual_hours,
+            }
+            tasks.append(task)
+
+        # Create task stats for template
+        task_stats = {
+            "total_tasks": len(tasks),
+            "in_progress": len([t for t in tasks if "Progress" in t["status"]]),
+            "completed": len([t for t in tasks if "Completed" in t["status"]]),
+            "overdue_tasks": 0,  # Can calculate this later if needed
+        }
+
+        # Get projects and users for filters
+        try:
+            projects = await ProjectController.get_user_projects(current_user.id, db)
+            users = await TaskController.get_users_for_assignment(db)
+        except Exception as e:
+            print(f"Error loading filter data: {str(e)}")
+            projects = []
+            users = []
+
+        return templates.TemplateResponse(
+            "task/templates/tasks.html",
+            {
+                "request": request,
+                "current_user": current_user,
+                "tasks": tasks,
+                "task_stats": task_stats,
+                "projects": projects,
+                "users": users,
+                "title": "Task List",
+            },
+        )
+
+    except Exception as e:
+        print(f"ERROR in task list: {str(e)}")
+        logger.error(f"Error loading task list: {str(e)}", exc_info=True)
+
+        # Return error page with empty tasks
+        return templates.TemplateResponse(
+            "task/templates/tasks.html",
+            {
+                "request": request,
+                "current_user": current_user,
+                "tasks": [],
+                "task_stats": {
+                    "total_tasks": 0,
+                    "in_progress": 0,
+                    "completed": 0,
+                    "overdue_tasks": 0,
+                },
+                "projects": [],
+                "users": [],
+                "error": f"Could not load tasks: {str(e)}",
+                "title": "Task List",
+            },
+        )
 
 
 @router.get("/tasks", response_class=HTMLResponse)
@@ -95,12 +232,14 @@ async def task_board(
                 "created_at": row.created_at,
                 "updated_at": row.updated_at,
                 "project_id": row.project_id,
-                "assignee": {
-                    "id": row.assignee_id,
-                    "name": row.assignee_name,
-                }
-                if row.assignee_id
-                else None,
+                "assignee": (
+                    {
+                        "id": row.assignee_id,
+                        "name": row.assignee_name,
+                    }
+                    if row.assignee_id
+                    else None
+                ),
             }
             tasks.append(task)
 
@@ -151,7 +290,7 @@ async def task_board(
                 "all_tasks": all_tasks,
                 "total_tasks": len(tasks),
                 "projects": [],  # Empty for now
-                "users": [],     # Empty for now
+                "users": [],  # Empty for now
             },
         )
 

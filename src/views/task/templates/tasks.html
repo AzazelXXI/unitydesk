@@ -18,7 +18,7 @@ endblock %} {% block head_extra %}
         class="d-flex justify-content-between align-items-center task-details-header"
       >
         <h2><i class="fas fa-tasks me-2"></i>Task Management</h2>
-        <a href="/tasks/create" class="btn btn-primary btn-task-primary">
+        <a href="/tasks/new" class="btn btn-primary btn-task-primary">
           <i class="fas fa-plus me-1"></i> Create New Task
         </a>
       </div>
@@ -32,14 +32,14 @@ endblock %} {% block head_extra %}
           class="fas fa-clipboard-list text-primary"
           style="font-size: 1.5rem"
         ></i>
-        <div class="task-stats-number">48</div>
+        <div class="task-stats-number">{{ task_stats.total_tasks }}</div>
         <div class="task-stats-label">Total Tasks</div>
       </div>
     </div>
     <div class="col-6 col-md-3 mb-3 mb-md-0">
       <div class="task-stats-card bg-white">
         <i class="fas fa-spinner text-warning" style="font-size: 1.5rem"></i>
-        <div class="task-stats-number">12</div>
+        <div class="task-stats-number">{{ task_stats.in_progress }}</div>
         <div class="task-stats-label">In Progress</div>
       </div>
     </div>
@@ -49,7 +49,7 @@ endblock %} {% block head_extra %}
           class="fas fa-exclamation-circle text-danger"
           style="font-size: 1.5rem"
         ></i>
-        <div class="task-stats-number">5</div>
+        <div class="task-stats-number">{{ task_stats.overdue_tasks }}</div>
         <div class="task-stats-label">Overdue</div>
       </div>
     </div>
@@ -59,12 +59,11 @@ endblock %} {% block head_extra %}
           class="fas fa-check-circle text-success"
           style="font-size: 1.5rem"
         ></i>
-        <div class="task-stats-number">23</div>
+        <div class="task-stats-number">{{ task_stats.completed }}</div>
         <div class="task-stats-label">Completed</div>
       </div>
     </div>
   </div>
-
   <!-- Task Filters -->
   <div class="row mb-4">
     <div class="col-12 task-filter-section">
@@ -72,17 +71,17 @@ endblock %} {% block head_extra %}
         <div class="col-md-3">
           <select class="form-select">
             <option selected>All Projects</option>
-            <option>Website Redesign</option>
-            <option>Mobile App Development</option>
-            <option>Marketing Campaign</option>
+            {% for project in projects %}
+            <option value="{{ project.id }}">{{ project.name }}</option>
+            {% endfor %}
           </select>
         </div>
         <div class="col-md-3">
           <select class="form-select">
             <option selected>All Assignees</option>
-            <option>John Smith</option>
-            <option>Jane Doe</option>
-            <option>Bob Johnson</option>
+            {% for user in users %}
+            <option value="{{ user.id }}">{{ user.name }}</option>
+            {% endfor %}
           </select>
         </div>
         <div class="col-md-3">
@@ -108,13 +107,10 @@ endblock %} {% block head_extra %}
     <div class="col-12 overflow-auto">
       <ul class="nav nav-tabs flex-nowrap">
         <li class="nav-item">
-          <a class="nav-link active" href="#">List View</a>
+          <a class="nav-link active" href="/tasks/list">List View</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/tasks/board">Board View</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/tasks/calendar">Calendar View</a>
+          <a class="nav-link" href="/tasks">Board View</a>
         </li>
       </ul>
     </div>
@@ -283,7 +279,9 @@ endblock %} {% block head_extra %}
       <div
         class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mt-3"
       >
-        <div class="mb-3 mb-md-0">Showing 1-5 of 48 tasks</div>
+        <div class="mb-3 mb-md-0">
+          Showing {{ tasks|length }} of {{ task_stats.total_tasks }} tasks
+        </div>
         <nav aria-label="Task pagination">
           <ul class="pagination pagination-sm flex-wrap justify-content-center">
             <li class="page-item disabled">

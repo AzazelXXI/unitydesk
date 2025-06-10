@@ -20,12 +20,12 @@ Platform{% endblock %} {% block head_extra %}
 {% endblock %} {% block content %}
 <div class="task-board-container">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="fas fa-columns me-2"></i>Task Board</h2>
+    <h2><i class="fas fa-tasks me-2"></i>Task Management</h2>
     <div>
-      <a href="/tasks" class="btn btn-outline-secondary me-2">
+      <a href="/tasks/list" class="btn btn-outline-secondary me-2">
         <i class="fas fa-list me-1"></i>List View
       </a>
-      <a href="/tasks/create" class="btn btn-primary">
+      <a href="/tasks/new" class="btn btn-primary">
         <i class="fas fa-plus me-1"></i>New Task
       </a>
       <!-- Nút Filter chỉ hiện trên mobile -->
@@ -38,6 +38,69 @@ Platform{% endblock %} {% block head_extra %}
       >
         <i class="fas fa-filter me-1"></i>Filter
       </button>
+    </div>
+  </div>
+
+  <!-- Task Statistics -->
+  <div class="row mb-4">
+    <div class="col-6 col-md-3 mb-3 mb-md-0">
+      <div class="task-stats-card bg-white p-3 rounded shadow-sm">
+        <i
+          class="fas fa-clipboard-list text-primary"
+          style="font-size: 1.5rem"
+        ></i>
+        <div class="task-stats-number h4 mb-0 mt-2">
+          {{ task_stats.total if task_stats else 0 }}
+        </div>
+        <div class="task-stats-label text-muted">Total Tasks</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3 mb-md-0">
+      <div class="task-stats-card bg-white p-3 rounded shadow-sm">
+        <i class="fas fa-spinner text-warning" style="font-size: 1.5rem"></i>
+        <div class="task-stats-number h4 mb-0 mt-2">
+          {{ task_stats.in_progress if task_stats else 0 }}
+        </div>
+        <div class="task-stats-label text-muted">In Progress</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="task-stats-card bg-white p-3 rounded shadow-sm">
+        <i
+          class="fas fa-exclamation-circle text-danger"
+          style="font-size: 1.5rem"
+        ></i>
+        <div class="task-stats-number h4 mb-0 mt-2">
+          {{ task_stats.overdue if task_stats else 0 }}
+        </div>
+        <div class="task-stats-label text-muted">Overdue</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="task-stats-card bg-white p-3 rounded shadow-sm">
+        <i
+          class="fas fa-check-circle text-success"
+          style="font-size: 1.5rem"
+        ></i>
+        <div class="task-stats-number h4 mb-0 mt-2">
+          {{ task_stats.completed if task_stats else 0 }}
+        </div>
+        <div class="task-stats-label text-muted">Completed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Navigation -->
+  <div class="row mb-3">
+    <div class="col-12 overflow-auto">
+      <ul class="nav nav-tabs flex-nowrap">
+        <li class="nav-item">
+          <a class="nav-link" href="/tasks/list">List View</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="/tasks">Board View</a>
+        </li>
+      </ul>
     </div>
   </div>
 
