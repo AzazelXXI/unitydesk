@@ -11,7 +11,8 @@ router = APIRouter(prefix="/api/tasks", tags=["simple-tasks"])
 async def get_task_details(task_id: int, db: AsyncSession = Depends(get_db)):
     """
     Get task details by ID - simple endpoint for task board/list functionality
-    """    try:
+    """    
+    try:
         # Use raw SQL with more explicit typing to avoid SQLAlchemy issues
         task_query = text("""
             SELECT 
