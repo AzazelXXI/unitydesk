@@ -97,3 +97,73 @@ function getInitials(name) {
     .toUpperCase()
     .substring(0, 2);
 }
+
+// Authentication and security utilities
+window.isAuthenticationError = function(status) {
+  return status === 401 || status === 403;
+}
+
+window.redirectToLogin = function() {
+  // Clear any existing authentication data
+  document.cookie =
+    "remember_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+  // Show user-friendly message
+  showToast("Your session has expired. Please log in again.", "warning", 2000);
+
+  // Redirect to login page after a short delay
+  setTimeout(() => {
+    window.location.href = "/login";
+  }, 2000);
+}
+
+window.handleAuthenticationError = function(response) {
+  if (window.isAuthenticationError(response.status)) {
+    window.redirectToLogin();
+    return true; // Indicates authentication error was handled
+  }
+  return false; // Not an authentication error
+}
+
+// Enhanced API request function with authentication handling
+window.authenticatedApiRequest = async function(url, method = "GET", data = null) {
+  try {
+    const options = {
+      method: method,
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      credentials: "same-origin",
+    };
+
+    if (data && (method === "POST" || method === "PUT" || method === "PATCH")) {
+      options.body = JSON.stringify(data);
+    }
+
+    const response = await fetch(url, options);    // Check for authentication errors first
+    if (window.handleAuthenticationError(response)) {
+      throw new Error("Authentication failed");
+    }
+
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+
+    // For DELETE requests or others that may not return content
+    if (
+      response.status === 204 ||
+      response.headers.get("Content-Length") === "0"
+    ) {
+      return true;
+    }
+
+    return await response.json();
+  } catch (error) {
+    // Only show network error if it's not an authentication error
+    if (!error.message.includes("Authentication failed")) {
+      showToast("Network error: Unable to connect to server", "danger");
+    }
+    throw error;
+  }
+}

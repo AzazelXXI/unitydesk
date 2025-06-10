@@ -1,9 +1,11 @@
 // Task Board JavaScript - Board View Functionality
 document.addEventListener("DOMContentLoaded", function () {
   // Check if we're on a mobile device
-  const isMobile = isMobileDevice();  // Check if dragula is loaded
+  const isMobile = isMobileDevice(); // Check if dragula is loaded
   if (typeof dragula === "undefined") {
-    alert("⚠️ Drag and drop functionality is not available. Please refresh the page.");
+    alert(
+      "⚠️ Drag and drop functionality is not available. Please refresh the page."
+    );
     return;
   }
 
@@ -17,12 +19,14 @@ document.addEventListener("DOMContentLoaded", function () {
   // Filter out null containers
   const validContainers = containers.filter((c) => c !== null);
   if (validContainers.length === 0) {
-    alert("⚠️ Task board is not properly initialized. Please refresh the page.");
+    alert(
+      "⚠️ Task board is not properly initialized. Please refresh the page."
+    );
     return;
   }
 
   // Add click event to all task cards to show details
-  addTaskCardClickListeners();  // Initialize Dragula for drag and drop functionality
+  addTaskCardClickListeners(); // Initialize Dragula for drag and drop functionality
   try {
     const drake = dragula(validContainers, {
       moves: function (el, source, handle, sibling) {
@@ -89,8 +93,11 @@ document.addEventListener("DOMContentLoaded", function () {
       if (container && container.closest) {
         container.closest(".task-column").classList.remove("drag-over");
       }
-    });  } catch (error) {
-    alert("⚠️ Drag and drop functionality could not be initialized. Please refresh the page.");
+    });
+  } catch (error) {
+    alert(
+      "⚠️ Drag and drop functionality could not be initialized. Please refresh the page."
+    );
   }
   // Task click handler is handled by addTaskCardClickListeners()
   // Mobile-specific enhancements
@@ -156,7 +163,8 @@ document.addEventListener("DOMContentLoaded", function () {
         const currentStatus = card
           .closest(".task-column")
           .getAttribute("data-status");
-        let targetStatus = "";        if (swipeDistance > 0) {
+        let targetStatus = "";
+        if (swipeDistance > 0) {
           // Right swipe - move to previous column
           targetStatus = getPreviousStatus(currentStatus);
         } else {
@@ -255,45 +263,10 @@ document.addEventListener("DOMContentLoaded", function () {
   function isMobileDevice() {
     return window.innerWidth < 768 || "ontouchstart" in window;
   }
-
-  // Function to make API requests
+  // Function to make API requests with authentication handling
   async function apiRequest(url, method = "GET", data = null) {
-    try {
-      const options = {
-        method: method,
-        headers: {
-          "Content-Type": "application/json",
-          "X-Requested-With": "XMLHttpRequest",
-        },
-        credentials: "same-origin",
-      };
-
-      if (
-        data &&
-        (method === "POST" || method === "PUT" || method === "PATCH")
-      ) {
-        options.body = JSON.stringify(data);
-      }
-
-      const response = await fetch(url, options);
-
-      if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
-      }
-
-      // For DELETE requests or others that may not return content
-      if (
-        response.status === 204 ||
-        response.headers.get("Content-Length") === "0"
-      ) {
-        return true;
-      }      return await response.json();
-    } catch (error) {
-      // Show user-friendly error message
-      showToast("Network error: Unable to connect to server", "danger");
-      throw error;
-    }
-  }  // Function to add click event listeners to task cards
+    return await authenticatedApiRequest(url, method, data);
+  } // Function to add click event listeners to task cards
   function addTaskCardClickListeners() {
     const taskCards = document.querySelectorAll(".task-card");
 
@@ -335,9 +308,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const taskDetailModal = new bootstrap.Modal(taskDetailModalElement);
-    taskDetailModal.show();
-
-    // Fetch task details from API
+    taskDetailModal.show();    // Fetch task details from API with authentication handling
     fetch(`/api/tasks/${taskId}`, {
       headers: {
         Accept: "application/json",
@@ -346,6 +317,22 @@ document.addEventListener("DOMContentLoaded", function () {
       credentials: "same-origin",
     })
       .then((response) => {
+        // Check for authentication errors
+        if (response.status === 401 || response.status === 403) {
+          // Clear any existing authentication data
+          document.cookie = "remember_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+          
+          // Show user-friendly message
+          showToast("Your session has expired. Please log in again.", "warning", 2000);
+          
+          // Redirect to login page after a short delay
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 2000);
+          
+          throw new Error("Authentication failed");
+        }
+        
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
@@ -353,12 +340,14 @@ document.addEventListener("DOMContentLoaded", function () {
       })
       .then((task) => {
         populateTaskDetailModal(task);
-      })      .catch((error) => {
-        // Show user-friendly error message instead of console error
-        showToast("Unable to load task details. Please try again.", "danger");
-        taskDetailContent.innerHTML = `<div class="alert alert-danger">
-          <i class="fas fa-exclamation-triangle me-2"></i>Unable to load task details. Please try again later.
-        </div>`;
+      })
+      .catch((error) => {
+        // Error handling
+        if (!error.message.includes("Authentication failed")) {
+          taskDetailContent.innerHTML = `<div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>Unable to load task details. Please try again later.
+          </div>`;
+        }
       });
   }
 

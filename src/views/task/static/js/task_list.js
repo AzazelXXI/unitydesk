@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     taskRows.forEach((row) => {
       const taskId = row.getAttribute("data-task-id");
-      
+
       row.addEventListener("click", function (e) {
         // Don't trigger click if clicking on checkboxes or action buttons
         if (e.target.type === "checkbox" || e.target.closest(".dropdown")) {
@@ -130,9 +130,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const taskDetailModal = new bootstrap.Modal(taskDetailModalElement);
-    taskDetailModal.show();
-
-    // Fetch task details from API
+    taskDetailModal.show();    // Fetch task details from API with authentication handling
     fetch(`/api/tasks/${taskId}`, {
       headers: {
         Accept: "application/json",
@@ -141,6 +139,22 @@ document.addEventListener("DOMContentLoaded", function () {
       credentials: "same-origin",
     })
       .then((response) => {
+        // Check for authentication errors
+        if (response.status === 401 || response.status === 403) {
+          // Clear any existing authentication data
+          document.cookie = "remember_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+          
+          // Show user-friendly message
+          showToast("Your session has expired. Please log in again.", "warning", 2000);
+          
+          // Redirect to login page after a short delay
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 2000);
+          
+          throw new Error("Authentication failed");
+        }
+        
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
@@ -150,11 +164,12 @@ document.addEventListener("DOMContentLoaded", function () {
         populateTaskDetailModal(task);
       })
       .catch((error) => {
-        // Show user-friendly error message
-        showToast("Unable to load task details. Please try again.", "danger");
-        taskDetailContent.innerHTML = `<div class="alert alert-danger">
-          <i class="fas fa-exclamation-triangle me-2"></i>Unable to load task details. Please try again later.
-        </div>`;
+        // Error handling
+        if (!error.message.includes("Authentication failed")) {
+          taskDetailContent.innerHTML = `<div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>Unable to load task details. Please try again later.
+          </div>`;
+        }
       });
   }
 
