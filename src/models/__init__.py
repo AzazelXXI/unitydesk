@@ -1,6 +1,7 @@
 from .base import Base
 from .user import (
     User,
+    UserProfile,
     ProjectManager,
     TeamLeader,
     Developer,
@@ -17,6 +18,8 @@ from .risk import Risk
 from .notification import Notification
 from .calendar import Calendar
 from .event import Event
+
+# from .department import Department, Position, DepartmentMembership  # Commented out to prevent startup errors
 from .association_tables import (
     project_members,
     task_assignees,
@@ -27,6 +30,7 @@ from .association_tables import (
 __all__ = [
     "Base",
     "User",
+    "UserProfile",
     "ProjectManager",
     "TeamLeader",
     "Developer",
@@ -42,6 +46,9 @@ __all__ = [
     "Notification",
     "Calendar",
     "Event",
+    # "Department",
+    # "Position",
+    # "DepartmentMembership",  # Commented out to prevent startup errors
     "project_members",
     "task_assignees",
     "task_attachments",

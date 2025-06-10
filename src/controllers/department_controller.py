@@ -6,17 +6,10 @@ from datetime import datetime, timedelta
 
 from src.database import get_db
 
-# Temporarily commenting out imports as we use Any placeholders
-# from src.models.user import Department, Position, DepartmentMembership, User, UserProfile
+# Real model imports
+from src.models.user import User, UserProfile
+from src.models.department import Department, Position, DepartmentMembership
 
-# Using Any as placeholders for models to allow the application to start
-from typing import Any
-
-Department = Any
-Position = Any
-DepartmentMembership = Any
-User = Any
-UserProfile = Any
 from src.schemas.department import (
     DepartmentCreate,
     DepartmentUpdate,

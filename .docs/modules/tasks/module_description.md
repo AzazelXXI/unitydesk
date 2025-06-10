@@ -155,10 +155,6 @@
   - Collaborate with developers to ensure designs are implemented correctly.
   - Update designs based on user feedback and testing results.
 
-### System Administrators
-
-- Responsible for maintaining the infrastructure, ensuring that the development and production environments are stable and secure.
-
 ## 5. Scenarios
 
 ### Starting situation

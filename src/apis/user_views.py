@@ -5,14 +5,9 @@ from typing import List, Optional
 
 from src.database import get_db
 
-# Temporarily commenting out model imports as we use Any placeholders
-# from src.models.user import User, UserTypeEnum as UserRole  # Changed from src.models_backup.user
+# Real model imports
+from src.models.user import User, UserTypeEnum as UserRole
 
-# Using Any as placeholders for models to allow the application to start
-from typing import Any
-
-User = Any
-UserRole = Any
 from src.schemas.user import (
     UserCreate,
     UserUpdate,

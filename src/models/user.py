@@ -58,12 +58,44 @@ class User(Base):
     # Many-to-many relationship for project membership
     member_projects = relationship(
         "Project", secondary="project_members", back_populates="team_members"
-    )
+    )  # Relationship to UserProfile
+    profile = relationship("UserProfile", back_populates="user", uselist=False)
+
+    # Department relationships - commented out to prevent startup errors
+    # managed_departments = relationship("Department", back_populates="manager")
+    # department_memberships = relationship("DepartmentMembership", back_populates="user", cascade="all, delete-orphan")
 
     __mapper_args__ = {
         "polymorphic_identity": "user",
         "polymorphic_on": user_type,
     }
+
+
+class UserProfile(Base):
+    """User profile model for additional user information"""
+
+    __tablename__ = "user_profiles"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=True)
+    first_name = Column(String(100), nullable=True)
+    last_name = Column(String(100), nullable=True)
+    display_name = Column(String(255), nullable=True)
+    avatar_url = Column(String(255), nullable=True)
+    bio = Column(Text, nullable=True)
+    phone = Column(String(50), nullable=True)
+    location = Column(String(100), nullable=True)
+    timezone = Column(String(50), nullable=True, default="UTC")
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime,
+        default=datetime.datetime.utcnow,
+        onupdate=datetime.datetime.utcnow,
+        nullable=False,
+    )
+
+    # Relationship back to User
+    user = relationship("User", back_populates="profile")
 
 
 # Subclasses

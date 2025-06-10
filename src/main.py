@@ -58,6 +58,13 @@ app.mount(
     name="task_static",
 )
 
+# Mount static files for user views (authentication pages)
+app.mount(
+    "/user/static",
+    StaticFiles(directory="src/views/user/static"),
+    name="user_static",
+)
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,

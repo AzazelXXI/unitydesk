@@ -8,19 +8,9 @@ from typing import List, Optional
 
 from src.database import get_db
 
-# Temporarily commenting out model imports as we use Any placeholders
-# from src.models.user import (
-#    User,
-#    UserProfile,
-#    UserTypeEnum as UserRole,
-# )  # Changed from src.models_backup.user
+# Real model imports
+from src.models.user import User, UserProfile, UserTypeEnum as UserRole
 
-# Using Any as placeholders for models to allow the application to start
-from typing import Any
-
-User = Any
-UserProfile = Any
-UserRole = Any
 from src.schemas.user import (
     UserCreate,
     UserUpdate,
@@ -46,12 +36,11 @@ logger = logging.getLogger(__name__)
 async def create_user(db: AsyncSession, user_data: UserCreate) -> User:
     """
     Create a new user
-    """
-    # Check if username or email already exists
+    """  # Check if name or email already exists (User model uses 'name' not 'username')
     query = await db.execute(
         select(
             exists().where(
-                (User.username == user_data.username) | (User.email == user_data.email)
+                (User.name == user_data.name) | (User.email == user_data.email)
             )
         )
     )
@@ -63,22 +52,19 @@ async def create_user(db: AsyncSession, user_data: UserCreate) -> User:
             detail="Username or email already registered",
         )
 
-    # Create user with hashed password
+    # Create user with hashed password (User model uses 'password_hash' not 'hashed_password')
     hashed_password = get_password_hash(user_data.password)
 
     db_user = User(
         email=user_data.email,
-        username=user_data.username,
-        hashed_password=hashed_password,
-        role=user_data.role,
-        is_active=user_data.is_active,
-        is_verified=user_data.is_verified,
+        name=user_data.name,  # Now matches schema field name
+        password_hash=hashed_password,  # User model uses 'password_hash' instead of 'hashed_password'
+        user_type=user_data.user_type.value,  # User model uses 'user_type' and needs enum value
+        status=user_data.status,  # User model uses 'status' instead of is_active/is_verified
     )
 
     db.add(db_user)
-    await db.flush()
-
-    # Create profile if provided
+    await db.flush()  # Create profile if provided
     if user_data.profile:
         db_profile = UserProfile(
             user_id=db_user.id,
@@ -87,8 +73,8 @@ async def create_user(db: AsyncSession, user_data: UserCreate) -> User:
             display_name=user_data.profile.display_name,
             avatar_url=user_data.profile.avatar_url,
             bio=user_data.profile.bio,
-            phone=user_data.profile.phone_number,  # Keep original field name if schema matches
-            department=user_data.profile.department,
+            phone=user_data.profile.phone_number,  # Schema uses phone_number, model uses phone
+            location=user_data.profile.department,  # Schema uses department, model uses location
             timezone=user_data.profile.timezone,
         )
         db.add(db_profile)
@@ -211,8 +197,8 @@ async def login_for_access_token(
         logger.info(f"Failed login attempt for username: {username}")
         return None
 
-    # Create token with user info
-    token_data = {"sub": user.username, "id": user.id, "role": user.role}
+    # Create token with user info (using correct field names: name, user_type)
+    token_data = {"sub": user.name, "id": user.id, "role": user.user_type}
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     refresh_token_expires = timedelta(days=7)  # You can make this configurable
@@ -236,22 +222,21 @@ async def change_user_password(
 ) -> bool:
     """
     Change a user's password after verifying current password
-    """
-    # Get user
+    """  # Get user
     query = await db.execute(select(User).filter(User.id == user_id))
     user = query.scalars().first()
 
     if not user:
         return False
 
-    # Verify current password - sửa lỗi thiếu await
-    if not await authenticate_user(db, user.username, current_password):
+    # Verify current password using correct field name (User model uses 'name' not 'username')
+    if not await authenticate_user(db, user.name, current_password):
         return False
 
-    # Update password
+    # Update password using correct field name (User model uses 'password_hash' not 'hashed_password')
     hashed_password = get_password_hash(new_password)
     await db.execute(
-        update(User).where(User.id == user_id).values(hashed_password=hashed_password)
+        update(User).where(User.id == user_id).values(password_hash=hashed_password)
     )
     await db.commit()
 

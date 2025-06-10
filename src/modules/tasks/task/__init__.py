@@ -8,28 +8,30 @@ This module provides complete CRUD operations for task management including:
 - Task statistics and reporting
 """
 
-from .routes import router as task_router
+from .routes import router
 from .service import TaskService
 from .schemas import (
-    TaskCreate, TaskUpdate, TaskResponse, TaskListResponse,
-    TaskQueryParams, TaskStatsResponse, TaskStatus, TaskPriority
-)
-from .dependencies import (
-    get_task_service, verify_task_access, TaskPermissions
+    TaskCreate,
+    TaskUpdate,
+    TaskResponse,
+    TaskListResponse,
+    TaskAssignmentUpdate,
+    TaskDependencyUpdate,
+    TaskStatsResponse,
+    TaskStatus,
+    TaskPriority,
 )
 
 __all__ = [
-    "task_router",
-    "TaskService", 
+    "router",
+    "TaskService",
     "TaskCreate",
     "TaskUpdate",
     "TaskResponse",
     "TaskListResponse",
-    "TaskQueryParams",
+    "TaskAssignmentUpdate",
+    "TaskDependencyUpdate",
     "TaskStatsResponse",
     "TaskStatus",
     "TaskPriority",
-    "get_task_service",
-    "verify_task_access",
-    "TaskPermissions"
 ]

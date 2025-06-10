@@ -18,8 +18,9 @@ from src.apis.notification_views import ws_router as notification_ws_router
 from src.apis.task_views import router as task_router
 from src.apis.project_views import router as project_router
 
-# Import new modular task API
-from src.modules.tasks.task import task_router as tasks_module_router
+# Import new modular task and project API
+from src.modules.tasks.project import router as project_module_router
+from src.modules.tasks.task import router as task_module_router
 from src.apis.asset_views import router as asset_router
 from src.apis.client_views import router as client_router
 from src.apis.customer_service_views import router as customer_service_router
@@ -41,8 +42,12 @@ api_router_v1.include_router(core_router, prefix="/core")
 # api_router_v1.include_router(meeting_router, prefix="/meetings")
 api_router_v1.include_router(notification_router)
 api_router_v1.include_router(task_router, prefix="/tasks")
-api_router_v1.include_router(tasks_module_router, prefix="/tasks-v2")  # New modular task API
 api_router_v1.include_router(project_router, prefix="/projects")
+
+# Include NEW modular task and project APIs
+api_router_v1.include_router(project_module_router)  # Already has /api/projects prefix
+api_router_v1.include_router(task_module_router)  # Already has /api/tasks prefix
+
 api_router_v1.include_router(asset_router, prefix="/assets")
 api_router_v1.include_router(client_router, prefix="/clients")
 api_router_v1.include_router(customer_service_router, prefix="/customer-service")

@@ -7,13 +7,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from dotenv import load_dotenv
 
-# Temporarily commenting out model imports as we use Any placeholders
-# from src.models.user import User
+# Real model imports
+from src.models.user import User
 
-# Using Any as placeholder for models to allow the application to start
-from typing import Any
-
-User = Any
 from src.schemas.user import TokenData, UserResponse, UserWithPassword
 import logging
 
@@ -53,9 +49,9 @@ async def authenticate_user(
     Authenticate a user by username and password.
     """
     try:
-        # Get user by username or email
+        # Get user by name or email (User model uses 'name' instead of 'username')
         query = await db.execute(
-            select(User).where((User.username == username) | (User.email == username))
+            select(User).where((User.name == username) | (User.email == username))
         )
         user = query.scalars().first()
 
@@ -65,7 +61,7 @@ async def authenticate_user(
             )
             return None
 
-        if not verify_password(password, user.hashed_password):
+        if not verify_password(password, user.password_hash):
             logger.info(f"Authentication failed: Invalid password for user {username}")
             return None
 

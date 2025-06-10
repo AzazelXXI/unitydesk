@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
 
-from src.models.user import UserTypeEnum  # Adjusted to new models path
+from src.models.user import UserTypeEnum, UserStatusEnum  # Import both enums
 
 
 # Base user schemas
@@ -54,10 +54,13 @@ class UserBase(BaseModel):
     """Base schema for user information"""
 
     email: EmailStr
-    username: str
-    role: UserTypeEnum = UserTypeEnum.TEAM_MEMBER
-    is_active: bool = True
-    is_verified: bool = False
+    name: str  # Changed from 'username' to 'name' to match User model
+    user_type: UserTypeEnum = (
+        UserTypeEnum.TEAM_MEMBER
+    )  # Changed from 'role' to 'user_type'
+    status: UserStatusEnum = (
+        UserStatusEnum.OFFLINE
+    )  # Changed from 'is_active'/'is_verified' to 'status'
 
 
 class UserCreate(UserBase):
@@ -78,10 +81,11 @@ class UserUpdate(BaseModel):
     """Schema for updating a user"""
 
     email: Optional[EmailStr] = None
-    username: Optional[str] = None
-    role: Optional[UserTypeEnum] = None
-    is_active: Optional[bool] = None
-    is_verified: Optional[bool] = None
+    name: Optional[str] = None  # Changed from 'username' to 'name'
+    user_type: Optional[UserTypeEnum] = None  # Changed from 'role' to 'user_type'
+    status: Optional[UserStatusEnum] = (
+        None  # Changed from 'is_active'/'is_verified' to 'status'
+    )
     profile: Optional[UserProfileUpdate] = None
 
 
@@ -110,7 +114,7 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     """Schema for token data"""
 
-    username: Optional[str] = None
+    username: Optional[str] = None  # Keep as username for JWT compatibility
     user_id: Optional[int] = None
     role: Optional[UserTypeEnum] = None
 
@@ -118,7 +122,7 @@ class TokenData(BaseModel):
 class LoginRequest(BaseModel):
     """Schema for login request"""
 
-    username: str
+    username: str  # This can accept either name or email
     password: str
 
 
