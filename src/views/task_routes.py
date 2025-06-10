@@ -8,152 +8,176 @@ This module contains all task-related web routes for the CSA Platform, including
 """
 
 from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
+from sqlalchemy import select, text
+from typing import List, Optional
+import os
+import logging
 
 from src.database import get_db
 from src.middleware.auth_middleware import get_current_user_web
 from src.models.user import User
-from src.modules.tasks.task.service import TaskService
-from src.modules.tasks.project.service import ProjectService
-from src.controllers.task_controller import TaskController
-from src.controllers.project_controller import ProjectController
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # Create router for task web routes
 router = APIRouter(
-    prefix="/tasks",
-    tags=["web-tasks"],
-    responses={404: {"description": "Page not found"}},
+    tags=["web-tasks"], responses={404: {"description": "Page not found"}}
 )
 
-# Templates
-templates = Jinja2Templates(directory="src/views")
+# Templates - use absolute path to avoid issues
+templates_path = "src/views"
+templates = Jinja2Templates(directory=templates_path)
 
 
-@router.get("/")
-async def tasks_home(
+@router.get("/tasks", response_class=HTMLResponse)
+async def task_board(
     request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_web),
-    project_id: Optional[int] = None,
 ):
-    """Tasks home page with real database data"""
+    """
+    Display the task board with all tasks for managers
+    """
     try:
-        # Get tasks from database
-        tasks_data = await TaskService.get_tasks(
-            user_id=current_user.id, project_id=project_id, db=db
+        print(f"=== TASK BOARD ACCESS ===")
+        print(f"User: {current_user.name} (ID: {current_user.id})")
+        print(f"User Type: {current_user.user_type}")
+
+        # Query all tasks directly from database (managers can see all tasks)
+        query = text(
+            """
+            SELECT 
+                t.id,
+                t.name as title,
+                t.description,
+                t.status,
+                t.priority,
+                t.estimated_hours,
+                t.actual_hours,
+                t.start_date,
+                t.due_date,
+                t.completed_date,
+                t.created_at,
+                t.updated_at,
+                t.project_id,
+                ta.user_id as assignee_id,
+                u.name as assignee_name
+            FROM tasks t
+            LEFT JOIN task_assignees ta ON t.id = ta.task_id
+            LEFT JOIN users u ON ta.user_id = u.id
+            ORDER BY t.created_at DESC
+        """
         )
 
-        # Get projects and users for filters
-        projects = await ProjectController.get_user_projects(current_user.id, db)
-        users = await TaskController.get_users_for_assignment(db)
+        result = await db.execute(query)
+        task_rows = result.fetchall()
 
-        # Get task statistics
-        task_stats = await TaskService.get_task_stats(
-            user_id=current_user.id, project_id=project_id, db=db
-        )
+        print(f"Found {len(task_rows)} tasks in database")
 
-        # Organize tasks by status for kanban board
-        columns = {"todo": [], "in_progress": [], "review": [], "done": []}
-
-        # Map database task statuses to board columns
-        status_mapping = {
-            "Not Started": "todo",
-            "In Progress": "in_progress",
-            "Completed": "done",
-            "Blocked": "review",  # Blocked tasks go to review column
-            "Cancelled": "done",  # Cancelled tasks go to done column
-        }
-
-        for task in tasks_data:
-            # Get task status
-            task_status = (
-                task.status.value if hasattr(task.status, "value") else task.status
-            )
-            column = status_mapping.get(task_status, "todo")
-
-            # Transform task for template compatibility
-            task_item = {
-                "id": task.id,
-                "title": (
-                    task.name
-                    if task.name and task.name.strip()
-                    else f"Untitled Task {task.id}"
-                ),
-                "description": task.description or "No description provided",
-                "priority": (
-                    task.priority.value.lower()
-                    if hasattr(task.priority, "value")
-                    else str(task.priority).lower()
-                ),
-                "due_date": (
-                    task.due_date.strftime("%B %d, %Y")
-                    if task.due_date
-                    else "No due date"
-                ),
-                "is_overdue": False,  # Will calculate this properly
+        # Convert to task objects
+        tasks = []
+        for row in task_rows:
+            task = {
+                "id": row.id,
+                "title": row.title,
+                "description": row.description,
+                "status": row.status,
+                "priority": row.priority,
+                "estimated_hours": row.estimated_hours,
+                "actual_hours": row.actual_hours,
+                "start_date": row.start_date,
+                "due_date": row.due_date,
+                "completed_date": row.completed_date,
+                "created_at": row.created_at,
+                "updated_at": row.updated_at,
+                "project_id": row.project_id,
                 "assignee": {
-                    "name": (
-                        f"User {task.assignee_count}"
-                        if task.assignee_count > 0
-                        else "Unassigned"
-                    ),
-                    "initials": "U",  # Will improve with real user data
-                },
-                "project_name": task.project_name or "Unknown Project",
+                    "id": row.assignee_id,
+                    "name": row.assignee_name,
+                }
+                if row.assignee_id
+                else None,
             }
+            tasks.append(task)
 
-            # Check if task is overdue
-            if task.due_date and task_status not in ["Completed", "Cancelled"]:
-                from datetime import datetime
+        # Organize tasks by status - use 'columns' to match template expectations
+        columns = {"todo": [], "in_progress": [], "done": []}
 
-                task_item["is_overdue"] = task.due_date < datetime.now()
+        for task in tasks:
+            status = str(task["status"]).upper()
+            print(f"Task: {task['title']} - Status: {status}")
 
-            columns[column].append(task_item)
+            if status in ["NOT_STARTED", "PENDING", "TODO"]:
+                columns["todo"].append(task)
+            elif status in ["IN_PROGRESS", "ACTIVE", "WORKING"]:
+                columns["in_progress"].append(task)
+            elif status in ["COMPLETED", "DONE", "FINISHED"]:
+                columns["done"].append(task)
+            else:
+                # Default unknown statuses to todo
+                columns["todo"].append(task)
+
+        print(
+            f"Task distribution: TODO={len(columns['todo'])}, IN_PROGRESS={len(columns['in_progress'])}, DONE={len(columns['done'])}"
+        )
+
+        # Create task stats for template
+        task_stats = {
+            "total": len(tasks),
+            "in_progress": len(columns["in_progress"]),
+            "completed": len(columns["done"]),
+            "overdue": 0,  # Can calculate this later if needed
+        }
 
         # Combine all tasks for list view
         all_tasks = []
-        for status, tasks in columns.items():
-            for task in tasks:
+        for status, task_list in columns.items():
+            for task in task_list:
                 task_copy = task.copy()
                 task_copy["status"] = status
                 all_tasks.append(task_copy)
 
         return templates.TemplateResponse(
-            request=request,
-            name="task/templates/modern_tasks.html",
-            context={
+            "task/templates/task_board.html",
+            {
                 "request": request,
-                "task_stats": task_stats,
-                "projects": projects,
-                "users": users,
-                "columns": columns,
-                "all_tasks": all_tasks,
                 "current_user": current_user,
+                "columns": columns,  # Template expects 'columns'
+                "task_stats": task_stats,
+                "all_tasks": all_tasks,
+                "total_tasks": len(tasks),
+                "projects": [],  # Empty for now
+                "users": [],     # Empty for now
             },
         )
 
     except Exception as e:
-        # Fallback to empty data if database query fails
-        empty_columns = {"todo": [], "in_progress": [], "review": [], "done": []}
+        print(f"ERROR in task board: {str(e)}")
+        logger.error(f"Error loading task board: {str(e)}", exc_info=True)
+
+        # Return error page with empty tasks
+        empty_columns = {"todo": [], "in_progress": [], "done": []}
         return templates.TemplateResponse(
-            request=request,
-            name="task/templates/modern_tasks.html",
-            context={
+            "task/templates/task_board.html",
+            {
                 "request": request,
+                "current_user": current_user,
+                "columns": empty_columns,
                 "task_stats": {
                     "total": 0,
                     "in_progress": 0,
                     "overdue": 0,
                     "completed": 0,
                 },
+                "all_tasks": [],
+                "total_tasks": 0,
                 "projects": [],
                 "users": [],
-                "columns": empty_columns,
-                "all_tasks": [],
-                "current_user": current_user,
-                "error": f"Failed to load tasks: {str(e)}",
+                "error": f"Could not load tasks: {str(e)}",
             },
         )
 

@@ -86,13 +86,10 @@ for router in api_web_routers:
 for router in view_web_routers:
     app.include_router(router)
 
-# Include task web router directly to avoid API prefix
-try:
-    from src.views.task.web_routes import task_web_router
+# Import and include the main task router
+from src.views.task_routes import router as task_router
 
-    app.include_router(task_web_router)
-except Exception as e:
-    app_logger.error(f"Failed to include task_web_router: {e}")
+app.include_router(task_router)
 
 # Include the centralized API router (which includes all API routes with versioning)
 app.include_router(api_router)
