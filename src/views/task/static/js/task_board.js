@@ -305,8 +305,9 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!taskDetailModalElement) {
       alert("⚠️ Task detail modal is not available. Please refresh the page.");
       return;
-    }    const taskDetailModal = new bootstrap.Modal(taskDetailModalElement);
-    taskDetailModal.show();    // Fetch task details from API with authentication handling
+    }
+    const taskDetailModal = new bootstrap.Modal(taskDetailModalElement);
+    taskDetailModal.show(); // Fetch task details from API with authentication handling
     fetch(`/api/simple-tasks/${taskId}`, {
       headers: {
         Accept: "application/json",
@@ -318,19 +319,24 @@ document.addEventListener("DOMContentLoaded", function () {
         // Check for authentication errors
         if (response.status === 401 || response.status === 403) {
           // Clear any existing authentication data
-          document.cookie = "remember_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-          
+          document.cookie =
+            "remember_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
           // Show user-friendly message
-          showToast("Your session has expired. Please log in again.", "warning", 2000);
-          
+          showToast(
+            "Your session has expired. Please log in again.",
+            "warning",
+            2000
+          );
+
           // Redirect to login page after a short delay
           setTimeout(() => {
             window.location.href = "/login";
           }, 2000);
-          
+
           throw new Error("Authentication failed");
         }
-        
+
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }

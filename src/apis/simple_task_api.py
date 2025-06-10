@@ -11,10 +11,11 @@ router = APIRouter(prefix="/api/simple-tasks", tags=["simple-tasks"])
 async def get_task_details(task_id: int, db: AsyncSession = Depends(get_db)):
     """
     Get task details by ID - simple endpoint for task board/list functionality
-    """    
+    """
     try:
         # Use raw SQL with more explicit typing to avoid SQLAlchemy issues
-        task_query = text("""
+        task_query = text(
+            """
             SELECT 
                 t.id,
                 t.name,
@@ -31,10 +32,11 @@ async def get_task_details(task_id: int, db: AsyncSession = Depends(get_db)):
             FROM tasks t
             LEFT JOIN projects p ON t.project_id = p.id
             WHERE t.id = :task_id
-        """)
+        """
+        )
         result = await db.execute(task_query, {"task_id": task_id})
         task_row = result.mappings().fetchone()
-        
+
         if not task_row:
             raise HTTPException(status_code=404, detail="Task not found")
 
@@ -46,16 +48,22 @@ async def get_task_details(task_id: int, db: AsyncSession = Depends(get_db)):
             "description": task_row["description"] or "No description provided",
             "status": task_row["status"] or "unknown",
             "priority": task_row["priority"] or "medium",
-            "due_date": task_row["due_date"].isoformat() if task_row["due_date"] else None,
-            "created_at": task_row["created_at"].isoformat() if task_row["created_at"] else None,
-            "updated_at": task_row["updated_at"].isoformat() if task_row["updated_at"] else None,
+            "due_date": (
+                task_row["due_date"].isoformat() if task_row["due_date"] else None
+            ),
+            "created_at": (
+                task_row["created_at"].isoformat() if task_row["created_at"] else None
+            ),
+            "updated_at": (
+                task_row["updated_at"].isoformat() if task_row["updated_at"] else None
+            ),
             "estimated_hours": task_row["estimated_hours"],
             "actual_hours": task_row["actual_hours"],
             "assignee": {"id": None, "name": "Unassigned", "initials": "??"},
             "project": {
                 "id": task_row["project_id"],
-                "name": task_row["project_name"] or "Unknown Project"
-            }
+                "name": task_row["project_name"] or "Unknown Project",
+            },
         }
 
         return task_data
