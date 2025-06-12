@@ -21,10 +21,9 @@ document.addEventListener("DOMContentLoaded", function () {
       group.classList.add("mb-3");
     });
   }
-
   const form = document.getElementById("createTaskForm");
   if (form) {
-    form.addEventListener("submit", function (event) {
+    form.addEventListener("submit", async function (event) {
       event.preventDefault();
 
       const taskName = document.getElementById("taskName").value;
@@ -39,14 +38,74 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
 
+      // Collect form data
       const formData = new FormData(form);
-      const data = {};
-      formData.forEach((value, key) => (data[key] = value));
+      const taskData = {
+        title: formData.get("taskName"),
+        name: formData.get("taskName"), // Some APIs expect 'name' instead of 'title'
+        description: formData.get("taskDescription") || "",
+        project_id: parseInt(formData.get("taskProject")),
+        assigned_to_id: formData.get("taskAssignee") ? parseInt(formData.get("taskAssignee")) : null,
+        status: formData.get("taskStatus") || "NOT_STARTED",
+        priority: formData.get("taskPriority") || "MEDIUM",
+        start_date: formData.get("taskStartDate") || null,
+        due_date: formData.get("taskEndDate") || null,
+        estimated_hours: formData.get("taskEstimatedTime") ? parseInt(formData.get("taskEstimatedTime")) : null,
+        category: formData.get("taskCategory") || null,
+        task_type: formData.get("taskType") || null,
+        is_recurring: formData.get("taskIsRecurring") === "on"
+      };
 
-      console.log("Form data:", data);
-      alert(
-        "Task creation form submitted (simulated). Check console for data."
-      );
+      try {
+        // Show loading state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Creating...';
+        submitBtn.disabled = true;        // Call the API to create the task
+        const response = await fetch('/api/simple-tasks/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify(taskData)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.detail || `HTTP ${response.status}`);
+        }
+
+        const createdTask = await response.json();
+        
+        // Show success message
+        if (typeof showToast === 'function') {
+          showToast('Task created successfully!', 'success');
+        } else {
+          alert('Task created successfully!');
+        }
+
+        // Redirect to task list after a short delay
+        setTimeout(() => {
+          window.location.href = '/tasks';
+        }, 1500);
+
+      } catch (error) {
+        console.error('Error creating task:', error);
+        
+        // Show error message
+        if (typeof showToast === 'function') {
+          showToast(`Failed to create task: ${error.message}`, 'danger');
+        } else {
+          alert(`Failed to create task: ${error.message}`);
+        }
+
+        // Reset button
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      }
     });
   }
 });

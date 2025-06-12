@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
 from src.database import get_db
-from src.middleware.auth_middleware import get_current_user
+from src.middleware.auth_middleware import get_current_user_web
 from src.models.user import User
 from src.modules.tasks.task.service import TaskService
 from src.modules.tasks.project.service import ProjectService
@@ -36,7 +36,7 @@ task_web_router = APIRouter(
 async def get_create_task_page(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_web),
 ):
     """
     Serves the HTML page for creating a new task.
@@ -74,7 +74,7 @@ async def get_create_task_page(
 async def get_task_list_page(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_web),
     project_id: Optional[int] = None,
     status: Optional[str] = None,
     priority: Optional[str] = None,
@@ -173,7 +173,7 @@ async def get_task_list_page(
 async def get_task_board_page(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_web),
     project_id: Optional[int] = None,
 ):
     """

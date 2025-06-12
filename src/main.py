@@ -88,8 +88,10 @@ for router in view_web_routers:
 
 # Import and include the main task router
 from src.views.task_routes import router as task_router
+from src.views.task.web_routes import task_web_router
 
 app.include_router(task_router)
+app.include_router(task_web_router)
 
 # Include the centralized API router (which includes all API routes with versioning)
 app.include_router(api_router)

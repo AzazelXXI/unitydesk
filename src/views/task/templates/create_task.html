@@ -35,28 +35,26 @@ endblock %} {% block head_extra %}
       <div class="col-md-4 mb-3">
         <label for="taskProject" class="form-label"
           >Project <span class="text-danger">*</span></label
-        >
-        <select
+        >        <select
           class="form-select"
           id="taskProject"
           name="taskProject"
           required
         >
           <option selected disabled value="">Choose project...</option>
-          <option value="proj1">Project Alpha</option>
-          <option value="proj2">Project Beta</option>
-          <option value="proj3">Internal Development</option>
+          {% for project in projects %}
+          <option value="{{ project.id }}">{{ project.name }}</option>
+          {% endfor %}
         </select>
       </div>
     </div>
     <div class="row">
       <div class="col-md-4 mb-3">
-        <label for="taskAssignee" class="form-label">Assignee</label>
-        <select class="form-select" id="taskAssignee" name="taskAssignee">
+        <label for="taskAssignee" class="form-label">Assignee</label>        <select class="form-select" id="taskAssignee" name="taskAssignee">
           <option selected disabled value="">Assign to...</option>
-          <option value="user1">Alice Wonderland</option>
-          <option value="user2">Bob The Builder</option>
-          <option value="user3">Charlie Brown</option>
+          {% for user in users %}
+          <option value="{{ user.id }}">{{ user.name or user.username or user.email }}</option>
+          {% endfor %}
         </select>
       </div>
       <div class="col-md-4 mb-3">
