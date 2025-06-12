@@ -94,6 +94,7 @@ async def get_task_details(task_id: int, db: AsyncSession = Depends(get_db)):
         print(f"Error fetching task {task_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch task: {str(e)}")
 
+
 @router.post("/")
 async def create_task(task_data: SimpleTaskCreate, db: AsyncSession = Depends(get_db)):
     """
@@ -101,7 +102,8 @@ async def create_task(task_data: SimpleTaskCreate, db: AsyncSession = Depends(ge
     """
     try:
         # Insert task into database using raw SQL
-        insert_query = text("""
+        insert_query = text(
+            """
             INSERT INTO tasks (
                 name, description, status, priority, due_date, 
                 estimated_hours, project_id, created_at, updated_at
@@ -109,8 +111,9 @@ async def create_task(task_data: SimpleTaskCreate, db: AsyncSession = Depends(ge
                 :name, :description, :status, :priority, :due_date,
                 :estimated_hours, :project_id, :created_at, :updated_at
             ) RETURNING id
-        """)
-        
+        """
+        )
+
         # Prepare the data
         current_time = datetime.now()
         query_params = {
@@ -118,41 +121,50 @@ async def create_task(task_data: SimpleTaskCreate, db: AsyncSession = Depends(ge
             "description": task_data.description,
             "status": task_data.status,
             "priority": task_data.priority,
-            "due_date": datetime.fromisoformat(task_data.due_date) if task_data.due_date else None,
+            "due_date": (
+                datetime.fromisoformat(task_data.due_date)
+                if task_data.due_date
+                else None
+            ),
             "estimated_hours": task_data.estimated_hours,
             "project_id": task_data.project_id,
             "created_at": current_time,
-            "updated_at": current_time
+            "updated_at": current_time,
         }
-        
+
         result = await db.execute(insert_query, query_params)
         task_id = result.scalar()
-        
+
         if not task_id:
             raise HTTPException(status_code=500, detail="Failed to create task")
-        
+
         # If there's an assignee, add to task_assignees table
         if task_data.assigned_to_id:
-            assignee_query = text("""
+            assignee_query = text(
+                """
                 INSERT INTO task_assignees (task_id, user_id, assigned_at)
                 VALUES (:task_id, :user_id, :assigned_at)
-            """)
-            await db.execute(assignee_query, {
-                "task_id": task_id,
-                "user_id": task_data.assigned_to_id,
-                "assigned_at": current_time
-            })
-        
+            """
+            )
+            await db.execute(
+                assignee_query,
+                {
+                    "task_id": task_id,
+                    "user_id": task_data.assigned_to_id,
+                    "assigned_at": current_time,
+                },
+            )
+
         await db.commit()
-        
+
         return {
             "id": task_id,
             "message": "Task created successfully",
             "title": task_data.title or task_data.name,
             "status": task_data.status,
-            "project_id": task_data.project_id
+            "project_id": task_data.project_id,
         }
-        
+
     except HTTPException:
         await db.rollback()
         raise

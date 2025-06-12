@@ -35,7 +35,8 @@ endblock %} {% block head_extra %}
       <div class="col-md-4 mb-3">
         <label for="taskProject" class="form-label"
           >Project <span class="text-danger">*</span></label
-        >        <select
+        >
+        <select
           class="form-select"
           id="taskProject"
           name="taskProject"
@@ -50,10 +51,13 @@ endblock %} {% block head_extra %}
     </div>
     <div class="row">
       <div class="col-md-4 mb-3">
-        <label for="taskAssignee" class="form-label">Assignee</label>        <select class="form-select" id="taskAssignee" name="taskAssignee">
+        <label for="taskAssignee" class="form-label">Assignee</label>
+        <select class="form-select" id="taskAssignee" name="taskAssignee">
           <option selected disabled value="">Assign to...</option>
           {% for user in users %}
-          <option value="{{ user.id }}">{{ user.name or user.username or user.email }}</option>
+          <option value="{{ user.id }}">
+            {{ user.name or user.username or user.email }}
+          </option>
           {% endfor %}
         </select>
       </div>
