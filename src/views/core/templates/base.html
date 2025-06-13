@@ -41,9 +41,10 @@
         color: #fff;
         font-weight: 500;
       }
-
       .sidebar .nav-link i {
-        margin-right: 10px;
+        margin-right: 8px;
+        width: 16px;
+        text-align: center;
       }
 
       .content {
@@ -130,7 +131,7 @@
       <div class="row">
         <!-- Sidebar (optional, can be toggled via block sidebar) -->
         {% block sidebar %}
-        <div class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
+        <div class="col-md-2 col-lg-2 d-md-block bg-dark sidebar collapse">
           <div class="position-sticky pt-3">
             <ul class="nav flex-column">
               <li class="nav-item">
@@ -166,7 +167,7 @@
 
         <!-- Main Content Area -->
         <main
-          class="{% block main_class %}col-md-9 ms-sm-auto col-lg-10 px-md-4{% endblock %}"
+          class="{% block main_class %}col-md-10 ms-sm-auto col-lg-10 px-md-4{% endblock %}"
         >
           <div
             class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"

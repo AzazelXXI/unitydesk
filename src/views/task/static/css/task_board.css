@@ -1,19 +1,21 @@
 /* Task Board Specific Styles */
 .task-board-container {
-  padding: 20px;
+  padding: 15px;
   background-color: #f8f9fa;
   min-height: 100vh;
 }
 
 .task-board {
   display: flex;
-  gap: 12px; /* Reduced from 15px */
+  gap: 15px;
   overflow-x: auto;
-  padding: 12px 0; /* Reduced from 15px */
+  padding: 0;
+  min-height: calc(100vh - 400px);
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin; /* Firefox */
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent; /* Firefox */
-  flex-wrap: wrap; /* Allow wrapping for mobile view */
+  flex-wrap: nowrap; /* Prevent wrapping to maintain board layout */
+  justify-content: flex-start; /* Align to left */
 }
 
 /* Customize scrollbar for WebKit browsers */
@@ -32,22 +34,36 @@
 }
 
 .task-column {
-  min-width: 200px; /* Reduced from 220px */
-  width: 200px; /* Reduced */
+  min-width: 280px;
+  width: 280px;
   flex: 0 0 auto;
   background-color: #e9ecef;
-  border-radius: 6px; /* Smaller radius */
+  border-radius: 8px;
   padding: 0;
   display: flex;
   flex-direction: column;
-  max-height: 72vh; /* Slightly reduced from 75vh */
+  max-height: calc(100vh - 450px);
   transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 1200px) {
+  .task-column {
+    min-width: 250px;
+    width: 250px;
+  }
+}
+
+@media (max-width: 992px) {
+  .task-column {
+    min-width: 220px;
+    width: 220px;
+  }
 }
 
 @media (max-width: 576px) {
   .task-column {
-    min-width: 180px; /* Even more compact for small screens */
+    min-width: 180px;
     width: 180px;
   }
 }
@@ -65,9 +81,10 @@
 
 .task-column-tasks {
   flex: 1;
-  padding: 8px; /* Reduced from 10px */
+  padding: 12px;
   overflow-y: auto;
-  min-height: 180px; /* Reduced from 200px */
+  min-height: 200px;
+  max-height: calc(100vh - 550px);
 }
 
 .task-card {
@@ -260,26 +277,26 @@
 
 /* Mobile landscape and small tablet view */
 @media (max-width: 768px) {
-  /* Begin vertical stacking at this breakpoint */
   .task-board {
-    flex-direction: column;
-    align-items: center;
-    overflow-x: hidden; /* No need for horizontal scroll when stacked */
-    overflow-y: auto;
-    gap: 15px;
+    gap: 10px;
+    padding: 0;
+    min-height: calc(100vh - 350px);
+    overflow-x: auto;
+    overflow-y: hidden;
   }
 
   .task-column {
-    min-width: 100%; /* Full width in column layout */
-    width: 100%;
-    max-width: 500px; /* Limit maximum width */
-    max-height: none; /* Don't limit height when stacked */
+    max-height: calc(100vh - 400px);
+    min-width: 200px;
+    width: 200px;
   }
 
   .task-column-tasks {
-    max-height: 300px; /* Limit height of task container when stacked */
+    max-height: calc(100vh - 500px);
+    padding: 8px;
   }
 
+  /* Keep the layout compact but usable */
   .task-board-container {
     padding: 10px;
   }
@@ -289,16 +306,6 @@
     flex-direction: column;
     align-items: flex-start !important;
     gap: 10px;
-  }
-
-  /* No need for horizontal scroll indicators when stacked */
-  .task-board:after {
-    display: none;
-  }
-
-  /* Remove horizontal scroll indicator text at bottom */
-  .task-board-container:after {
-    display: none;
   }
 
   /* Improve the task column header */
@@ -429,5 +436,41 @@
 @media (min-width: 768px) {
   .offcanvas#filterOffcanvas {
     display: none !important;
+  }
+}
+
+/* Desktop optimization */
+@media (min-width: 1400px) {
+  .task-board {
+    gap: 20px;
+    justify-content: flex-start;
+  }
+
+  .task-column {
+    min-width: 320px;
+    width: 320px;
+    max-height: calc(100vh - 420px);
+  }
+
+  .task-column-tasks {
+    max-height: calc(100vh - 520px);
+    padding: 15px;
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .task-board {
+    gap: 18px;
+  }
+
+  .task-column {
+    min-width: 300px;
+    width: 300px;
+    max-height: calc(100vh - 430px);
+  }
+
+  .task-column-tasks {
+    max-height: calc(100vh - 530px);
+    padding: 14px;
   }
 }

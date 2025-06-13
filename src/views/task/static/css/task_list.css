@@ -1,7 +1,7 @@
 /* Task List Styles */
 .task-container {
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
 }
 
 .task-details-header {

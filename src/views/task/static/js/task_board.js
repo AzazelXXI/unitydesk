@@ -465,14 +465,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 <p class="card-text">${dueDate}</p>
               </div>
             </div>
-          </div>
-          <div class="col-md-6">
+          </div>          <div class="col-md-6">
             <div class="card mb-3">
-              <div class="card-header">
-                <i class="fas fa-user me-2"></i>Assigned To
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-user me-2"></i>Assigned To</span>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="changeAssigneeBtn">
+                  <i class="fas fa-edit me-1"></i>Change
+                </button>
               </div>
               <div class="card-body">
-                <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center" id="currentAssigneeDisplay">
                   <div class="assignee-avatar me-2">
                     ${
                       taskData.assignee.initials ||
@@ -481,6 +483,21 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                   </div>
                   <span>${taskData.assignee.name || "Unassigned"}</span>
+                </div>
+                <div class="d-none" id="assigneeChangeForm">
+                  <div class="mb-2">
+                    <select class="form-select form-select-sm" id="assigneeSelect">
+                      <option value="">Select Assignee</option>
+                    </select>
+                  </div>
+                  <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-success" id="saveAssigneeBtn">
+                      <i class="fas fa-check me-1"></i>Save
+                    </button>
+                    <button type="button" class="btn btn-sm btn-secondary" id="cancelAssigneeBtn">
+                      <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -512,6 +529,156 @@ document.addEventListener("DOMContentLoaded", function () {
         window.location.href = editUrl;
       };
     }
+
+    // Initialize assignment functionality
+    setupTaskAssignmentHandlers(taskData);
+  }
+
+  // Function to setup task assignment handlers
+  function setupTaskAssignmentHandlers(taskData) {
+    const changeAssigneeBtn = document.getElementById("changeAssigneeBtn");
+    const assigneeChangeForm = document.getElementById("assigneeChangeForm");
+    const currentAssigneeDisplay = document.getElementById(
+      "currentAssigneeDisplay"
+    );
+    const saveAssigneeBtn = document.getElementById("saveAssigneeBtn");
+    const cancelAssigneeBtn = document.getElementById("cancelAssigneeBtn");
+    const assigneeSelect = document.getElementById("assigneeSelect");
+
+    if (!changeAssigneeBtn || !assigneeChangeForm || !currentAssigneeDisplay) {
+      return;
+    }
+
+    // Load users for assignment dropdown
+    loadUsersForAssignment();
+
+    // Show assignment form
+    changeAssigneeBtn.addEventListener("click", function () {
+      currentAssigneeDisplay.classList.add("d-none");
+      assigneeChangeForm.classList.remove("d-none");
+
+      // Set current assignee as selected
+      if (taskData.assignee && taskData.assignee.id) {
+        assigneeSelect.value = taskData.assignee.id;
+      }
+    });
+
+    // Cancel assignment change
+    cancelAssigneeBtn.addEventListener("click", function () {
+      currentAssigneeDisplay.classList.remove("d-none");
+      assigneeChangeForm.classList.add("d-none");
+    });
+
+    // Save assignment change
+    saveAssigneeBtn.addEventListener("click", function () {
+      const newAssigneeId = assigneeSelect.value;
+      updateTaskAssignment(taskData.id, newAssigneeId);
+    });
+  }
+
+  // Function to load users for assignment dropdown
+  async function loadUsersForAssignment() {
+    try {
+      const response = await fetch("/api/users", {
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        credentials: "same-origin",
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const users = await response.json();
+      const assigneeSelect = document.getElementById("assigneeSelect");
+
+      if (assigneeSelect) {
+        // Clear existing options except the first one
+        assigneeSelect.innerHTML = '<option value="">Select Assignee</option>';
+
+        // Add user options
+        users.forEach((user) => {
+          const option = document.createElement("option");
+          option.value = user.id;
+          option.textContent =
+            user.profile?.display_name || user.name || user.email;
+          assigneeSelect.appendChild(option);
+        });
+      }
+    } catch (error) {
+      console.error("Error loading users:", error);
+      showToast("Failed to load users for assignment", "error");
+    }
+  }
+
+  // Function to update task assignment
+  async function updateTaskAssignment(taskId, newAssigneeId) {
+    try {
+      const response = await fetch(`/api/simple-tasks/${taskId}/assign`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          assignee_id: newAssigneeId || null,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const updatedTask = await response.json();
+
+      // Update the display
+      updateAssigneeDisplay(updatedTask);
+
+      // Hide the form and show the display
+      const currentAssigneeDisplay = document.getElementById(
+        "currentAssigneeDisplay"
+      );
+      const assigneeChangeForm = document.getElementById("assigneeChangeForm");
+
+      if (currentAssigneeDisplay && assigneeChangeForm) {
+        currentAssigneeDisplay.classList.remove("d-none");
+        assigneeChangeForm.classList.add("d-none");
+      }
+
+      showToast("Task assignment updated successfully", "success");
+
+      // Reload the page to reflect changes in the task board
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      console.error("Error updating task assignment:", error);
+      showToast("Failed to update task assignment", "error");
+    }
+  }
+
+  // Function to update assignee display
+  function updateAssigneeDisplay(taskData) {
+    const currentAssigneeDisplay = document.getElementById(
+      "currentAssigneeDisplay"
+    );
+
+    if (currentAssigneeDisplay) {
+      const assigneeInitials =
+        taskData.assignee?.initials ||
+        taskData.assignee?.name?.charAt(0) ||
+        "?";
+      const assigneeName = taskData.assignee?.name || "Unassigned";
+
+      currentAssigneeDisplay.innerHTML = `
+        <div class="assignee-avatar me-2">${assigneeInitials}</div>
+        <span>${assigneeName}</span>
+      `;
+    }
   }
 
   // Ẩn filter row nếu có (nếu bạn có filter row cũ, thêm class d-none d-md-block để chỉ hiện trên desktop)
@@ -541,5 +708,42 @@ document.addEventListener("DOMContentLoaded", function () {
         window.location.href = "/tasks";
       }
     });
+  }
+
+  // Function to show toast messages (if not already available from task_common.js)
+  function showToast(message, type = "info", duration = 3000) {
+    // Create toast element if it doesn't exist
+    let toastContainer = document.querySelector(".toast-container");
+    if (!toastContainer) {
+      toastContainer = document.createElement("div");
+      toastContainer.className =
+        "toast-container position-fixed top-0 end-0 p-3";
+      document.body.appendChild(toastContainer);
+    }
+
+    const toastId = "toast-" + Date.now();
+    const toastHtml = `
+      <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+          <strong class="me-auto text-${type === "error" ? "danger" : type}">${
+      type === "error" ? "Error" : "Success"
+    }</strong>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">${message}</div>
+      </div>
+    `;
+
+    toastContainer.insertAdjacentHTML("beforeend", toastHtml);
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+
+    // Remove toast after duration
+    setTimeout(() => {
+      if (toastElement) {
+        toastElement.remove();
+      }
+    }, duration + 1000);
   }
 });

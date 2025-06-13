@@ -132,7 +132,7 @@
 /* Column adjustment for different screen sizes */
 @media (min-width: 1400px) {
   .task-board {
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .task-column {
@@ -146,7 +146,7 @@
   /* Change task board to vertical layout on mobile */
   .task-board {
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     overflow-x: hidden; /* Disable horizontal scroll when stacked */
     overflow-y: auto;
     gap: 15px;

@@ -2,10 +2,12 @@
   display: flex;
   gap: 15px;
   overflow-x: auto;
-  padding: 10px 0;
-  min-height: calc(100vh - 300px);
+  padding: 0;
+  min-height: calc(100vh - 400px);
   -webkit-overflow-scrolling: touch; /* Improved touch scrolling */
   scrollbar-width: thin; /* For Firefox */
+  flex-wrap: nowrap; /* Prevent wrapping to maintain board layout */
+  justify-content: flex-start; /* Align to left */
 }
 
 /* Custom scrollbar for better UX */
@@ -29,13 +31,14 @@
 
 .task-column {
   background: #f8f9fa;
-  border-radius: 5px;
+  border-radius: 8px;
   min-width: 280px;
   max-width: 350px;
-  width: 100%;
+  width: 280px;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  max-height: calc(100vh - 450px);
 }
 
 /* Mobile view adjustment */
