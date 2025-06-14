@@ -573,13 +573,10 @@ document.addEventListener("DOMContentLoaded", function () {
     saveAssigneeBtn.addEventListener("click", function () {
       const newAssigneeId = assigneeSelect.value;
       updateTaskAssignment(taskData.id, newAssigneeId);
-    });
-  }
-
-  // Function to load users for assignment dropdown
+    });  }  // Function to load users for assignment dropdown
   async function loadUsersForAssignment() {
     try {
-      const response = await fetch("/api/users", {
+      const response = await fetch("/api/simple-tasks/users", {
         headers: {
           Accept: "application/json",
           "X-Requested-With": "XMLHttpRequest",

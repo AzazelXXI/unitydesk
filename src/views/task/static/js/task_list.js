@@ -399,7 +399,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Function to load users for assignment dropdown
   async function loadUsersForAssignment() {
     try {
-      const response = await fetch("/api/users", {
+      const response = await fetch("/api/simple-tasks/users", {
         headers: {
           Accept: "application/json",
           "X-Requested-With": "XMLHttpRequest",

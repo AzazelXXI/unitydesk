@@ -1,29 +1,55 @@
-fastapi
-uvicorn
+# Core FastAPI and web framework dependencies
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
 websockets
-jinja2
-sqlalchemy>=1.4.0
+jinja2>=3.1.0
+starlette
+
+# Database dependencies
+sqlalchemy>=2.0.0
 psycopg2-binary
-asyncpg
-pydantic>=1.8.0
+asyncpg>=0.29.0
+alembic>=1.12.0
+
+# Data validation and serialization
+pydantic>=2.0.0
 pydantic[email]
-alembic
+email-validator
+
+# Environment and configuration
 python-dotenv
+
+# File upload and form handling
 python-multipart
-fpdf
+
+# Document generation
+fpdf2
 XlsxWriter
-jwt
-passlib
-python-jose[cryptography]
-bcrypt
 
-pytest
-httpx
-requests
+# Authentication and security
+PyJWT>=2.8.0  # Updated from jwt to PyJWT (more common)
+passlib[bcrypt]>=1.7.4
+python-jose[cryptography]>=3.3.0
+bcrypt>=4.0.0
 
-# anyio
-pytest-asyncio
-# pytest-tornasync
-# pytest-trio
-# pytest-twisted
+# HTTP client for external API calls
+aiohttp>=3.8.0
+httpx>=0.25.0
+requests>=2.31.0
+
+# Testing dependencies
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-mock
+
+# Additional utilities and tools
 pyparsing
+click>=8.0.0
+
+# Optional development dependencies (uncomment if needed)
+# rich>=13.0.0  # For better terminal output
+# loguru>=0.7.0  # Alternative logging
+# typer>=0.9.0  # For CLI tools
+# aiofiles>=23.0.0  # For async file operations
+# redis>=5.0.0  # For caching (if using Redis)
+# celery[redis]>=5.3.0  # For background tasks (if using Celery)

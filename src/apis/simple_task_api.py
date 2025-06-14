@@ -32,6 +32,33 @@ class TaskAssignmentUpdate(BaseModel):
     assignee_id: Optional[int] = None
 
 
+@router.get("/users")
+async def get_users_for_assignment(db: AsyncSession = Depends(get_db)):
+    """
+    Get all users available for task assignment
+    """
+    try:
+        from src.controllers.task_controller import TaskController
+        users = await TaskController.get_users_for_assignment(db)
+        
+        # Format users for assignment dropdown
+        formatted_users = []
+        for user in users:
+            formatted_users.append({
+                "id": user.id,
+                "name": user.name,
+                "email": getattr(user, 'email', ''),
+                "initials": user.name[0].upper() if user.name else "?",
+            })
+        
+        return formatted_users
+    except Exception as e:
+        print(f"Error fetching users for assignment: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch users: {str(e)}"
+        )
+
+
 @router.get("/{task_id}")
 async def get_task_details(task_id: int, db: AsyncSession = Depends(get_db)):
     """
@@ -247,9 +274,7 @@ async def update_task_assignment(
         delete_assignment_query = text(
             "DELETE FROM task_assignees WHERE task_id = :task_id"
         )
-        await db.execute(delete_assignment_query, {"task_id": task_id})
-
-        # Add new assignment if provided
+        await db.execute(delete_assignment_query, {"task_id": task_id})        # Add new assignment if provided
         if assignment_data.assignee_id:
             insert_assignment_query = text(
                 """
@@ -270,7 +295,7 @@ async def update_task_assignment(
 
         # Return updated task details
         return await get_task_details(task_id, db)
-
+        
     except HTTPException:
         await db.rollback()
         raise
