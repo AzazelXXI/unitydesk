@@ -9,7 +9,7 @@ This module contains the core web routes for the CSA Platform, including:
 """
 
 from fastapi import APIRouter, Request, Response, Form, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -195,10 +195,50 @@ async def register_submit(
 @router.get("/logout")
 async def logout(request: Request):
     """
-    Handle logout
+    Handle logout - Clear all authentication data and redirect to login
     """
     response = RedirectResponse(url="/login", status_code=303)
-    response.delete_cookie("remember_token")
+
+    # Clear all authentication cookies
+    response.delete_cookie("remember_token", path="/")
+    response.delete_cookie("access_token", path="/")
+    response.delete_cookie("refresh_token", path="/")
+    response.delete_cookie("user_id", path="/")
+    response.delete_cookie("user_session", path="/")
+
+    # Clear session data if any (safely)
+    try:
+        if hasattr(request, "session") and request.session:
+            request.session.clear()
+    except Exception as e:
+        logger.warning(f"Could not clear session: {e}")
+
+    return response
+
+
+@router.post("/api/auth/logout")
+async def api_logout(request: Request):
+    """
+    API endpoint for logout - returns JSON response
+    """
+    response = JSONResponse(
+        content={"message": "Logged out successfully", "redirect": "/login"}
+    )
+
+    # Clear all authentication cookies
+    response.delete_cookie("remember_token", path="/")
+    response.delete_cookie("access_token", path="/")
+    response.delete_cookie("refresh_token", path="/")
+    response.delete_cookie("user_id", path="/")
+    response.delete_cookie("user_session", path="/")
+
+    # Clear session data if any (safely)
+    try:
+        if hasattr(request, "session") and request.session:
+            request.session.clear()
+    except Exception as e:
+        logger.warning(f"Could not clear session: {e}")
+
     return response
 
 

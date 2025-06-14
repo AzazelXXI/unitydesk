@@ -103,6 +103,7 @@ app.include_router(notification_ws_router)
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(status.HTTP_404_NOT_FOUND, not_found_exception_handler)
+# Re-enabled with detailed error reporting for debugging
 app.add_exception_handler(Exception, server_error_handler)
 
 
