@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 import ssl
 import asyncio
+import logging
 
 # Import all web routers through the centralized import
 from src.apis import web_routers as api_web_routers
@@ -116,6 +117,12 @@ app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(status.HTTP_404_NOT_FOUND, not_found_exception_handler)
 app.add_exception_handler(Exception, server_error_handler)
+
+
+# Add startup logging
+@app.on_event("startup")
+async def startup_event():
+    logger = logging.getLogger("src.main")
 
 
 # Gracefully handle asyncio.CancelledError on shutdown
