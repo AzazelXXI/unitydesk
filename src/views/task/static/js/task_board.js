@@ -24,9 +24,13 @@ document.addEventListener("DOMContentLoaded", function () {
     );
     return;
   }
-
   // Add click event to all task cards to show details
-  addTaskCardClickListeners(); // Initialize Dragula for drag and drop functionality
+  addTaskCardClickListeners();
+
+  // Initialize task statistics
+  updateTaskStatistics();
+
+  // Initialize Dragula for drag and drop functionality
   try {
     const drake = dragula(validContainers, {
       moves: function (el, source, handle, sibling) {
@@ -57,6 +61,9 @@ document.addEventListener("DOMContentLoaded", function () {
             // Update task count in columns
             updateTaskCount(sourceColumn, -1);
             updateTaskCount(targetColumn, 1);
+
+            // Update task statistics immediately
+            updateTaskStatistics();
 
             // Show success message
             showToast(
@@ -1438,4 +1445,101 @@ document.addEventListener("DOMContentLoaded", function () {
       console.error("Error deleting attachment:", error);
     }
   };
+
+  // Function to update task statistics in real-time
+  function updateTaskStatistics() {
+    const columns = {
+      todo: document.querySelector('[data-status="todo"]'),
+      in_progress: document.querySelector('[data-status="in_progress"]'),
+      review: document.querySelector('[data-status="review"]'),
+      done: document.querySelector('[data-status="done"]'),
+    };
+
+    // Count tasks in each column
+    const stats = {};
+    let totalTasks = 0;
+
+    Object.keys(columns).forEach((status) => {
+      const column = columns[status];
+      const taskCount = column
+        ? column.querySelectorAll(".task-card").length
+        : 0;
+      stats[status] = taskCount;
+      totalTasks += taskCount;
+    });
+
+    // Calculate overdue tasks (simplified - could be enhanced with actual due date logic)
+    const overdueTasks = document.querySelectorAll(".task-card.overdue").length;
+
+    // Update the statistics display
+    const statsElements = {
+      total: document.querySelector(".task-stats-card .task-stats-number"),
+      todo: document.querySelectorAll(".task-stats-card .task-stats-number")[1],
+      in_progress: document.querySelectorAll(
+        ".task-stats-card .task-stats-number"
+      )[2],
+      review: document.querySelectorAll(
+        ".task-stats-card .task-stats-number"
+      )[3],
+      completed: document.querySelectorAll(
+        ".task-stats-card .task-stats-number"
+      )[4],
+      overdue: document.querySelectorAll(
+        ".task-stats-card .task-stats-number"
+      )[5],
+    };
+
+    // Update each statistic with animation
+    if (statsElements.total) {
+      animateNumber(statsElements.total, totalTasks);
+    }
+    if (statsElements.todo) {
+      animateNumber(statsElements.todo, stats.todo);
+    }
+    if (statsElements.in_progress) {
+      animateNumber(statsElements.in_progress, stats.in_progress);
+    }
+    if (statsElements.review) {
+      animateNumber(statsElements.review, stats.review);
+    }
+    if (statsElements.completed) {
+      animateNumber(statsElements.completed, stats.done);
+    }
+    if (statsElements.overdue) {
+      animateNumber(statsElements.overdue, overdueTasks);
+    }
+
+    console.log("📊 Updated task statistics:", {
+      total: totalTasks,
+      todo: stats.todo,
+      in_progress: stats.in_progress,
+      review: stats.review,
+      completed: stats.done,
+      overdue: overdueTasks,
+    });
+  }
+
+  // Function to animate number changes
+  function animateNumber(element, newValue) {
+    const currentValue = parseInt(element.textContent) || 0;
+    if (currentValue === newValue) return;
+
+    // Add a subtle animation class
+    element.style.transform = "scale(1.1)";
+    element.style.transition = "transform 0.2s ease";
+
+    // Update the number
+    setTimeout(() => {
+      element.textContent = newValue;
+      element.style.transform = "scale(1)";
+    }, 100);
+
+    // Remove transition after animation
+    setTimeout(() => {
+      element.style.transition = "";
+    }, 300);
+  }
+
+  // Initial statistics update
+  updateTaskStatistics();
 });
