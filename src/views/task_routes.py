@@ -250,15 +250,18 @@ async def task_board(
             status = str(task["status"]).upper()
             print(f"Task: {task['title']} - Status: {status}")
 
-            if status in ["NOT STARTED", "PENDING", "TODO"]:
+            # Map database enum keys to display columns
+            if status in ["NOT_STARTED", "NOT STARTED", "PENDING", "TODO"]:
                 columns["todo"].append(task)
-            elif status in ["IN PROGRESS", "ACTIVE", "WORKING"]:
+            elif status in ["IN_PROGRESS", "IN PROGRESS", "ACTIVE", "WORKING"]:
                 columns["in_progress"].append(task)
-            elif status in ["UNDER REVIEW", "REVIEW", "REVIEWING"]:
+            elif status in ["BLOCKED", "UNDER_REVIEW", "REVIEW", "REVIEWING"]:
                 columns["review"].append(task)
             elif status in ["COMPLETED", "DONE", "FINISHED"]:
                 columns["done"].append(task)
-            else:  # Default unknown statuses to todo
+            else:
+                # Default unknown statuses to todo
+                print(f"⚠️ Unknown status '{status}' for task {task['title']}, defaulting to TODO")
                 columns["todo"].append(task)
 
         print(
