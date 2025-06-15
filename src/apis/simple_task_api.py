@@ -110,23 +110,30 @@ async def update_task_status(
     Update task status - for drag and drop functionality
     """
     try:
-        # Validate status
+        # Debug logging
+        print(f"🔍 DEBUG: Received status update request")
+        print(f"🔍 DEBUG: Task ID = {task_id}")
+        print(f"🔍 DEBUG: Status data = {status_data.status}")
+        # Validate status (using database enum keys, not values)
         valid_statuses = [
             "NOT_STARTED",
             "IN_PROGRESS",
-            "UNDER_REVIEW",
             "COMPLETED",
-            "ON_HOLD",
+            "BLOCKED",
             "CANCELLED",
         ]
         if status_data.status not in valid_statuses:
+            print(
+                f"🔍 DEBUG: Status validation failed. Received: '{status_data.status}'"
+            )
+            print(f"🔍 DEBUG: Valid statuses: {valid_statuses}")
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}",
             )
 
         # Check if task exists
-        task_check_query = text("SELECT id, title FROM tasks WHERE id = :task_id")
+        task_check_query = text("SELECT id, name FROM tasks WHERE id = :task_id")
         result = await db.execute(task_check_query, {"task_id": task_id})
         task = result.fetchone()
 
@@ -157,7 +164,7 @@ async def update_task_status(
 
         return {
             "success": True,
-            "message": f"Task '{task.title}' status updated to {status_data.status}",
+            "message": f"Task '{task.name}' status updated to {status_data.status}",
             "task_id": task_id,
             "new_status": status_data.status,
             "updated_at": now.isoformat(),

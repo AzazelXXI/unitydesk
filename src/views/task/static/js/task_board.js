@@ -276,19 +276,20 @@ document.addEventListener("DOMContentLoaded", function () {
   // Function to update task status in database
   async function updateTaskStatus(taskId, newStatus, oldStatus) {
     try {
-      // Map column status to database status values
+      // Map column status to database enum keys (not values)
       const statusMapping = {
         todo: "NOT_STARTED",
         in_progress: "IN_PROGRESS",
-        review: "UNDER_REVIEW",
+        review: "BLOCKED", // Using Blocked as intermediate status
         done: "COMPLETED",
       };
-
       const dbStatus = statusMapping[newStatus];
       if (!dbStatus) {
         throw new Error(`Invalid status: ${newStatus}`);
       }
 
+      console.log(`🔍 DEBUG: Column status = "${newStatus}"`);
+      console.log(`🔍 DEBUG: Mapped DB status = "${dbStatus}"`);
       console.log(
         `🔄 Updating task ${taskId} status from ${oldStatus} to ${newStatus} (${dbStatus})`
       );

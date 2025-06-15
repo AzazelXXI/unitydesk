@@ -183,7 +183,6 @@ async def task_board(
         print(f"=== TASK BOARD ACCESS ===")
         print(f"User: {current_user.name} (ID: {current_user.id})")
         print(f"User Type: {current_user.user_type}")
-        print(f"🔍 DEBUG: Starting database query...")
 
         # Query all tasks directly from database (managers can see all tasks)
         query = text(
@@ -211,18 +210,14 @@ async def task_board(
         """
         )
 
-        print(f"🔍 DEBUG: Executing database query...")
         result = await db.execute(query)
-        print(f"🔍 DEBUG: Query executed, fetching results...")
         task_rows = result.fetchall()
 
         print(f"Found {len(task_rows)} tasks in database")
-        print(f"🔍 DEBUG: Processing task data...")
 
         # Convert to task objects
         tasks = []
-        for i, row in enumerate(task_rows):
-            print(f"🔍 DEBUG: Processing task {i+1}/{len(task_rows)}")
+        for row in task_rows:
             task = {
                 "id": row.id,
                 "title": row.title,
@@ -246,30 +241,30 @@ async def task_board(
                     else None
                 ),
             }
-            tasks.append(task)
-
-        print(f"🔍 DEBUG: Organizing tasks by status...")
-        # Organize tasks by status - use 'columns' to match template expectations
-        columns = {"todo": [], "in_progress": [], "done": []}
+            tasks.append(
+                task
+            )  # Organize tasks by status - use 'columns' to match template expectations
+        columns = {"todo": [], "in_progress": [], "review": [], "done": []}
 
         for task in tasks:
             status = str(task["status"]).upper()
             print(f"Task: {task['title']} - Status: {status}")
 
-            if status in ["NOT_STARTED", "PENDING", "TODO"]:
+            if status in ["NOT STARTED", "PENDING", "TODO"]:
                 columns["todo"].append(task)
-            elif status in ["IN_PROGRESS", "ACTIVE", "WORKING"]:
+            elif status in ["IN PROGRESS", "ACTIVE", "WORKING"]:
                 columns["in_progress"].append(task)
+            elif status in ["UNDER REVIEW", "REVIEW", "REVIEWING"]:
+                columns["review"].append(task)
             elif status in ["COMPLETED", "DONE", "FINISHED"]:
                 columns["done"].append(task)
             else:  # Default unknown statuses to todo
                 columns["todo"].append(task)
 
         print(
-            f"Task distribution: TODO={len(columns['todo'])}, IN_PROGRESS={len(columns['in_progress'])}, DONE={len(columns['done'])}"
+            f"Task distribution: TODO={len(columns['todo'])}, IN_PROGRESS={len(columns['in_progress'])}, REVIEW={len(columns['review'])}, DONE={len(columns['done'])}"
         )
 
-        print(f"🔍 DEBUG: Creating task stats...")
         # Create task stats for template
         task_stats = {
             "total": len(tasks),
@@ -278,7 +273,6 @@ async def task_board(
             "overdue": 0,  # Can calculate this later if needed
         }
 
-        print(f"🔍 DEBUG: Combining tasks for list view...")
         # Combine all tasks for list view
         all_tasks = []
         for status, task_list in columns.items():
@@ -287,24 +281,19 @@ async def task_board(
                 task_copy["status"] = status
                 all_tasks.append(task_copy)
 
-        print(f"🔍 DEBUG: Rendering template...")
-        template_context = {
-            "request": request,
-            "current_user": current_user,
-            "columns": columns,  # Template expects 'columns'
-            "task_stats": task_stats,
-            "all_tasks": all_tasks,
-            "total_tasks": len(tasks),
-            "projects": [],  # Empty for now
-            "users": [],  # Empty for now
-        }
-
-        print(f"🔍 DEBUG: Template context prepared, calling TemplateResponse...")
-        response = templates.TemplateResponse(
-            "task/templates/task_board.html", template_context
+        return templates.TemplateResponse(
+            "task/templates/task_board.html",
+            {
+                "request": request,
+                "current_user": current_user,
+                "columns": columns,  # Template expects 'columns'
+                "task_stats": task_stats,
+                "all_tasks": all_tasks,
+                "total_tasks": len(tasks),
+                "projects": [],  # Empty for now
+                "users": [],  # Empty for now
+            },
         )
-        print(f"🔍 DEBUG: Template rendered successfully!")
-        return response
 
     except Exception as e:
         print(f"ERROR in task board: {str(e)}")
