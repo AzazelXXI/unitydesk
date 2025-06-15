@@ -30,10 +30,9 @@ Platform{% endblock %} {% block header %}{% endblock %} {% block head_extra %}
         </a></div>
     </div>
   </div>
-
   <!-- Task Statistics -->
   <div class="row mb-4">
-    <div class="col-6 col-md-3 mb-3 mb-md-0">
+    <div class="col-6 col-md-2 mb-3 mb-md-0">
       <div class="task-stats-card bg-white">
         <i
           class="fas fa-clipboard-list text-primary"
@@ -43,24 +42,31 @@ Platform{% endblock %} {% block header %}{% endblock %} {% block head_extra %}
         <div class="task-stats-label">Total Tasks</div>
       </div>
     </div>
-    <div class="col-6 col-md-3 mb-3 mb-md-0">
+    <div class="col-6 col-md-2 mb-3 mb-md-0">
+      <div class="task-stats-card bg-white">
+        <i class="fas fa-list text-secondary" style="font-size: 1.5rem"></i>
+        <div class="task-stats-number">{{ task_stats.todo }}</div>
+        <div class="task-stats-label">To Do</div>
+        <div class="task-stats-percentage">{{ task_stats.todo_percentage }}%</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2 mb-3 mb-md-0">
       <div class="task-stats-card bg-white">
         <i class="fas fa-spinner text-warning" style="font-size: 1.5rem"></i>
         <div class="task-stats-number">{{ task_stats.in_progress }}</div>
         <div class="task-stats-label">In Progress</div>
+        <div class="task-stats-percentage">{{ task_stats.in_progress_percentage }}%</div>
       </div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-2 mb-3 mb-md-0">
       <div class="task-stats-card bg-white">
-        <i
-          class="fas fa-exclamation-circle text-danger"
-          style="font-size: 1.5rem"
-        ></i>
-        <div class="task-stats-number">{{ task_stats.overdue }}</div>
-        <div class="task-stats-label">Overdue</div>
+        <i class="fas fa-eye text-info" style="font-size: 1.5rem"></i>
+        <div class="task-stats-number">{{ task_stats.review }}</div>
+        <div class="task-stats-label">Review</div>
+        <div class="task-stats-percentage">{{ task_stats.review_percentage }}%</div>
       </div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-2 mb-3 mb-md-0">
       <div class="task-stats-card bg-white">
         <i
           class="fas fa-check-circle text-success"
@@ -68,6 +74,17 @@ Platform{% endblock %} {% block header %}{% endblock %} {% block head_extra %}
         ></i>
         <div class="task-stats-number">{{ task_stats.completed }}</div>
         <div class="task-stats-label">Completed</div>
+        <div class="task-stats-percentage">{{ task_stats.completion_percentage }}%</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2 mb-3 mb-md-0">
+      <div class="task-stats-card bg-white">
+        <i
+          class="fas fa-exclamation-circle text-danger"
+          style="font-size: 1.5rem"
+        ></i>
+        <div class="task-stats-number">{{ task_stats.overdue }}</div>
+        <div class="task-stats-label">Overdue</div>
       </div>
     </div>
   </div>

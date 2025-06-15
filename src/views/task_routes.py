@@ -270,13 +270,70 @@ async def task_board(
             f"Task distribution: TODO={len(columns['todo'])}, IN_PROGRESS={len(columns['in_progress'])}, REVIEW={len(columns['review'])}, DONE={len(columns['done'])}"
         )
 
-        # Create task stats for template
+        # Calculate overdue tasks
+        from datetime import datetime, date
+
+        overdue_count = 0
+        today = date.today()
+
+        for task in tasks:
+            if task.get("due_date") and task.get("status") not in [
+                "COMPLETED",
+                "CANCELLED",
+            ]:
+                due_date = task["due_date"]
+                # Handle both date and datetime objects
+                if hasattr(due_date, "date"):
+                    due_date = due_date.date()
+                elif isinstance(due_date, str):
+                    try:
+                        due_date = datetime.strptime(due_date, "%Y-%m-%d").date()
+                    except:
+                        continue
+
+                if due_date < today:
+                    overdue_count += 1
+
+        # Create comprehensive task stats for template
         task_stats = {
             "total": len(tasks),
+            "todo": len(columns["todo"]),
             "in_progress": len(columns["in_progress"]),
+            "review": len(columns["review"]),
             "completed": len(columns["done"]),
-            "overdue": 0,  # Can calculate this later if needed
+            "overdue": overdue_count,
+            # Calculate percentages
+            "completion_percentage": round(
+                (len(columns["done"]) / len(tasks) * 100) if len(tasks) > 0 else 0, 1
+            ),
+            "in_progress_percentage": round(
+                (
+                    (len(columns["in_progress"]) / len(tasks) * 100)
+                    if len(tasks) > 0
+                    else 0
+                ),
+                1,
+            ),
+            "todo_percentage": round(
+                (len(columns["todo"]) / len(tasks) * 100) if len(tasks) > 0 else 0, 1
+            ),
+            "review_percentage": round(
+                (len(columns["review"]) / len(tasks) * 100) if len(tasks) > 0 else 0, 1
+            ),
         }
+
+        # Log the calculated stats
+        print(f"📊 Task Statistics:")
+        print(f"  Total: {task_stats['total']}")
+        print(f"  To Do: {task_stats['todo']} ({task_stats['todo_percentage']}%)")
+        print(
+            f"  In Progress: {task_stats['in_progress']} ({task_stats['in_progress_percentage']}%)"
+        )
+        print(f"  Review: {task_stats['review']} ({task_stats['review_percentage']}%)")
+        print(
+            f"  Completed: {task_stats['completed']} ({task_stats['completion_percentage']}%)"
+        )
+        print(f"  Overdue: {task_stats['overdue']}")
 
         # Combine all tasks for list view
         all_tasks = []
