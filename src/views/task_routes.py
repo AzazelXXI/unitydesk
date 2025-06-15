@@ -261,7 +261,9 @@ async def task_board(
                 columns["done"].append(task)
             else:
                 # Default unknown statuses to todo
-                print(f"⚠️ Unknown status '{status}' for task {task['title']}, defaulting to TODO")
+                print(
+                    f"⚠️ Unknown status '{status}' for task {task['title']}, defaulting to TODO"
+                )
                 columns["todo"].append(task)
 
         print(
