@@ -94,12 +94,7 @@ for router in api_web_routers:
 for router in view_web_routers:
     app.include_router(router)
 
-# Import and include the main task router
-from src.views.task_routes import router as task_router
-from src.views.task.web_routes import task_web_router
-
-app.include_router(task_router)
-app.include_router(task_web_router)
+# Task routers are already included in view_web_routers, no need to include them again
 
 # Import and include the project router
 from src.views.project.project_routes import router as project_web_router

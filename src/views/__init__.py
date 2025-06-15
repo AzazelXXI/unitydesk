@@ -14,7 +14,8 @@ from src.views.dashboard_routes import router as dashboard_router
 # from src.views.meeting_routes import router as meeting_router
 from src.views.calendar_routes import router as calendar_router
 from src.views.projects_routes import router as projects_router
-from src.views.task_routes import router as task_router
+from src.views.task.web_routes import task_web_router  # Specific routes first
+from src.views.task_routes import router as task_router  # Dynamic routes second
 from src.views.user_routes import router as user_router
 from src.views.public_user_routes import public_user_router
 from src.controllers.project_controller import router as project_controller_router
@@ -26,7 +27,8 @@ web_routers = [
     # meeting_router,  # Hidden for now, will be developed later
     calendar_router,
     projects_router,
-    task_router,  # Now uses real database data
+    task_web_router,  # Specific routes like /tasks/create (FIRST)
+    task_router,      # Dynamic routes like /tasks/{task_id} (SECOND)
     user_router,
     public_user_router,  # /public-user prefix
     project_controller_router,  # Modern project templates
