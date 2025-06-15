@@ -65,6 +65,13 @@ app.mount(
     name="user_static",
 )
 
+# Mount static files for project views
+app.mount(
+    "/projects/static",
+    StaticFiles(directory="src/views/project/static"),
+    name="project_static",
+)
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -92,6 +99,11 @@ from src.views.task.web_routes import task_web_router
 
 app.include_router(task_router)
 app.include_router(task_web_router)
+
+# Import and include the project router
+from src.views.project.project_routes import router as project_web_router
+
+app.include_router(project_web_router)
 
 # Include the centralized API router (which includes all API routes with versioning)
 app.include_router(api_router)

@@ -27,7 +27,8 @@ logger = logging.getLogger(__name__)
 
 # Create router for task web routes
 router = APIRouter(
-    tags=["web-tasks"], responses={404: {"description": "Page not found"}}
+    tags=["web-tasks"], 
+    responses={404: {"description": "Page not found"}}
 )
 
 # Templates - use absolute path to avoid issues
@@ -384,7 +385,7 @@ async def task_board(
         )
 
 
-@router.get("/{task_id}")
+@router.get("/tasks/{task_id}")
 async def task_details(
     request: Request,
     task_id: int,
@@ -411,7 +412,7 @@ async def task_details(
     )
 
 
-@router.get("/new")
+@router.get("/tasks/new")
 async def new_task(
     request: Request,
     db: AsyncSession = Depends(get_db),
@@ -448,7 +449,7 @@ async def new_task(
         )
 
 
-@router.get("/{task_id}/edit")
+@router.get("/tasks/{task_id}/edit")
 async def edit_task(
     request: Request,
     task_id: int,
