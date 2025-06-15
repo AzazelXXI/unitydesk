@@ -49,7 +49,8 @@ async def projects_dashboard(
         print(f"User Type: {current_user.user_type}")
 
         # Query all projects with basic statistics
-        projects_query = text("""
+        projects_query = text(
+            """
             SELECT 
                 p.id,
                 p.name,
@@ -68,7 +69,8 @@ async def projects_dashboard(
             GROUP BY p.id, p.name, p.description, p.status, p.progress, p.budget, 
                      p.start_date, p.end_date, p.created_at, p.updated_at
             ORDER BY p.created_at DESC
-        """)
+        """
+        )
 
         result = await db.execute(projects_query)
         project_rows = result.fetchall()
@@ -91,7 +93,14 @@ async def projects_dashboard(
                 "updated_at": row.updated_at,
                 "task_count": row.task_count or 0,
                 "completed_tasks": row.completed_tasks or 0,
-                "completion_percentage": round((row.completed_tasks / row.task_count * 100) if row.task_count > 0 else 0, 1)
+                "completion_percentage": round(
+                    (
+                        (row.completed_tasks / row.task_count * 100)
+                        if row.task_count > 0
+                        else 0
+                    ),
+                    1,
+                ),
             }
             projects.append(project)
 
@@ -103,7 +112,14 @@ async def projects_dashboard(
             "completed": len([p for p in projects if p["status"] == "Completed"]),
             "canceled": len([p for p in projects if p["status"] == "Canceled"]),
             "total_budget": sum([p["budget"] for p in projects]),
-            "avg_progress": round(sum([p["progress"] for p in projects]) / len(projects) if projects else 0, 1)
+            "avg_progress": round(
+                (
+                    sum([p["progress"] for p in projects]) / len(projects)
+                    if projects
+                    else 0
+                ),
+                1,
+            ),
         }
 
         print(f"📊 Project Statistics:")
@@ -120,7 +136,7 @@ async def projects_dashboard(
                 "current_user": current_user,
                 "projects": projects,
                 "stats": stats,
-                "page_title": "Projects Dashboard"
+                "page_title": "Projects Dashboard",
             },
         )
 
@@ -141,10 +157,10 @@ async def projects_dashboard(
                     "completed": 0,
                     "canceled": 0,
                     "total_budget": 0,
-                    "avg_progress": 0
+                    "avg_progress": 0,
                 },
                 "error": f"Could not load projects: {str(e)}",
-                "page_title": "Projects Dashboard"
+                "page_title": "Projects Dashboard",
             },
         )
 
@@ -161,7 +177,8 @@ async def project_details(
     """
     try:
         # Get project with related data
-        project_query = text("""
+        project_query = text(
+            """
             SELECT 
                 p.id,
                 p.name,
@@ -181,7 +198,8 @@ async def project_details(
             WHERE p.id = :project_id
             GROUP BY p.id, p.name, p.description, p.status, p.progress, p.budget, 
                      p.start_date, p.end_date, p.created_at, p.updated_at
-        """)
+        """
+        )
 
         result = await db.execute(project_query, {"project_id": project_id})
         project_row = result.fetchone()
@@ -206,7 +224,8 @@ async def project_details(
         }
 
         # Get project tasks
-        tasks_query = text("""
+        tasks_query = text(
+            """
             SELECT 
                 t.id,
                 t.name,
@@ -222,7 +241,8 @@ async def project_details(
             LEFT JOIN users u ON ta.user_id = u.id
             WHERE t.project_id = :project_id
             ORDER BY t.created_at DESC
-        """)
+        """
+        )
 
         tasks_result = await db.execute(tasks_query, {"project_id": project_id})
         task_rows = tasks_result.fetchall()
@@ -249,7 +269,7 @@ async def project_details(
                 "current_user": current_user,
                 "project": project,
                 "tasks": tasks,
-                "page_title": f"Project: {project['name']}"
+                "page_title": f"Project: {project['name']}",
             },
         )
 
@@ -273,6 +293,6 @@ async def new_project(
         {
             "request": request,
             "current_user": current_user,
-            "page_title": "Create New Project"
+            "page_title": "Create New Project",
         },
     )

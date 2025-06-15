@@ -27,8 +27,7 @@ logger = logging.getLogger(__name__)
 
 # Create router for task web routes
 router = APIRouter(
-    tags=["web-tasks"], 
-    responses={404: {"description": "Page not found"}}
+    tags=["web-tasks"], responses={404: {"description": "Page not found"}}
 )
 
 # Templates - use absolute path to avoid issues

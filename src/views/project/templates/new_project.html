@@ -1,12 +1,10 @@
-{% extends "core/templates/base.html" %}
-
-{% block title %}Create New Project{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', path='/views/project/static/css/projects.css') }}">
-{% endblock %}
-
-{% block content %}
+{% extends "core/templates/base.html" %} {% block title %}Create New Project{%
+endblock %} {% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', path='/views/project/static/css/projects.css') }}"
+/>
+{% endblock %} {% block content %}
 <div class="projects-container">
   <!-- Header Section -->
   <div class="row mb-4">
@@ -14,10 +12,12 @@
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
           <li class="breadcrumb-item"><a href="/projects">Projects</a></li>
-          <li class="breadcrumb-item active" aria-current="page">New Project</li>
+          <li class="breadcrumb-item active" aria-current="page">
+            New Project
+          </li>
         </ol>
       </nav>
-      
+
       <div class="d-flex justify-content-between align-items-center">
         <div>
           <h1 class="page-title">
@@ -46,8 +46,16 @@
           <form id="newProjectForm" action="/api/projects" method="post">
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label for="projectName" class="form-label">Project Name *</label>
-                <input type="text" class="form-control" id="projectName" name="name" required>
+                <label for="projectName" class="form-label"
+                  >Project Name *</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="projectName"
+                  name="name"
+                  required
+                />
               </div>
               <div class="col-md-6 mb-3">
                 <label for="projectStatus" class="form-label">Status</label>
@@ -59,11 +67,18 @@
                 </select>
               </div>
             </div>
-            
+
             <div class="mb-3">
-              <label for="projectDescription" class="form-label">Description</label>
-              <textarea class="form-control" id="projectDescription" name="description" rows="4" 
-                        placeholder="Describe what this project is about..."></textarea>
+              <label for="projectDescription" class="form-label"
+                >Description</label
+              >
+              <textarea
+                class="form-control"
+                id="projectDescription"
+                name="description"
+                rows="4"
+                placeholder="Describe what this project is about..."
+              ></textarea>
             </div>
 
             <div class="row">
@@ -71,25 +86,52 @@
                 <label for="projectBudget" class="form-label">Budget</label>
                 <div class="input-group">
                   <span class="input-group-text">$</span>
-                  <input type="number" class="form-control" id="projectBudget" name="budget" 
-                         placeholder="0.00" step="0.01" min="0">
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="projectBudget"
+                    name="budget"
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                  />
                 </div>
               </div>
               <div class="col-md-4 mb-3">
                 <label for="startDate" class="form-label">Start Date</label>
-                <input type="date" class="form-control" id="startDate" name="start_date">
+                <input
+                  type="date"
+                  class="form-control"
+                  id="startDate"
+                  name="start_date"
+                />
               </div>
               <div class="col-md-4 mb-3">
                 <label for="endDate" class="form-label">End Date</label>
-                <input type="date" class="form-control" id="endDate" name="end_date">
+                <input
+                  type="date"
+                  class="form-control"
+                  id="endDate"
+                  name="end_date"
+                />
               </div>
             </div>
 
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label for="projectProgress" class="form-label">Initial Progress (%)</label>
-                <input type="range" class="form-range" id="projectProgress" name="progress" 
-                       min="0" max="100" value="0" oninput="updateProgressValue(this.value)">
+                <label for="projectProgress" class="form-label"
+                  >Initial Progress (%)</label
+                >
+                <input
+                  type="range"
+                  class="form-range"
+                  id="projectProgress"
+                  name="progress"
+                  min="0"
+                  max="100"
+                  value="0"
+                  oninput="updateProgressValue(this.value)"
+                />
                 <div class="d-flex justify-content-between">
                   <small class="text-muted">0%</small>
                   <small class="text-muted" id="progressValue">0%</small>
@@ -123,90 +165,92 @@
 <!-- Success/Error Messages -->
 <div id="messageContainer"></div>
 
-{% endblock %}
-
-{% block extra_js %}
+{% endblock %} {% block extra_js %}
 <script src="{{ url_for('static', path='/views/project/static/js/projects.js') }}"></script>
 <script>
-// Update progress value display
-function updateProgressValue(value) {
-  document.getElementById('progressValue').textContent = value + '%';
-}
-
-// Handle form submission
-document.getElementById('newProjectForm').addEventListener('submit', async function(e) {
-  e.preventDefault();
-  
-  const submitBtn = this.querySelector('button[type="submit"]');
-  const originalText = submitBtn.innerHTML;
-  
-  // Show loading state
-  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
-  submitBtn.disabled = true;
-  
-  try {
-    const formData = new FormData(this);
-    const projectData = Object.fromEntries(formData.entries());
-    
-    const response = await fetch('/api/projects', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
-      },
-      body: JSON.stringify(projectData)
-    });
-    
-    if (response.ok) {
-      const result = await response.json();
-      
-      // Show success message
-      showMessage('Project created successfully!', 'success');
-      
-      // Redirect to project details or projects list
-      setTimeout(() => {
-        window.location.href = `/projects/${result.id}`;
-      }, 1500);
-      
-    } else {
-      const error = await response.json();
-      showMessage(`Error: ${error.detail || 'Failed to create project'}`, 'danger');
-    }
-    
-  } catch (error) {
-    console.error('Error creating project:', error);
-    showMessage('Failed to create project. Please try again.', 'danger');
-  } finally {
-    // Restore button
-    submitBtn.innerHTML = originalText;
-    submitBtn.disabled = false;
+  // Update progress value display
+  function updateProgressValue(value) {
+    document.getElementById("progressValue").textContent = value + "%";
   }
-});
 
-// Show message function
-function showMessage(message, type) {
-  const container = document.getElementById('messageContainer');
-  const alert = document.createElement('div');
-  alert.className = `alert alert-${type} alert-dismissible fade show`;
-  alert.innerHTML = `
+  // Handle form submission
+  document
+    .getElementById("newProjectForm")
+    .addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+
+      // Show loading state
+      submitBtn.innerHTML =
+        '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
+      submitBtn.disabled = true;
+
+      try {
+        const formData = new FormData(this);
+        const projectData = Object.fromEntries(formData.entries());
+
+        const response = await fetch("/api/projects", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+          },
+          body: JSON.stringify(projectData),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+
+          // Show success message
+          showMessage("Project created successfully!", "success");
+
+          // Redirect to project details or projects list
+          setTimeout(() => {
+            window.location.href = `/projects/${result.id}`;
+          }, 1500);
+        } else {
+          const error = await response.json();
+          showMessage(
+            `Error: ${error.detail || "Failed to create project"}`,
+            "danger"
+          );
+        }
+      } catch (error) {
+        console.error("Error creating project:", error);
+        showMessage("Failed to create project. Please try again.", "danger");
+      } finally {
+        // Restore button
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      }
+    });
+
+  // Show message function
+  function showMessage(message, type) {
+    const container = document.getElementById("messageContainer");
+    const alert = document.createElement("div");
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.innerHTML = `
     ${message}
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
   `;
-  
-  container.appendChild(alert);
-  
-  // Auto dismiss after 5 seconds
-  setTimeout(() => {
-    if (alert.parentNode) {
-      alert.remove();
-    }
-  }, 5000);
-}
 
-// Set minimum end date to start date
-document.getElementById('startDate').addEventListener('change', function() {
-  const endDateInput = document.getElementById('endDate');
-  endDateInput.min = this.value;
-});
+    container.appendChild(alert);
+
+    // Auto dismiss after 5 seconds
+    setTimeout(() => {
+      if (alert.parentNode) {
+        alert.remove();
+      }
+    }, 5000);
+  }
+
+  // Set minimum end date to start date
+  document.getElementById("startDate").addEventListener("change", function () {
+    const endDateInput = document.getElementById("endDate");
+    endDateInput.min = this.value;
+  });
 </script>
 {% endblock %}
