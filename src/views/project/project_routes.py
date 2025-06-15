@@ -130,7 +130,7 @@ async def projects_dashboard(
         print(f"  Average Progress: {stats['avg_progress']}%")
 
         return templates.TemplateResponse(
-            "project/templates/projects.html",
+            "project/templates/projects_clean.html",
             {
                 "request": request,
                 "current_user": current_user,
@@ -145,7 +145,7 @@ async def projects_dashboard(
         logger.error(f"Error loading projects dashboard: {str(e)}", exc_info=True)
 
         return templates.TemplateResponse(
-            "project/templates/projects.html",
+            "project/templates/projects_clean.html",
             {
                 "request": request,
                 "current_user": current_user,

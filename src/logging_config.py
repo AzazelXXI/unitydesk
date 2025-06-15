@@ -62,8 +62,6 @@ def setup_logging():
 
     # Log startup information with the new log file name
     startup_logger = logging.getLogger("src.logging")
-    startup_logger.info(f"📝 New log session started")
-    startup_logger.info(f"📁 Log file: {log_file}")
 
     return root_logger
 
