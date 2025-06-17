@@ -40,11 +40,23 @@ async def get_create_task_page(
 ):
     """
     Serves the HTML page for creating a new task.
-    The page is located at src/views/task/templates/create_task.html    """
-    print(f"🎯 Create task route accessed by user: {current_user.name}")
-    
-    # Return simple template first to test
+    The page is located at src/views/task/templates/create_task.html
+    """
+    # Get projects for dropdown
     try:
+        projects = await ProjectController.get_user_projects(current_user.id, db)
+        users = await TaskController.get_users_for_assignment(db)
+
+        return TEMPLATES.TemplateResponse(
+            "task/templates/create_task.html",
+            {
+                "request": request,
+                "projects": projects,
+                "users": users,
+                "current_user": current_user,
+            },
+        )
+    except Exception as e:
         return TEMPLATES.TemplateResponse(
             "task/templates/create_task.html",
             {
@@ -52,12 +64,9 @@ async def get_create_task_page(
                 "projects": [],
                 "users": [],
                 "current_user": current_user,
-                "error": None,
+                "error": "Failed to load project data",
             },
         )
-    except Exception as e:
-        print(f"❌ Template error: {e}")
-        return HTMLResponse(f"<h1>Template Error</h1><p>{str(e)}</p>", status_code=500)
 
 
 # Add route for the task list page
@@ -263,9 +272,3 @@ async def get_task_board_page(
                 "error": f"Failed to load tasks: {str(e)}",
             },
         )
-
-
-@task_web_router.get("/test", response_class=HTMLResponse)
-async def test_route(request: Request):
-    """Simple test route with no dependencies"""
-    return HTMLResponse("<h1>Test Route Works!</h1>")

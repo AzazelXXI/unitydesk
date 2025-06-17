@@ -28,7 +28,7 @@ web_routers = [
     calendar_router,
     projects_router,
     task_web_router,  # Specific routes like /tasks/create (FIRST)
-    task_router,      # Dynamic routes like /tasks/{task_id} (SECOND)
+    task_router,  # Dynamic routes like /tasks/{task_id} (SECOND)
     user_router,
     public_user_router,  # /public-user prefix
     project_controller_router,  # Modern project templates
