@@ -28,7 +28,9 @@ from src.apis.error_handlers import (
     http_exception_handler,
     not_found_exception_handler,
     server_error_handler,
+    redirect_to_login_exception_handler,
 )
+from src.middleware.auth_middleware import RedirectToLoginException
 from fastapi.exceptions import HTTPException
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi import status
@@ -108,6 +110,7 @@ app.include_router(api_router)
 app.include_router(notification_ws_router)
 
 # Add exception handlers
+app.add_exception_handler(RedirectToLoginException, redirect_to_login_exception_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(status.HTTP_404_NOT_FOUND, not_found_exception_handler)

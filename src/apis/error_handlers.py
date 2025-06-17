@@ -45,3 +45,11 @@ async def server_error_handler(request: Request, exc: Exception):
             "path": str(request.url.path),
         },
     )
+
+
+async def redirect_to_login_exception_handler(request: Request, exc):
+    """Handler for RedirectToLoginException - redirects web users to login"""
+    from fastapi.responses import RedirectResponse
+
+    logger.info(f"Redirecting to login: {exc.message}")
+    return RedirectResponse(url="/login", status_code=302)

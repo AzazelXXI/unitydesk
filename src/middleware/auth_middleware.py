@@ -8,6 +8,16 @@ from sqlalchemy import select
 
 from src.database import get_db
 from src.models.user import User, UserTypeEnum as UserRole, UserStatusEnum
+
+
+class RedirectToLoginException(Exception):
+    """Custom exception to trigger redirect to login page for web routes"""
+
+    def __init__(self, message: str = "Authentication required"):
+        self.message = message
+        super().__init__(self.message)
+
+
 from src.schemas.user import TokenData
 from src.services.auth_service import verify_token
 import logging
@@ -24,13 +34,8 @@ async def get_current_user_web(
     """
     Get the current user from cookie-based authentication for web routes.
     This function checks for the token in cookies instead of Authorization headers.
+    For web routes, raises RedirectToLoginException instead of returning JSON errors.
     """
-    credentials_exception = HTTPException(
-        status_code=HTTP_401_UNAUTHORIZED,
-        detail="Not authenticated",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
     try:
         # Try to get token from cookie first
         token = request.cookies.get("remember_token")
@@ -43,14 +48,14 @@ async def get_current_user_web(
                 token = authorization.split(" ")[1]
                 logger.debug("Using Authorization header token")
             else:
-                logger.debug("No token found in cookies or headers")
-                raise credentials_exception
+                logger.debug("No token found in cookies or headers - needs login")
+                raise RedirectToLoginException("No authentication token found")
 
         logger.debug("Attempting to verify token")
         token_data = await verify_token(token)
         if token_data is None:
-            logger.warning("Token verification failed")
-            raise credentials_exception
+            logger.warning("Token verification failed - needs login")
+            raise RedirectToLoginException("Invalid or expired token")
 
         logger.debug(f"Token verified for user_id: {token_data.user_id}")
 
@@ -59,28 +64,26 @@ async def get_current_user_web(
         user = result.scalar_one_or_none()
 
         if user is None:
-            logger.warning("User not found in database")
-            raise credentials_exception
+            logger.warning("User not found in database - needs login")
+            raise RedirectToLoginException("User not found")
 
         # Check if user is not offline - allow ONLINE and IDLE status
         if user.status == UserStatusEnum.OFFLINE:
-            logger.warning(f"User is offline, status: {user.status}")
-            raise HTTPException(
-                status_code=HTTP_403_FORBIDDEN, detail="User is offline"
-            )
+            logger.warning(f"User is offline, status: {user.status} - needs login")
+            raise RedirectToLoginException("User is offline")
 
         logger.debug(f"Successfully authenticated user: {user.name}")
         return user
 
-    except JWTError as e:
-        logger.warning(f"JWT validation error in web auth: {e}")
-        raise credentials_exception
-    except HTTPException:
-        # Re-raise HTTP exceptions as-is
+    except RedirectToLoginException:
+        # Re-raise custom redirect exceptions as-is
         raise
+    except JWTError as e:
+        logger.warning(f"JWT validation error in web auth: {e} - needs login")
+        raise RedirectToLoginException("Invalid token format")
     except Exception as e:
-        logger.error(f"Error in web authentication: {e}", exc_info=True)
-        raise credentials_exception
+        logger.error(f"Error in web authentication: {e} - needs login", exc_info=True)
+        raise RedirectToLoginException("Authentication error")
 
 
 async def get_current_user(

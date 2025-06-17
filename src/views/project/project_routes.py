@@ -8,7 +8,7 @@ This module contains all project-related web routes for the CSA Platform, includ
 """
 
 from fastapi import APIRouter, Request, Depends, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text, func
@@ -39,6 +39,7 @@ async def projects_dashboard(
     request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_web),
+    success: Optional[str] = None,
 ):
     """
     Display the projects dashboard with all projects
@@ -47,6 +48,9 @@ async def projects_dashboard(
         print(f"=== PROJECTS DASHBOARD ACCESS ===")
         print(f"User: {current_user.name} (ID: {current_user.id})")
         print(f"User Type: {current_user.user_type}")
+
+        # Get success message from query parameter
+        success_message = request.query_params.get("success")
 
         # Query all projects with basic statistics
         projects_query = text(
@@ -137,6 +141,7 @@ async def projects_dashboard(
                 "projects": projects,
                 "stats": stats,
                 "page_title": "Projects Dashboard",
+                "success_message": success_message,
             },
         )
 
@@ -161,6 +166,84 @@ async def projects_dashboard(
                 },
                 "error": f"Could not load projects: {str(e)}",
                 "page_title": "Projects Dashboard",
+            },
+        )
+
+
+@router.get("/projects/new", response_class=HTMLResponse)
+async def new_project(
+    request: Request,
+    current_user: User = Depends(get_current_user_web),
+):
+    """
+    Display new project creation form
+    """
+    return templates.TemplateResponse(
+        "project/templates/new_project.html",
+        {
+            "request": request,
+            "current_user": current_user,
+            "page_title": "Create New Project",
+        },
+    )
+
+
+@router.post("/projects/new", response_class=HTMLResponse)
+async def create_project_web(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+):
+    """
+    Handle project creation form submission
+    """
+    try:
+        form_data = await request.form()
+
+        # Create project data from form
+        project_data = {
+            "name": form_data.get("name"),
+            "description": form_data.get("description"),
+            "client_name": form_data.get("client_name"),
+            "status": form_data.get("status", "Planning"),
+            "priority": form_data.get("priority", "Medium"),
+            "budget": (
+                float(form_data.get("budget", 0)) if form_data.get("budget") else None
+            ),
+            "start_date": (
+                form_data.get("start_date") if form_data.get("start_date") else None
+            ),
+            "end_date": (
+                form_data.get("end_date") if form_data.get("end_date") else None
+            ),
+            "department": form_data.get("department"),
+            "project_manager": form_data.get("project_manager"),
+            "goals": form_data.get("goals"),
+        }
+
+        # Use the ProjectController to create the project
+        from src.controllers.project_controller import ProjectController
+
+        new_project = await ProjectController.create_project(project_data, db)
+
+        # Redirect to projects page with success message
+        from fastapi.responses import RedirectResponse
+
+        return RedirectResponse(
+            url="/projects?success=Project created successfully",
+            status_code=303,
+        )
+
+    except Exception as e:
+        print(f"Error creating project: {e}")
+        # Return to form with error
+        return templates.TemplateResponse(
+            "project/templates/new_project.html",
+            {
+                "request": request,
+                "current_user": current_user,
+                "page_title": "Create New Project",
+                "error": f"Failed to create project: {str(e)}",
             },
         )
 
@@ -278,21 +361,3 @@ async def project_details(
     except Exception as e:
         logger.error(f"Error loading project details: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Could not load project details")
-
-
-@router.get("/projects/new", response_class=HTMLResponse)
-async def new_project(
-    request: Request,
-    current_user: User = Depends(get_current_user_web),
-):
-    """
-    Display new project creation form
-    """
-    return templates.TemplateResponse(
-        "project/templates/new_project.html",
-        {
-            "request": request,
-            "current_user": current_user,
-            "page_title": "Create New Project",
-        },
-    )
