@@ -26,7 +26,7 @@ web_routers = [
     dashboard_router,
     # meeting_router,  # Hidden for now, will be developed later
     calendar_router,
-    projects_router,
+    # projects_router,  # Removed - using project_web_router instead to avoid conflicts
     task_web_router,  # Specific routes like /tasks/create (FIRST)
     task_router,  # Dynamic routes like /tasks/{task_id} (SECOND)
     user_router,

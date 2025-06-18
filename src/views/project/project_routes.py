@@ -219,12 +219,12 @@ async def create_project_web(
             "department": form_data.get("department"),
             "project_manager": form_data.get("project_manager"),
             "goals": form_data.get("goals"),
-        }
-
-        # Use the ProjectController to create the project
+        }  # Use the ProjectController to create the project
         from src.controllers.project_controller import ProjectController
 
-        new_project = await ProjectController.create_project(project_data, db)
+        new_project = await ProjectController.create_project(
+            project_data, db, owner_id=current_user.id
+        )
 
         # Redirect to projects page with success message
         from fastapi.responses import RedirectResponse

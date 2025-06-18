@@ -44,28 +44,26 @@ class ProjectController:
         from sqlalchemy import or_
         from sqlalchemy.future import select
         from src.models.project import (
-            MarketingProject,
+            Project,
         )  # Changed from src.models_backup.marketing_project
 
         # Build the query
-        query = select(MarketingProject)
-
-        # Apply filters if provided
+        query = select(Project)  # Apply filters if provided
         if status:
-            query = query.where(MarketingProject.status == status)
+            query = query.where(Project.status == status)
 
         if project_type:
-            query = query.where(MarketingProject.project_type == project_type)
+            query = query.where(Project.project_type == project_type)
 
         if client_id:
-            query = query.where(MarketingProject.client_id == client_id)
+            query = query.where(Project.client_id == client_id)
 
         if search:
             search_term = f"%{search}%"
             query = query.where(
                 or_(
-                    MarketingProject.name.ilike(search_term),
-                    MarketingProject.description.ilike(search_term),
+                    Project.name.ilike(search_term),
+                    Project.description.ilike(search_term),
                 )
             )
 
@@ -94,10 +92,10 @@ class ProjectController:
         from sqlalchemy.future import select
         from fastapi import HTTPException, status
         from src.models.project import (
-            MarketingProject,
+            Project,
         )  # Changed from src.models_backup.marketing_project
 
-        query = select(MarketingProject).where(MarketingProject.id == project_id)
+        query = select(Project).where(Project.id == project_id)
         result = await db.execute(query)
         project = result.scalars().first()
 
@@ -107,10 +105,9 @@ class ProjectController:
                 detail=f"Project with ID {project_id} not found",
             )
 
-        return project
+        return project @ staticmethod
 
-    @staticmethod
-    async def create_project(project_data, db):
+    async def create_project(project_data, db, owner_id=None):
         """
         Create a new project with the given data.
 
@@ -119,17 +116,58 @@ class ProjectController:
             db: Database session
 
         Returns:
-            Created marketing project object
-        """
+            Created marketing project object"""
         from src.models.project import (
-            MarketingProject,
-        )  # Changed from src.models_backup.marketing_project
+            Project,
+        )  # Changed from src.models_backup.marketing_project        # Handle both Pydantic models and regular dictionaries
 
-        # Create dict of project data excluding relationships
-        project_dict = project_data.model_dump(exclude={"team_members"})
+        if hasattr(project_data, "model_dump"):
+            # Pydantic model from API
+            project_dict = project_data.model_dump(exclude={"team_members"})
+        else:
+            # Regular dictionary from web form
+            project_dict = dict(project_data)
+            # Remove team_members if present
+            project_dict.pop("team_members", None)
+
+        # Filter to only include valid Project model fields
+        valid_fields = {
+            "name",
+            "description",
+            "start_date",
+            "end_date",
+            "status",
+            "progress",
+            "budget",
+        }
+        filtered_dict = {k: v for k, v in project_dict.items() if k in valid_fields}
+
+        # Convert empty strings to None for optional fields
+        for field in ["start_date", "end_date", "budget"]:
+            if field in filtered_dict and filtered_dict[field] == "":
+                filtered_dict[field] = None
+
+        # Convert date strings to datetime objects if needed
+        if "start_date" in filtered_dict and filtered_dict["start_date"]:
+            if isinstance(filtered_dict["start_date"], str):
+                from datetime import datetime
+
+                filtered_dict["start_date"] = datetime.fromisoformat(
+                    filtered_dict["start_date"]
+                )
+
+        if "end_date" in filtered_dict and filtered_dict["end_date"]:
+            if isinstance(filtered_dict["end_date"], str):
+                from datetime import datetime
+
+                filtered_dict["end_date"] = datetime.fromisoformat(
+                    filtered_dict["end_date"]
+                )  # Set owner_id if provided
+        if owner_id:
+            filtered_dict["owner_id"] = owner_id
 
         # Create new project
-        project = MarketingProject(**project_dict)
+        project = Project(**filtered_dict)
 
         # Add to database
         db.add(project)
