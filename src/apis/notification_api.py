@@ -2,13 +2,13 @@
 Notification API Routes - Handle user notifications
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 import logging
 
 from src.database import get_db
-from src.middleware.auth_middleware import get_current_user
+from src.middleware.auth_middleware import get_current_user, get_current_user_web
 from src.models.user import User
 from src.models.notification import Notification, NotificationTypeEnum
 from src.services.notification_service import NotificationService
@@ -16,6 +16,28 @@ from pydantic import BaseModel
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
+
+
+# Create a dependency that works for both API and web requests
+async def get_current_user_flexible(
+    request: Request, db: AsyncSession = Depends(get_db)
+) -> User:
+    """
+    Get current user using either web cookies or API tokens
+    """
+    try:
+        # Try web authentication first (cookies)
+        return await get_current_user_web(request, db)
+    except Exception:
+        try:
+            # Fall back to API authentication (Bearer token)
+            return await get_current_user(request, db)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+            )
+
 
 # Router for notification API endpoints
 router = APIRouter(
@@ -43,10 +65,11 @@ class NotificationResponse(BaseModel):
 
 @router.get("/", response_model=List[NotificationResponse])
 async def get_notifications(
+    request: Request,
     unread_only: bool = False,
     limit: int = 50,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_flexible),
 ):
     """
     Get notifications for the current user
@@ -72,8 +95,9 @@ async def get_notifications(
 @router.put("/{notification_id}/mark-read")
 async def mark_notification_read(
     notification_id: int,
+    request: Request,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_flexible),
 ):
     """
     Mark a notification as read

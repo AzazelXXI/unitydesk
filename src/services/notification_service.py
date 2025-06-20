@@ -110,8 +110,8 @@ class NotificationService:
             updater_name = updater.name if updater else "Someone"
 
             # Create notification message
-            title = f"Task Status Updated: {task.title}"
-            message = f"{updater_name} changed task '{task.title}' status from '{old_status}' to '{new_status}' in project '{project.name}'"
+            title = f"Task Status Updated: {task.name}"
+            message = f"{updater_name} changed task '{task.name}' status from '{old_status}' to '{new_status}' in project '{project.name}'"
 
             # Get all project team members (including owner and assignee)
             members_to_notify = set()
@@ -187,11 +187,9 @@ class NotificationService:
             assigner_query = select(User).where(User.id == assigned_by_id)
             assigner_result = await db.execute(assigner_query)
             assigner = assigner_result.scalar_one_or_none()
-            assigner_name = assigner.name if assigner else "Someone"
-
-            # Notify the assigned user
-            title = f"New Task Assigned: {task.title}"
-            message = f"{assigner_name} assigned you the task '{task.title}' in project '{project.name if project else 'Unknown'}'"
+            assigner_name = assigner.name if assigner else "Someone"            # Notify the assigned user
+            title = f"New Task Assigned: {task.name}"
+            message = f"{assigner_name} assigned you the task '{task.name}' in project '{project.name if project else 'Unknown'}'"
 
             await NotificationService.create_notification(
                 db=db,

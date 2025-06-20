@@ -10,6 +10,8 @@ from pathlib import Path
 from src.database import get_db
 from src.middleware.auth_middleware import get_current_user_web
 from src.models.user import User
+from src.services.notification_service import NotificationService
+from src.services.websocket_manager import websocket_manager
 
 router = APIRouter(prefix="/api/simple-tasks", tags=["simple-tasks"])
 
@@ -130,17 +132,16 @@ async def update_task_status(
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}",
-            )
-
-        # Check if task exists
-        task_check_query = text("SELECT id, name FROM tasks WHERE id = :task_id")
+            )        # Check if task exists and get old status
+        task_check_query = text("SELECT id, name, status FROM tasks WHERE id = :task_id")
         result = await db.execute(task_check_query, {"task_id": task_id})
         task = result.fetchone()
 
         if not task:
             raise HTTPException(status_code=404, detail="Task not found")
 
-        # Update task status
+        # Store old status for notifications
+        old_status = task.status        # Update task status
         update_query = text(
             """
             UPDATE tasks 
@@ -148,19 +149,45 @@ async def update_task_status(
             WHERE id = :task_id
         """
         )
-
+        
         from datetime import datetime
 
         now = datetime.now()
-
+        
         await db.execute(
             update_query,
             {"task_id": task_id, "status": status_data.status, "updated_at": now},
         )
-
+        
         await db.commit()
 
         print(f"✅ Task {task_id} status updated to {status_data.status}")
+
+        # Send notifications only if status actually changed
+        if old_status != status_data.status:
+            try:
+                # Send database notification
+                await NotificationService.notify_task_status_change(
+                    db=db,
+                    task_id=task_id,
+                    old_status=old_status,
+                    new_status=status_data.status,
+                    updated_by_id=current_user.id,
+                )
+
+                # Send real-time WebSocket notification
+                await websocket_manager.notify_task_status_change(
+                    db=db,
+                    task_id=task_id,
+                    old_status=old_status,
+                    new_status=status_data.status,
+                    updated_by_user_id=current_user.id,
+                )
+
+                print(f"📨 Notifications sent for task {task_id} status change from {old_status} to {status_data.status}")
+            except Exception as notification_error:
+                # Don't fail the status update if notifications fail
+                print(f"⚠️ Failed to send notifications: {notification_error}")
 
         return {
             "success": True,

@@ -15,6 +15,7 @@ from sqlalchemy import select
 from src.models.user import User
 from src.models.project import Project
 from src.models.task import Task
+from src.models.association_tables import project_members
 from src.services.notification_service import NotificationService
 
 logger = logging.getLogger(__name__)
@@ -83,24 +84,59 @@ class WebSocketManager:
                 self.disconnect(user_id)
 
     async def broadcast_to_project(
-        self, project_id: int, message: dict, exclude_user_id: Optional[int] = None
+        self, project_id: int, message: dict, exclude_user_id: Optional[int] = None, db: Optional[AsyncSession] = None
     ):
         """Send message to all members of a project"""
-        if project_id not in self.project_members:
+        recipients = set()
+        
+        # First, get recipients from active WebSocket subscriptions
+        if project_id in self.project_members:
+            recipients.update(self.project_members[project_id])
+        
+        # If we have database access, also get actual project members
+        if db:
+            try:
+                # Get project owner
+                project_query = select(Project).where(Project.id == project_id)
+                project_result = await db.execute(project_query)
+                project = project_result.scalar_one_or_none()
+                
+                if project:
+                    # Add project owner
+                    recipients.add(project.owner_id)
+                    
+                    # Get project team members from association table
+                    members_query = select(project_members.c.user_id).where(
+                        project_members.c.project_id == project_id
+                    )
+                    members_result = await db.execute(members_query)
+                    member_ids = [row[0] for row in members_result.fetchall()]
+                    recipients.update(member_ids)
+                    
+                    logger.info(f"Found {len(recipients)} total members for project {project_id} (owner + team members)")
+                else:
+                    logger.warning(f"Project {project_id} not found in database")
+            except Exception as e:
+                logger.error(f"Error querying project members for project {project_id}: {e}")
+        
+        if not recipients:
             logger.warning(f"No members found for project {project_id}")
             return
 
-        recipients = self.project_members[project_id].copy()
+        # Remove excluded user
         if exclude_user_id:
             recipients.discard(exclude_user_id)
 
         # Send to all connected project members
         failed_connections = []
+        sent_count = 0
+        
         for user_id in recipients:
             if user_id in self.active_connections:
                 try:
                     websocket = self.active_connections[user_id]
                     await websocket.send_text(json.dumps(message))
+                    sent_count += 1
                 except Exception as e:
                     logger.error(f"Error sending message to user {user_id}: {e}")
                     failed_connections.append(user_id)
@@ -110,7 +146,7 @@ class WebSocketManager:
             self.disconnect(user_id)
 
         logger.info(
-            f"Broadcasted message to {len(recipients)} members of project {project_id}"
+            f"Broadcasted message to {sent_count} connected members of project {project_id} (out of {len(recipients)} total members)"
         )
 
     async def notify_task_status_change(

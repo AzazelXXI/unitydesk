@@ -117,7 +117,23 @@
 
     {% block head_extra %}{% endblock %}
   </head>
-  <body data-user-id="{% if user %}{{ user.id }}{% endif %}">
+  <body
+    data-user-id="{% if user %}{{ user.id }}{% elif current_user %}{{ current_user.id }}{% endif %}"
+  >
+    <!-- Add debug info for user ID -->
+    <script>
+      // Debug: Check if user ID is available
+      console.log('User ID from body:', document.body.getAttribute('data-user-id'));
+      {% if user %}
+      window.currentUserId = {{ user.id }};
+      console.log('User ID from template (user):', {{ user.id }});
+      {% elif current_user %}
+      window.currentUserId = {{ current_user.id }};
+      console.log('User ID from template (current_user):', {{ current_user.id }});
+      {% else %}
+      console.log('No user found in template context');
+      {% endif %}
+    </script>
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container-fluid">
@@ -358,21 +374,36 @@
           } catch (error) {
             console.error('Error initializing WebSocket:', error);
           }
-        }
+        }        getCurrentUserId() {
+          // Try multiple methods to get user ID
 
-        getCurrentUserId() {
-          // Try to get user ID from a data attribute or global variable
-          // You can set this in your base template using the current_user context
-          const userElement = document.querySelector('[data-user-id]');
-          if (userElement) {
-            return userElement.getAttribute('data-user-id');
+          // Method 1: From body data attribute
+          const userElement = document.body;
+          if (userElement && userElement.getAttribute('data-user-id')) {
+            const userId = userElement.getAttribute('data-user-id');
+            if (userId && userId !== '') {
+              console.log('Found user ID from body:', userId);
+              return userId;
+            }
           }
 
-          // Alternative: use a global variable set by the template
-          if (typeof window.currentUserId !== 'undefined') {
+          // Method 2: From global variable
+          if (typeof window.currentUserId !== 'undefined' && window.currentUserId) {
+            console.log('Found user ID from global variable:', window.currentUserId);
             return window.currentUserId;
           }
 
+          // Method 3: Try to get from any element with data-user-id
+          const anyUserElement = document.querySelector('[data-user-id]');
+          if (anyUserElement) {
+            const userId = anyUserElement.getAttribute('data-user-id');
+            if (userId && userId !== '') {
+              console.log('Found user ID from any element:', userId);
+              return userId;
+            }
+          }
+
+          console.warn('No user ID found using any method');
           return null;
         }
 
@@ -471,22 +502,27 @@
 
           // Exponential backoff
           this.reconnectDelay *= 2;
-        }
-
-        async loadNotifications() {
+        }        async loadNotifications() {
           try {
             const response = await fetch('/api/notifications/', {
               headers: {
                 'Accept': 'application/json',
-              }
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+              },
+              credentials: 'same-origin' // Include cookies for authentication
             });
 
             if (response.ok) {
               const notifications = await response.json();
               this.renderNotifications(notifications);
               this.updateBadge(notifications.filter(n => !n.is_read).length);
+            } else if (response.status === 401) {
+              console.warn('User not authenticated, notifications disabled');
+              // Don't show error for unauthenticated users
+              this.notificationList.innerHTML = '<li><span class="dropdown-item-text text-muted">Please log in to see notifications</span></li>';
             } else {
-              console.error('Failed to load notifications');
+              console.error('Failed to load notifications:', response.status);
             }
           } catch (error) {
             console.error('Error loading notifications:', error);
@@ -524,19 +560,22 @@
           } else {
             this.notificationBadge.style.display = 'none';
           }
-        }
-
-        async markAsRead(notificationId) {
+        }        async markAsRead(notificationId) {
           try {
             const response = await fetch(`/api/notifications/${notificationId}/mark-read`, {
               method: 'PUT',
               headers: {
                 'Accept': 'application/json',
-              }
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+              },
+              credentials: 'same-origin'
             });
 
             if (response.ok) {
               await this.loadNotifications(); // Refresh notifications
+            } else if (response.status === 401) {
+              console.warn('User not authenticated');
             }
           } catch (error) {
             console.error('Error marking notification as read:', error);
@@ -598,19 +637,15 @@
             const permission = await Notification.requestPermission();
             console.log('Notification permission:', permission);
           }
-        }
-
-        // Clean up WebSocket on page unload
+        }        // Clean up WebSocket on page unload
         destroy() {
           if (this.websocket) {
             this.websocket.close();
           }
         }
       }
-          div.textContent = text;
-          return div.innerHTML;
-        }
-      }      // Global functions
+
+      // Global functions
       async function markAsRead(notificationId) {
         await notificationSystem.markAsRead(notificationId);
       }
@@ -633,11 +668,11 @@
         if (notificationSystem) {
           notificationSystem.destroy();
         }
-      });
-
-      // Set current user ID for WebSocket connection
+      });      // Set current user ID for WebSocket connection
       {% if user %}
       window.currentUserId = {{ user.id }};
+      {% elif current_user %}
+      window.currentUserId = {{ current_user.id }};
       {% endif %}
     </script>
 
