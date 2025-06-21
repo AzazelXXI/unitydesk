@@ -259,6 +259,10 @@ async def project_details(
     Display project details page
     """
     try:
+        print(f"=== PROJECT DETAILS ACCESS ===")
+        print(f"Project ID: {project_id}")
+        print(f"User: {current_user.name} (ID: {current_user.id})")
+
         # Get project with related data
         project_query = text(
             """
@@ -279,16 +283,26 @@ async def project_details(
             FROM projects p
             LEFT JOIN tasks t ON p.id = t.project_id
             WHERE p.id = :project_id
-            GROUP BY p.id, p.name, p.description, p.status, p.progress, p.budget, 
-                     p.start_date, p.end_date, p.created_at, p.updated_at
-        """
+            GROUP BY p.id, p.name, p.description, p.status, p.progress, p.budget,                     p.start_date, p.end_date, p.created_at, p.updated_at        """
         )
 
         result = await db.execute(project_query, {"project_id": project_id})
         project_row = result.fetchone()
 
+        print(f"Query executed. Found project: {project_row is not None}")
+
         if not project_row:
             raise HTTPException(status_code=404, detail="Project not found")
+
+        # Map project status to template stages
+        status_to_stage = {
+            "Planning": "planning",
+            "In Progress": "execution",
+            "Completed": "evaluation",
+            "On Hold": "monitoring",
+            "Cancelled": "planning",
+        }
+        current_stage = status_to_stage.get(project_row.status, "planning")
 
         project = {
             "id": project_row.id,
@@ -303,7 +317,15 @@ async def project_details(
             "updated_at": project_row.updated_at,
             "task_count": project_row.task_count or 0,
             "completed_tasks": project_row.completed_tasks or 0,
-            "active_tasks": project_row.active_tasks or 0,
+            "active_tasks": project_row.active_tasks
+            or 0,  # Add missing fields with defaults for template compatibility
+            "project_type": "General",  # Default project type
+            "client": None,  # No client data available
+            "target_end_date": project_row.end_date,  # Use end_date as target
+            "current_stage": current_stage,  # Use mapped stage
+            "workflow_progress": project_row.progress
+            or 0,  # Use progress as workflow progress
+            "client_brief": None,  # No client brief available
         }
 
         # Get project tasks
