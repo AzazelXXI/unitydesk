@@ -1,0 +1,507 @@
+{% extends "core/templates/base.html" %} {% block title %}New Project | CSA
+Platform{% endblock %} {% block head_extra %}
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+/>
+<style>
+  .section-card {
+    margin-bottom: 20px;
+    border-radius: 8px;
+  }
+
+  .section-card .card-header {
+    border-radius: 8px 8px 0 0;
+    background-color: #f8f9fa;
+    font-weight: 500;
+  }
+
+  .section-divider {
+    margin: 2rem 0;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+  }
+
+  .section-divider::before,
+  .section-divider::after {
+    content: "";
+    flex: 1;
+    border-bottom: 1px solid #dee2e6;
+  }
+
+  .section-divider::before {
+    margin-right: 0.5rem;
+  }
+
+  .section-divider::after {
+    margin-left: 0.5rem;
+  }
+
+  .team-member-row {
+    margin-bottom: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 10px;
+  }
+
+  .team-member-row:hover {
+    background-color: #e9ecef;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Create New Project</h1>
+    <a href="/project" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Back to Projects
+    </a>
+  </div>
+
+  <form id="newProjectForm" method="POST" action="/api/projects/">
+    <!-- Basic Information -->
+    <div class="card section-card">
+      <div class="card-header">
+        <h5 class="mb-0">Basic Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="projectName" class="form-label required"
+              >Project Name</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="projectName"
+              name="name"
+              required
+            />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="projectType" class="form-label required"
+              >Project Type</label
+            >
+            <select
+              class="form-select"
+              id="projectType"
+              name="project_type"
+              required
+            >
+              <option value="">Select Project Type</option>
+              <option value="content_creation">Content Creation</option>
+              <option value="brand_building">Brand Building</option>
+              <option value="video_production">Video Production</option>
+              <option value="social_media">Social Media</option>
+              <option value="advertising">Advertising</option>
+              <option value="market_research">Market Research</option>
+              <option value="integrated_campaign">Integrated Campaign</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="projectDescription" class="form-label">Description</label>
+          <textarea
+            class="form-control"
+            id="projectDescription"
+            name="description"
+            rows="3"
+            placeholder="Describe the project objectives and scope"
+          ></textarea>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="projectStatus" class="form-label">Status</label>
+            <select class="form-select" id="projectStatus" name="status">
+              <option value="draft">Draft</option>
+              <option value="approved">Approved</option>
+              <option value="in_progress">In Progress</option>
+              <option value="on_hold">On Hold</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="currentStage" class="form-label">Current Stage</label>
+            <select class="form-select" id="currentStage" name="current_stage">
+              <option value="initiation">Initiation</option>
+              <option value="research">Research</option>
+              <option value="planning">Planning</option>
+              <option value="execution">Execution</option>
+              <option value="monitoring">Monitoring</option>
+              <option value="evaluation">Evaluation</option>
+            </select>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="projectOwner" class="form-label required"
+              >Project Owner</label
+            >
+            <select
+              class="form-select"
+              id="projectOwner"
+              name="owner_id"
+              required
+            >
+              <option value="">Select Project Owner</option>
+              <option value="1">John Doe (You)</option>
+              <option value="2">Jane Smith</option>
+              <option value="3">Mark Miller</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Client Information -->
+    <div class="card section-card">
+      <div class="card-header">
+        <h5 class="mb-0">Client Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="clientId" class="form-label">Client</label>
+            <select class="form-select" id="clientId" name="client_id">
+              <option value="">Select Client</option>
+              <option value="1">Acme Corporation</option>
+              <option value="2">Global Industries</option>
+              <option value="3">Tech Innovators</option>
+              <option value="4">Other (No Client)</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="newClient" class="form-label"
+              >Or Create New Client</label
+            >
+            <div class="input-group">
+              <input
+                type="text"
+                class="form-control"
+                id="newClient"
+                placeholder="New Client Name"
+              />
+              <button
+                class="btn btn-outline-secondary"
+                type="button"
+                id="addNewClient"
+              >
+                <i class="bi bi-plus-lg"></i> Add
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="clientBrief" class="form-label">Client Brief</label>
+          <textarea
+            class="form-control"
+            id="clientBrief"
+            name="client_brief"
+            rows="3"
+            placeholder="Enter client requirements and goals"
+          ></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline & Budget -->
+    <div class="card section-card">
+      <div class="card-header">
+        <h5 class="mb-0">Timeline & Budget</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="startDate" class="form-label">Start Date</label>
+            <input
+              type="text"
+              class="form-control datepicker"
+              id="startDate"
+              name="start_date"
+              placeholder="Select date"
+            />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="targetEndDate" class="form-label"
+              >Target End Date</label
+            >
+            <input
+              type="text"
+              class="form-control datepicker"
+              id="targetEndDate"
+              name="target_end_date"
+              placeholder="Select date"
+            />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="estimatedBudget" class="form-label"
+              >Estimated Budget</label
+            >
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input
+                type="number"
+                class="form-control"
+                id="estimatedBudget"
+                name="estimated_budget"
+                placeholder="0.00"
+                step="0.01"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project Team -->
+    <div class="card section-card">
+      <div
+        class="card-header d-flex justify-content-between align-items-center"
+      >
+        <h5 class="mb-0">Project Team</h5>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-primary"
+          id="addTeamMember"
+        >
+          <i class="bi bi-plus-lg"></i> Add Team Member
+        </button>
+      </div>
+      <div class="card-body">
+        <div id="teamMembersContainer">
+          <!-- Team members will be added here -->
+          <div class="alert alert-light text-center mb-0" id="noTeamMembers">
+            <p>No team members added yet.</p>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-primary"
+              onclick="document.getElementById('addTeamMember').click()"
+            >
+              <i class="bi bi-plus-lg"></i> Add Team Member
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4 mb-5">
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
+        onclick="window.location.href='/project'"
+      >
+        Cancel
+      </button>
+      <div>
+        <button
+          type="button"
+          class="btn btn-outline-primary me-2"
+          id="saveAsDraft"
+        >
+          <i class="bi bi-save"></i> Save as Draft
+        </button>
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check-lg"></i> Create Project
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Template for team member row -->
+<template id="teamMemberTemplate">
+  <div class="team-member-row">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="flex-grow-1">
+        <div class="row">
+          <div class="col-md-4 mb-2 mb-md-0">
+            <select
+              class="form-select form-select-sm team-member-user-id"
+              name="team_members[][user_id]"
+            >
+              <option value="">Select Member</option>
+              <option value="1">John Doe</option>
+              <option value="2">Jane Smith</option>
+              <option value="3">Mark Miller</option>
+            </select>
+          </div>
+          <div class="col-md-4 mb-2 mb-md-0">
+            <input
+              type="text"
+              class="form-control form-control-sm team-member-role"
+              name="team_members[][role]"
+              placeholder="Role (e.g. Designer, Writer)"
+            />
+          </div>
+          <div class="col-md-4">
+            <input
+              type="text"
+              class="form-control form-control-sm team-member-joined-at datepicker"
+              name="team_members[][joined_at]"
+              placeholder="Join Date"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="ms-3">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-danger remove-team-member"
+        >
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- Flatpickr for date picking -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Initialize date pickers
+    flatpickr(".datepicker", {
+      dateFormat: "Y-m-d",
+      allowInput: true,
+    });
+
+    // Team members functionality
+    const teamMembersContainer = document.getElementById(
+      "teamMembersContainer"
+    );
+    const teamMemberTemplate = document.getElementById("teamMemberTemplate");
+    const noTeamMembersAlert = document.getElementById("noTeamMembers");
+    let teamMemberCount = 0;
+
+    // Add team member button
+    document
+      .getElementById("addTeamMember")
+      .addEventListener("click", function () {
+        const teamMemberNode = teamMemberTemplate.content.cloneNode(true);
+        const teamMemberRow = teamMemberNode.querySelector(".team-member-row");
+
+        // Update the indices for the form fields to ensure unique names
+        const currentIndex = teamMemberCount++;
+        const userIdField = teamMemberNode.querySelector(
+          ".team-member-user-id"
+        );
+        const roleField = teamMemberNode.querySelector(".team-member-role");
+        const joinedAtField = teamMemberNode.querySelector(
+          ".team-member-joined-at"
+        );
+
+        userIdField.name = `team_members[${currentIndex}][user_id]`;
+        roleField.name = `team_members[${currentIndex}][role]`;
+        joinedAtField.name = `team_members[${currentIndex}][joined_at]`;
+
+        // Add remove event handler
+        const removeButton = teamMemberNode.querySelector(
+          ".remove-team-member"
+        );
+        removeButton.addEventListener("click", function () {
+          teamMemberRow.remove();
+
+          if (
+            teamMembersContainer.querySelectorAll(".team-member-row").length ===
+            0
+          ) {
+            noTeamMembersAlert.style.display = "block";
+          }
+        });
+
+        // Hide the "no team members" message
+        noTeamMembersAlert.style.display = "none";
+
+        // Add the new row to the container
+        teamMembersContainer.appendChild(teamMemberNode);
+
+        // Initialize datepicker for the new field
+        flatpickr(joinedAtField, {
+          dateFormat: "Y-m-d",
+          allowInput: true,
+        });
+      });
+
+    // Save as draft button
+    document
+      .getElementById("saveAsDraft")
+      .addEventListener("click", function () {
+        document.getElementById("projectStatus").value = "draft";
+        document.getElementById("newProjectForm").submit();
+      });
+
+    // Form submission handling
+    document
+      .getElementById("newProjectForm")
+      .addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        // Collect form data
+        const formData = new FormData(this);
+
+        // Convert to JSON
+        const jsonData = {};
+        formData.forEach((value, key) => {
+          // Handle team members array
+          if (key.startsWith("team_members[")) {
+            const matches = key.match(/team_members\[(\d+)\]\[(\w+)\]/);
+            if (matches) {
+              const index = matches[1];
+              const property = matches[2];
+
+              if (!jsonData.team_members) {
+                jsonData.team_members = [];
+              }
+
+              if (!jsonData.team_members[index]) {
+                jsonData.team_members[index] = {};
+              }
+
+              jsonData.team_members[index][property] = value;
+            }
+          } else {
+            // Handle regular fields
+            jsonData[key] = value;
+          }
+        });
+
+        // Clean up team_members to be a proper array (no gaps)
+        if (jsonData.team_members) {
+          jsonData.team_members = jsonData.team_members.filter(
+            (item) => item !== null
+          );
+        }
+
+        // Make API request
+        fetch("/api/projects/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(jsonData),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+            return response.json();
+          })
+          .then((data) => {
+            // Redirect to the new project details page
+            window.location.href = `/project/${data.id}`;
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert(
+              "There was a problem creating the project. Please try again."
+            );
+          });
+      });
+  });
+</script>
+{% endblock %}

@@ -179,7 +179,7 @@ async def new_project(
     Display new project creation form
     """
     return templates.TemplateResponse(
-        "project/templates/new_project_modern.html",
+        "project/templates/new_project.html",
         {
             "request": request,
             "current_user": current_user,
@@ -238,7 +238,7 @@ async def create_project_web(
         print(f"Error creating project: {e}")
         # Return to form with error
         return templates.TemplateResponse(
-            "project/templates/new_project_modern.html",
+            "project/templates/new_project.html",
             {
                 "request": request,
                 "current_user": current_user,
@@ -368,7 +368,7 @@ async def project_details(
             tasks.append(task)
 
         return templates.TemplateResponse(
-            "project/templates/project_details_modern.html",
+            "project/templates/project_details.html",
             {
                 "request": request,
                 "current_user": current_user,
