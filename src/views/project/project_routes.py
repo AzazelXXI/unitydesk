@@ -134,7 +134,7 @@ async def projects_dashboard(
         print(f"  Average Progress: {stats['avg_progress']}%")
 
         return templates.TemplateResponse(
-            "project/templates/projects_clean.html",
+            "project/templates/projects.html",
             {
                 "request": request,
                 "current_user": current_user,
@@ -150,7 +150,7 @@ async def projects_dashboard(
         logger.error(f"Error loading projects dashboard: {str(e)}", exc_info=True)
 
         return templates.TemplateResponse(
-            "project/templates/projects_clean.html",
+            "project/templates/projects.html",
             {
                 "request": request,
                 "current_user": current_user,
@@ -179,7 +179,7 @@ async def new_project(
     Display new project creation form
     """
     return templates.TemplateResponse(
-        "project/templates/new_project.html",
+        "project/templates/new_project_modern.html",
         {
             "request": request,
             "current_user": current_user,
@@ -238,7 +238,7 @@ async def create_project_web(
         print(f"Error creating project: {e}")
         # Return to form with error
         return templates.TemplateResponse(
-            "project/templates/new_project.html",
+            "project/templates/new_project_modern.html",
             {
                 "request": request,
                 "current_user": current_user,
@@ -346,7 +346,7 @@ async def project_details(
             tasks.append(task)
 
         return templates.TemplateResponse(
-            "project/templates/project_details.html",
+            "project/templates/project_details_modern.html",
             {
                 "request": request,
                 "current_user": current_user,
