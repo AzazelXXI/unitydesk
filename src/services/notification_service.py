@@ -85,8 +85,14 @@ class NotificationService:
             updated_by_id: ID of user who made the change
         """
         try:
-            # Get task with project and assignee info
-            task_query = select(Task).where(Task.id == task_id)
+            # Get task with project and assignee info using eager loading
+            from sqlalchemy.orm import selectinload
+
+            task_query = (
+                select(Task)
+                .options(selectinload(Task.assignees), selectinload(Task.project))
+                .where(Task.id == task_id)
+            )
             task_result = await db.execute(task_query)
             task = task_result.scalar_one_or_none()
 
@@ -94,13 +100,10 @@ class NotificationService:
                 logger.warning(f"Task {task_id} not found for notification")
                 return
 
-            # Get project details
-            project_query = select(Project).where(Project.id == task.project_id)
-            project_result = await db.execute(project_query)
-            project = project_result.scalar_one_or_none()
-
+            # Get project details (already loaded via relationship)
+            project = task.project
             if not project:
-                logger.warning(f"Project {task.project_id} not found for notification")
+                logger.warning(f"Project not found for task {task_id}")
                 return
 
             # Get the user who made the change
@@ -114,19 +117,37 @@ class NotificationService:
             message = f"{updater_name} changed task '{task.name}' status from '{old_status}' to '{new_status}' in project '{project.name}'"
 
             # Get all project team members (including owner and assignee)
-            members_to_notify = set()
-
-            # Add project owner
+            members_to_notify = set()  # Add project owner
             members_to_notify.add(project.owner_id)
 
-            # Add task assignee if exists
-            if task.assigned_to:
-                members_to_notify.add(task.assigned_to)
+            # Add task assignees if they exist
+            if hasattr(task, "assignees") and task.assignees:
+                for assignee in task.assignees:
+                    members_to_notify.add(assignee.id)
 
             # Add project team members if they exist
-            if hasattr(project, "team_members") and project.team_members:
-                for member in project.team_members:
-                    members_to_notify.add(member.id)
+            try:
+                # Load project team members using the many-to-many relationship
+                from sqlalchemy.orm import selectinload
+
+                project_with_members_query = (
+                    select(Project)
+                    .options(selectinload(Project.team_members))
+                    .where(Project.id == project.id)
+                )
+                project_result = await db.execute(project_with_members_query)
+                project_with_members = project_result.scalar_one_or_none()
+
+                if (
+                    project_with_members
+                    and hasattr(project_with_members, "team_members")
+                    and project_with_members.team_members
+                ):
+                    for member in project_with_members.team_members:
+                        members_to_notify.add(member.id)
+            except Exception as e:
+                logger.warning(f"Could not load project team members: {e}")
+                # Continue without team members
 
             # Remove the person who made the change (don't notify themselves)
             members_to_notify.discard(updated_by_id)
@@ -181,13 +202,13 @@ class NotificationService:
 
             project_query = select(Project).where(Project.id == task.project_id)
             project_result = await db.execute(project_query)
-            project = project_result.scalar_one_or_none()
-
-            # Get assigner name
+            project = project_result.scalar_one_or_none()  # Get assigner name
             assigner_query = select(User).where(User.id == assigned_by_id)
             assigner_result = await db.execute(assigner_query)
             assigner = assigner_result.scalar_one_or_none()
-            assigner_name = assigner.name if assigner else "Someone"            # Notify the assigned user
+            assigner_name = assigner.name if assigner else "Someone"
+
+            # Notify the assigned user
             title = f"New Task Assigned: {task.name}"
             message = f"{assigner_name} assigned you the task '{task.name}' in project '{project.name if project else 'Unknown'}'"
 
@@ -225,8 +246,14 @@ class NotificationService:
             updated_by_id: ID of user who made the update
         """
         try:
-            # Get project details
-            project_query = select(Project).where(Project.id == project_id)
+            # Get project details with team members
+            from sqlalchemy.orm import selectinload
+
+            project_query = (
+                select(Project)
+                .options(selectinload(Project.team_members))
+                .where(Project.id == project_id)
+            )
             project_result = await db.execute(project_query)
             project = project_result.scalar_one_or_none()
 
