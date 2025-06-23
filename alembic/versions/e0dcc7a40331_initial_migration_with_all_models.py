@@ -1,8 +1,8 @@
-"""Initial migration
+"""Initial migration with all models
 
-Revision ID: 4377e4c06209
+Revision ID: e0dcc7a40331
 Revises: 
-Create Date: 2025-06-09 16:54:27.274598
+Create Date: 2025-06-23 19:43:44.930871
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '4377e4c06209'
+revision: str = 'e0dcc7a40331'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -61,6 +61,23 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['owner_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
+    )
+    op.create_table('user_profiles',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=True),
+    sa.Column('first_name', sa.String(length=100), nullable=True),
+    sa.Column('last_name', sa.String(length=100), nullable=True),
+    sa.Column('display_name', sa.String(length=255), nullable=True),
+    sa.Column('avatar_url', sa.String(length=255), nullable=True),
+    sa.Column('bio', sa.Text(), nullable=True),
+    sa.Column('phone', sa.String(length=50), nullable=True),
+    sa.Column('location', sa.String(length=100), nullable=True),
+    sa.Column('timezone', sa.String(length=50), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id')
     )
     op.create_table('attachments',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -223,6 +240,7 @@ def downgrade() -> None:
     op.drop_table('milestones')
     op.drop_table('events')
     op.drop_table('attachments')
+    op.drop_table('user_profiles')
     op.drop_table('projects')
     op.drop_table('calendars')
     op.drop_table('users')
