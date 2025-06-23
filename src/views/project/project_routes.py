@@ -223,7 +223,7 @@ async def create_project_web(
         from src.controllers.project_controller import ProjectController
 
         new_project = await ProjectController.create_project(
-            project_data, db, owner_id=current_user.id
+            project_data, db, current_user.id
         )
 
         # Redirect to projects page with success message

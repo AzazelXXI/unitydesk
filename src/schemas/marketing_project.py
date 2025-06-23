@@ -92,7 +92,6 @@ class ProjectTeamMember(BaseModel):
 class MarketingProjectBase(BaseModel):
     name: str
     description: Optional[str] = None
-    project_type: ProjectType
     status: ProjectStatus = None
     current_stage: WorkflowStage = None
     client_id: Optional[int] = None
@@ -106,13 +105,19 @@ class MarketingProjectBase(BaseModel):
 
 
 class MarketingProjectCreate(MarketingProjectBase):
-    team_members: Optional[List[ProjectTeamMember]] = None
+    @validator("estimated_budget", pre=True)
+    def parse_estimated_budget(cls, v):
+        if v == "" or v is None:
+            return None
+        try:
+            return float(v)
+        except (ValueError, TypeError):
+            return None
 
 
 class MarketingProjectUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
-    project_type: Optional[ProjectType] = None
     status: Optional[ProjectStatus] = None
     current_stage: Optional[WorkflowStage] = None
     client_id: Optional[int] = None
@@ -131,7 +136,6 @@ class MarketingProjectReadBasic(MarketingProjectBase, BaseSchema):
 
 class MarketingProjectRead(MarketingProjectReadBasic):
     client: Optional[ClientRead] = None
-    team_members: List[Dict[str, Any]] = []
     task_stats: Optional[Dict[str, int]] = None  # Summary of task status counts
     workflow_progress: Optional[float] = None  # Percentage of workflow completion
 

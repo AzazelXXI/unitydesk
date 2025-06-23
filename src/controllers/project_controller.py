@@ -72,9 +72,8 @@ class ProjectController:
 
         # Execute query
         result = await db.execute(query)
-        return result.scalars().all()
+        return result.scalars().all() @ staticmethod
 
-    @staticmethod
     async def get_project(project_id: int, db):
         """
         Get a project by its ID.
@@ -91,9 +90,7 @@ class ProjectController:
         """
         from sqlalchemy.future import select
         from fastapi import HTTPException, status
-        from src.models.project import (
-            Project,
-        )  # Changed from src.models_backup.marketing_project
+        from src.models.project import Project
 
         query = select(Project).where(Project.id == project_id)
         result = await db.execute(query)
@@ -105,18 +102,21 @@ class ProjectController:
                 detail=f"Project with ID {project_id} not found",
             )
 
-        return project @ staticmethod
+        return project
 
-    async def create_project(project_data, db, owner_id=None):
+    @staticmethod
+    async def create_project(project_data, db, current_user_id):
         """
         Create a new project with the given data.
 
         Args:
             project_data: Project data from the request
             db: Database session
+            current_user_id: ID of the user creating the project (becomes owner)
 
         Returns:
-            Created marketing project object"""
+            Created marketing project object
+        """
         from src.models.project import (
             Project,
         )  # Changed from src.models_backup.marketing_project        # Handle both Pydantic models and regular dictionaries
@@ -145,9 +145,9 @@ class ProjectController:
         # Convert empty strings to None for optional fields
         for field in ["start_date", "end_date", "budget"]:
             if field in filtered_dict and filtered_dict[field] == "":
-                filtered_dict[field] = None
-
-        # Convert date strings to datetime objects if needed
+                filtered_dict[field] = (
+                    None  # Convert date strings to datetime objects if needed
+                )
         if "start_date" in filtered_dict and filtered_dict["start_date"]:
             if isinstance(filtered_dict["start_date"], str):
                 from datetime import datetime
@@ -162,9 +162,10 @@ class ProjectController:
 
                 filtered_dict["end_date"] = datetime.fromisoformat(
                     filtered_dict["end_date"]
-                )  # Set owner_id if provided
-        if owner_id:
-            filtered_dict["owner_id"] = owner_id
+                )
+
+        # Set current user as owner
+        filtered_dict["owner_id"] = current_user_id
 
         # Create new project
         project = Project(**filtered_dict)

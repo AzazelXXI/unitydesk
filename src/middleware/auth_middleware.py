@@ -5,9 +5,15 @@ from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+import logging
+import os
 
 from src.database import get_db
 from src.models.user import User, UserTypeEnum as UserRole, UserStatusEnum
+
+# JWT constants
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "YOUR_SECRET_KEY_HERE_CHANGE_IN_PRODUCTION")
+ALGORITHM = "HS256"
 
 
 class RedirectToLoginException(Exception):
@@ -119,6 +125,48 @@ async def get_current_user(
     except JWTError:
         logger.error("JWT validation error", exc_info=True)
         raise credentials_exception
+
+
+async def get_current_user_from_cookie(
+    request: Request, db: AsyncSession = Depends(get_db)
+) -> User:
+    """
+    Get the current user from cookie token (for API endpoints called from web interface).
+    """
+    credentials_exception = HTTPException(
+        status_code=HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        # Get token from cookie
+        token = request.cookies.get("remember_token")
+        if not token:
+            logger.warning("No remember_token cookie found")
+            raise credentials_exception
+
+        # Verify token
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        user_id: int = payload.get("id")
+        if username is None or user_id is None:
+            raise credentials_exception
+    except JWTError:
+        logger.error("JWT validation error from cookie", exc_info=True)
+        raise credentials_exception
+
+    # Get user from database
+    query = await db.execute(select(User).where(User.id == user_id))
+    user = query.scalars().first()
+    if user is None:
+        raise credentials_exception
+
+    # Check if user is not offline
+    if user.status == UserStatusEnum.OFFLINE:
+        raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="User is offline")
+
+    return user
 
 
 async def get_current_active_user(

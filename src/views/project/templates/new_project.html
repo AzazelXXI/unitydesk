@@ -66,7 +66,7 @@ Platform{% endblock %} {% block head_extra %}
       </div>
       <div class="card-body">
         <div class="row">
-          <div class="col-md-6 mb-3">
+          <div class="col-12 mb-3">
             <label for="projectName" class="form-label required"
               >Project Name</label
             >
@@ -77,26 +77,6 @@ Platform{% endblock %} {% block head_extra %}
               name="name"
               required
             />
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="projectType" class="form-label required"
-              >Project Type</label
-            >
-            <select
-              class="form-select"
-              id="projectType"
-              name="project_type"
-              required
-            >
-              <option value="">Select Project Type</option>
-              <option value="content_creation">Content Creation</option>
-              <option value="brand_building">Brand Building</option>
-              <option value="video_production">Video Production</option>
-              <option value="social_media">Social Media</option>
-              <option value="advertising">Advertising</option>
-              <option value="market_research">Market Research</option>
-              <option value="integrated_campaign">Integrated Campaign</option>
-            </select>
           </div>
         </div>
 
@@ -112,96 +92,15 @@ Platform{% endblock %} {% block head_extra %}
         </div>
 
         <div class="row">
-          <div class="col-md-4 mb-3">
+          <div class="col-md-6 mb-3">
             <label for="projectStatus" class="form-label">Status</label>
             <select class="form-select" id="projectStatus" name="status">
-              <option value="draft">Draft</option>
-              <option value="approved">Approved</option>
-              <option value="in_progress">In Progress</option>
-              <option value="on_hold">On Hold</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
+              <option value="Planning">Planning</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+              <option value="Canceled">Canceled</option>
             </select>
           </div>
-          <div class="col-md-4 mb-3">
-            <label for="currentStage" class="form-label">Current Stage</label>
-            <select class="form-select" id="currentStage" name="current_stage">
-              <option value="initiation">Initiation</option>
-              <option value="research">Research</option>
-              <option value="planning">Planning</option>
-              <option value="execution">Execution</option>
-              <option value="monitoring">Monitoring</option>
-              <option value="evaluation">Evaluation</option>
-            </select>
-          </div>
-          <div class="col-md-4 mb-3">
-            <label for="projectOwner" class="form-label required"
-              >Project Owner</label
-            >
-            <select
-              class="form-select"
-              id="projectOwner"
-              name="owner_id"
-              required
-            >
-              <option value="">Select Project Owner</option>
-              <option value="1">John Doe (You)</option>
-              <option value="2">Jane Smith</option>
-              <option value="3">Mark Miller</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Client Information -->
-    <div class="card section-card">
-      <div class="card-header">
-        <h5 class="mb-0">Client Information</h5>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label for="clientId" class="form-label">Client</label>
-            <select class="form-select" id="clientId" name="client_id">
-              <option value="">Select Client</option>
-              <option value="1">Acme Corporation</option>
-              <option value="2">Global Industries</option>
-              <option value="3">Tech Innovators</option>
-              <option value="4">Other (No Client)</option>
-            </select>
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="newClient" class="form-label"
-              >Or Create New Client</label
-            >
-            <div class="input-group">
-              <input
-                type="text"
-                class="form-control"
-                id="newClient"
-                placeholder="New Client Name"
-              />
-              <button
-                class="btn btn-outline-secondary"
-                type="button"
-                id="addNewClient"
-              >
-                <i class="bi bi-plus-lg"></i> Add
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="mb-3">
-          <label for="clientBrief" class="form-label">Client Brief</label>
-          <textarea
-            class="form-control"
-            id="clientBrief"
-            name="client_brief"
-            rows="3"
-            placeholder="Enter client requirements and goals"
-          ></textarea>
         </div>
       </div>
     </div>
@@ -258,37 +157,6 @@ Platform{% endblock %} {% block head_extra %}
       </div>
     </div>
 
-    <!-- Project Team -->
-    <div class="card section-card">
-      <div
-        class="card-header d-flex justify-content-between align-items-center"
-      >
-        <h5 class="mb-0">Project Team</h5>
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-primary"
-          id="addTeamMember"
-        >
-          <i class="bi bi-plus-lg"></i> Add Team Member
-        </button>
-      </div>
-      <div class="card-body">
-        <div id="teamMembersContainer">
-          <!-- Team members will be added here -->
-          <div class="alert alert-light text-center mb-0" id="noTeamMembers">
-            <p>No team members added yet.</p>
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-primary"
-              onclick="document.getElementById('addTeamMember').click()"
-            >
-              <i class="bi bi-plus-lg"></i> Add Team Member
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div class="d-flex justify-content-between mt-4 mb-5">
       <button
         type="button"
@@ -303,7 +171,7 @@ Platform{% endblock %} {% block head_extra %}
           class="btn btn-outline-primary me-2"
           id="saveAsDraft"
         >
-          <i class="bi bi-save"></i> Save as Draft
+          <i class="bi bi-save"></i> Save as Planning
         </button>
         <button type="submit" class="btn btn-primary">
           <i class="bi bi-check-lg"></i> Create Project
@@ -313,53 +181,50 @@ Platform{% endblock %} {% block head_extra %}
   </form>
 </div>
 
-<!-- Template for team member row -->
-<template id="teamMemberTemplate">
-  <div class="team-member-row">
-    <div class="d-flex justify-content-between align-items-center">
-      <div class="flex-grow-1">
-        <div class="row">
-          <div class="col-md-4 mb-2 mb-md-0">
-            <select
-              class="form-select form-select-sm team-member-user-id"
-              name="team_members[][user_id]"
-            >
-              <option value="">Select Member</option>
-              <option value="1">John Doe</option>
-              <option value="2">Jane Smith</option>
-              <option value="3">Mark Miller</option>
-            </select>
-          </div>
-          <div class="col-md-4 mb-2 mb-md-0">
-            <input
-              type="text"
-              class="form-control form-control-sm team-member-role"
-              name="team_members[][role]"
-              placeholder="Role (e.g. Designer, Writer)"
-            />
-          </div>
-          <div class="col-md-4">
-            <input
-              type="text"
-              class="form-control form-control-sm team-member-joined-at datepicker"
-              name="team_members[][joined_at]"
-              placeholder="Join Date"
-            />
-          </div>
-        </div>
+<!-- Success Modal -->
+<div
+  class="modal fade"
+  id="successModal"
+  tabindex="-1"
+  aria-labelledby="successModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="successModalLabel">
+          <i class="bi bi-check-circle"></i> Success!
+        </h5>
       </div>
-      <div class="ms-3">
+      <div class="modal-body text-center">
+        <div class="mb-3">
+          <i
+            class="bi bi-check-circle-fill text-success"
+            style="font-size: 3rem"
+          ></i>
+        </div>
+        <h4>Project Created Successfully!</h4>
+        <p class="text-muted">
+          Your project has been created and saved to the database.
+        </p>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-success" id="viewProjectBtn">
+          <i class="bi bi-arrow-right"></i> View Project
+        </button>
         <button
           type="button"
-          class="btn btn-sm btn-outline-danger remove-team-member"
+          class="btn btn-outline-secondary"
+          id="createAnotherBtn"
         >
-          <i class="bi bi-trash"></i>
+          Create Another Project
         </button>
       </div>
     </div>
   </div>
-</template>
+</div>
 
+{% endblock %} {% block scripts %}
 <!-- Flatpickr for date picking -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
@@ -431,7 +296,7 @@ Platform{% endblock %} {% block head_extra %}
     document
       .getElementById("saveAsDraft")
       .addEventListener("click", function () {
-        document.getElementById("projectStatus").value = "draft";
+        document.getElementById("projectStatus").value = "Planning";
         document.getElementById("newProjectForm").submit();
       });
 
@@ -444,63 +309,68 @@ Platform{% endblock %} {% block head_extra %}
         // Collect form data
         const formData = new FormData(this);
 
-        // Convert to JSON
-        const jsonData = {};
-        formData.forEach((value, key) => {
-          // Handle team members array
-          if (key.startsWith("team_members[")) {
-            const matches = key.match(/team_members\[(\d+)\]\[(\w+)\]/);
-            if (matches) {
-              const index = matches[1];
-              const property = matches[2];
-
-              if (!jsonData.team_members) {
-                jsonData.team_members = [];
-              }
-
-              if (!jsonData.team_members[index]) {
-                jsonData.team_members[index] = {};
-              }
-
-              jsonData.team_members[index][property] = value;
-            }
-          } else {
-            // Handle regular fields
-            jsonData[key] = value;
-          }
-        });
-
-        // Clean up team_members to be a proper array (no gaps)
-        if (jsonData.team_members) {
-          jsonData.team_members = jsonData.team_members.filter(
-            (item) => item !== null
-          );
-        }
+        // Convert empty string to empty string for estimated_budget (API will handle it)
+        // No need to convert to JSON, send as FormData for the Form(...) API endpoint
 
         // Make API request
         fetch("/api/projects/", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(jsonData),
+          credentials: "include", // Include cookies for authentication
+          body: formData, // Send as FormData, not JSON
         })
           .then((response) => {
             if (!response.ok) {
-              throw new Error("Network response was not ok");
+              return response.json().then((errorData) => {
+                throw new Error(
+                  errorData.detail || "Network response was not ok"
+                );
+              });
             }
             return response.json();
           })
           .then((data) => {
-            // Redirect to the new project details page
-            window.location.href = `/project/${data.id}`;
+            // Store project data for later use
+            window.newProjectData = data;
+
+            // Show success modal
+            const successModal = new bootstrap.Modal(
+              document.getElementById("successModal")
+            );
+            successModal.show();
           })
           .catch((error) => {
             console.error("Error:", error);
+            // Show user-friendly error message
             alert(
-              "There was a problem creating the project. Please try again."
+              error.message ||
+                "There was a problem creating the project. Please try again."
             );
           });
+      });
+
+    // Handle success modal buttons
+    document
+      .getElementById("viewProjectBtn")
+      .addEventListener("click", function () {
+        if (window.newProjectData) {
+          window.location.href = `/project/${window.newProjectData.id}`;
+        }
+      });
+
+    document
+      .getElementById("createAnotherBtn")
+      .addEventListener("click", function () {
+        // Hide the modal
+        const successModal = bootstrap.Modal.getInstance(
+          document.getElementById("successModal")
+        );
+        successModal.hide();
+
+        // Reset the form
+        document.getElementById("newProjectForm").reset();
+
+        // Clear the stored project data
+        window.newProjectData = null;
       });
   });
 </script>
