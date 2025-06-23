@@ -182,13 +182,7 @@ Platform{% endblock %} {% block head_extra %}
 </div>
 
 <!-- Success Modal -->
-<div
-  class="modal fade"
-  id="successModal"
-  tabindex="-1"
-  aria-labelledby="successModalLabel"
-  aria-hidden="true"
->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-success text-white">
@@ -198,25 +192,16 @@ Platform{% endblock %} {% block head_extra %}
       </div>
       <div class="modal-body text-center">
         <div class="mb-3">
-          <i
-            class="bi bi-check-circle-fill text-success"
-            style="font-size: 3rem"
-          ></i>
+          <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
         </div>
         <h4>Project Created Successfully!</h4>
-        <p class="text-muted">
-          Your project has been created and saved to the database.
-        </p>
+        <p class="text-muted">Your project has been created and saved to the database.</p>
       </div>
       <div class="modal-footer justify-content-center">
         <button type="button" class="btn btn-success" id="viewProjectBtn">
           <i class="bi bi-arrow-right"></i> View Project
         </button>
-        <button
-          type="button"
-          class="btn btn-outline-secondary"
-          id="createAnotherBtn"
-        >
+        <button type="button" class="btn btn-outline-secondary" id="createAnotherBtn">
           Create Another Project
         </button>
       </div>
@@ -224,7 +209,9 @@ Platform{% endblock %} {% block head_extra %}
   </div>
 </div>
 
-{% endblock %} {% block scripts %}
+{% endblock %}
+
+{% block scripts %}
 <!-- Flatpickr for date picking -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
@@ -320,10 +307,8 @@ Platform{% endblock %} {% block head_extra %}
         })
           .then((response) => {
             if (!response.ok) {
-              return response.json().then((errorData) => {
-                throw new Error(
-                  errorData.detail || "Network response was not ok"
-                );
+              return response.json().then(errorData => {
+                throw new Error(errorData.detail || "Network response was not ok");
               });
             }
             return response.json();
@@ -331,47 +316,36 @@ Platform{% endblock %} {% block head_extra %}
           .then((data) => {
             // Store project data for later use
             window.newProjectData = data;
-
+            
             // Show success modal
-            const successModal = new bootstrap.Modal(
-              document.getElementById("successModal")
-            );
+            const successModal = new bootstrap.Modal(document.getElementById('successModal'));
             successModal.show();
           })
           .catch((error) => {
             console.error("Error:", error);
             // Show user-friendly error message
-            alert(
-              error.message ||
-                "There was a problem creating the project. Please try again."
-            );
+            alert(error.message || "There was a problem creating the project. Please try again.");
           });
       });
 
     // Handle success modal buttons
-    document
-      .getElementById("viewProjectBtn")
-      .addEventListener("click", function () {
-        if (window.newProjectData) {
-          window.location.href = `/project/${window.newProjectData.id}`;
-        }
-      });
+    document.getElementById('viewProjectBtn').addEventListener('click', function() {
+      if (window.newProjectData) {
+        window.location.href = `/project/${window.newProjectData.id}`;
+      }
+    });
 
-    document
-      .getElementById("createAnotherBtn")
-      .addEventListener("click", function () {
-        // Hide the modal
-        const successModal = bootstrap.Modal.getInstance(
-          document.getElementById("successModal")
-        );
-        successModal.hide();
-
-        // Reset the form
-        document.getElementById("newProjectForm").reset();
-
-        // Clear the stored project data
-        window.newProjectData = null;
-      });
+    document.getElementById('createAnotherBtn').addEventListener('click', function() {
+      // Hide the modal
+      const successModal = bootstrap.Modal.getInstance(document.getElementById('successModal'));
+      successModal.hide();
+      
+      // Reset the form
+      document.getElementById('newProjectForm').reset();
+      
+      // Clear the stored project data
+      window.newProjectData = null;
+    });
   });
 </script>
 {% endblock %}

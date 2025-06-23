@@ -136,6 +136,7 @@ class MarketingProjectReadBasic(MarketingProjectBase, BaseSchema):
 
 class MarketingProjectRead(MarketingProjectReadBasic):
     client: Optional[ClientRead] = None
+    team_members: List[Dict[str, Any]] = []
     task_stats: Optional[Dict[str, int]] = None  # Summary of task status counts
     workflow_progress: Optional[float] = None  # Percentage of workflow completion
 
