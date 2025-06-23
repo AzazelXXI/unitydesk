@@ -200,6 +200,13 @@ async def login_for_access_token(
         logger.info(f"Failed login attempt for username: {username}")
         return None
 
+    # Update user status to ONLINE after successful authentication
+    from src.models.user import UserStatusEnum
+    user.status = UserStatusEnum.ONLINE
+    await db.commit()
+    await db.refresh(user)
+    logger.info(f"User {user.name} status updated to ONLINE")
+
     # Create token with user info - handle user_type properly
     # Check if user_type is already a string or if it's an enum
     role_value = (
