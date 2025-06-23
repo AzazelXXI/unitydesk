@@ -2,7 +2,7 @@
 endblock %} {% block extra_css %}
 <link
   rel="stylesheet"
-  href="{{ url_for('static', path='/views/project/static/css/projects.css') }}"
+  href="{{ url_for('project_static', path='css/projects.css') }}"
 />
 {% endblock %} {% block content %}
 <div class="projects-container">
@@ -16,7 +16,8 @@ endblock %} {% block extra_css %}
             Projects Dashboard
           </h1>
           <p class="text-muted">Manage and track all your projects</p>
-        </div>        <div>
+        </div>
+        <div>
           <a href="/projects/new" class="btn btn-primary">
             <i class="fas fa-plus me-2"></i>New Project
           </a>
@@ -95,11 +96,13 @@ endblock %} {% block extra_css %}
         <div class="stats-label">Avg Progress</div>
       </div>
     </div>
-  </div>  <!-- Projects Grid -->
+  </div>
+  <!-- Projects Grid -->
   <div class="row">
-    {% if projects %}
-    {% for project in projects %}<div class="col-lg-4 col-md-6 mb-4">
-      <div class="project-card">        <div class="project-header">
+    {% if projects %} {% for project in projects %}
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="project-card">
+        <div class="project-header">
           <div class="d-flex justify-content-between align-items-start">
             <h5 class="project-title">
               <a href="/projects/{{ project.id }}" class="text-decoration-none">
@@ -212,151 +215,5 @@ endblock %} {% block extra_css %}
   {% endif %}
 </div>
 {% endblock %} {% block extra_js %}
-<script src="{{ url_for('static', path='/views/project/static/js/projects.js') }}"></script>
-{% endblock %}
-  document.addEventListener("DOMContentLoaded", function () {
-    console.log("🚀 JavaScript is loading...");
-    
-    // Test - make delete button visible for 3 seconds as a test
-    const deleteBtn = document.getElementById('deleteSelectedBtn');
-    if (deleteBtn) {
-      console.log("✅ Found delete button, making it visible for 3 seconds as test...");
-      deleteBtn.style.display = 'inline-block';
-      deleteBtn.innerHTML = '<i class="fas fa-trash me-2"></i>Delete Button Test';
-      
-      setTimeout(() => {
-        deleteBtn.style.display = 'none';
-        console.log("✅ Test complete, hiding button. Now initializing proper functionality...");
-        // Initialize project deletion functionality
-        initializeProjectDeletion();
-      }, 3000);
-    } else {
-      console.error("❌ Delete button not found!");
-      // Initialize anyway
-      initializeProjectDeletion();
-    }
-  });
-  
-  function initializeProjectDeletion() {
-    const checkboxes = document.querySelectorAll('.project-checkbox');
-    const deleteBtn = document.getElementById('deleteSelectedBtn');
-    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-    
-    console.log('Initializing project deletion functionality...');
-    console.log('Found checkboxes:', checkboxes.length);
-    console.log('Delete button:', deleteBtn);
-    
-    if (!deleteBtn) {
-      console.error('Delete button not found!');
-      return;
-    }
-    
-    function updateDeleteButton() {
-      const selectedCheckboxes = document.querySelectorAll('.project-checkbox:checked');
-      console.log('Selected checkboxes:', selectedCheckboxes.length);
-      
-      if (selectedCheckboxes.length > 0) {
-        deleteBtn.style.display = 'inline-block';
-        deleteBtn.innerHTML = `<i class="fas fa-trash me-2"></i>Delete ${selectedCheckboxes.length} Selected`;
-        console.log('Showing delete button');
-      } else {
-        deleteBtn.style.display = 'none';
-        console.log('Hiding delete button');
-      }
-      
-      // Update select all checkbox state
-      if (selectAllCheckbox) {
-        selectAllCheckbox.indeterminate = selectedCheckboxes.length > 0 && selectedCheckboxes.length < checkboxes.length;
-        selectAllCheckbox.checked = selectedCheckboxes.length === checkboxes.length && checkboxes.length > 0;
-      }
-    }
-    
-    // Add event listeners to project checkboxes
-    checkboxes.forEach((checkbox, index) => {
-      checkbox.addEventListener('change', function() {
-        console.log(`Checkbox ${index} changed:`, this.checked);
-        updateDeleteButton();
-      });
-    });
-    
-    // Handle select all checkbox
-    if (selectAllCheckbox) {
-      selectAllCheckbox.addEventListener('change', function() {
-        console.log('Select all changed:', this.checked);
-        checkboxes.forEach(checkbox => {
-          checkbox.checked = this.checked;
-        });
-        updateDeleteButton();
-      });
-    }
-      // Handle delete button click - THIS IS THE IMPORTANT PART
-    deleteBtn.addEventListener('click', async function() {
-      console.log('Delete button clicked!');
-      
-      const selectedCheckboxes = document.querySelectorAll('.project-checkbox:checked');
-      const selectedIds = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
-      
-      console.log('Selected project IDs:', selectedIds);
-      
-      if (selectedIds.length === 0) {
-        alert('Please select projects to delete.');
-        return;
-      }
-      
-      const confirmMessage = `Are you sure you want to delete ${selectedIds.length} project${selectedIds.length > 1 ? 's' : ''}? This action cannot be undone.`;
-      
-      if (!confirm(confirmMessage)) {
-        console.log('User cancelled deletion');
-        return;
-      }
-      
-      try {
-        console.log('Starting deletion process...');
-        
-        let successCount = 0;
-        let failedProjects = [];
-        
-        // Delete each project individually using the existing API
-        for (const projectId of selectedIds) {
-          try {
-            console.log(`Deleting project ${projectId}...`);
-            
-            const response = await fetch(`/api/projects/${projectId}`, {
-              method: 'DELETE',
-              credentials: 'include'
-            });
-            
-            if (response.ok) {
-              console.log(`✅ Successfully deleted project ${projectId}`);
-              successCount++;
-            } else {
-              console.error(`❌ Failed to delete project ${projectId}:`, response.status);
-              failedProjects.push(projectId);
-            }
-          } catch (error) {
-            console.error(`❌ Error deleting project ${projectId}:`, error);
-            failedProjects.push(projectId);
-          }
-        }
-        
-        // Show results to user
-        if (failedProjects.length === 0) {
-          alert(`Successfully deleted ${successCount} project${successCount > 1 ? 's' : ''}!`);
-        } else {
-          alert(`Deleted ${successCount} project${successCount > 1 ? 's' : ''} successfully. ${failedProjects.length} project${failedProjects.length > 1 ? 's' : ''} could not be deleted.`);
-        }
-        
-        // Reload the page to refresh the project list
-        console.log('Reloading page to refresh project list...');
-        window.location.reload();
-        
-      } catch (error) {
-        console.error('Error in deletion process:', error);
-        alert('An error occurred while deleting projects. Please try again.');
-      }
-    });
-    
-    console.log('✅ Project deletion functionality initialized');
-  }
-</script>
+<script src="{{ url_for('project_static', path='js/projects.js') }}"></script>
 {% endblock %}
