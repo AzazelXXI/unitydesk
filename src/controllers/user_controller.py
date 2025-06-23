@@ -202,6 +202,7 @@ async def login_for_access_token(
 
     # Update user status to ONLINE after successful authentication
     from src.models.user import UserStatusEnum
+
     user.status = UserStatusEnum.ONLINE
     await db.commit()
     await db.refresh(user)
