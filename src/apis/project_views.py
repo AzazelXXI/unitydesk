@@ -1,4 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, Request, Form
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    status,
+    Query,
+    Path,
+    Request,
+    Form,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional, Dict, Any
 import logging
@@ -39,9 +48,7 @@ router = APIRouter(
 )
 
 
-@router.post(
-    "/", status_code=status.HTTP_201_CREATED
-)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_project(
     name: str = Form(...),
     description: str = Form(""),
@@ -57,7 +64,7 @@ async def create_project(
     """
     logger.info(f"Creating project: {name}")
     logger.info(f"Current user: {current_user.id}")
-    
+
     try:
         # Convert form data to proper types
         project_data = {
@@ -69,44 +76,48 @@ async def create_project(
             "estimated_budget": float(estimated_budget) if estimated_budget else None,
             "owner_id": current_user.id,  # Set current user as owner
         }
-        
+
         logger.info(f"Project data: {project_data}")
-        
+
         # Create MarketingProjectCreate object
         project_create = MarketingProjectCreate(**project_data)
-        
-        # Create project using controller  
-        project = await ProjectController.create_project(project_create, db, current_user.id)
-        
+
+        # Create project using controller
+        project = await ProjectController.create_project(
+            project_create, db, current_user.id
+        )
+
         # Return success message instead of project data
         return {
             "success": True,
             "message": "Project Created Successfully",
             "project_id": project.id,
-            "project_name": project.name
+            "project_name": project.name,
         }
-        
+
     except Exception as e:
         logger.error(f"Error creating project: {str(e)}", exc_info=True)
-        
+
         # Handle unique constraint violation for project name
-        if "duplicate key value violates unique constraint" in str(e) and "projects_name_key" in str(e):
+        if "duplicate key value violates unique constraint" in str(
+            e
+        ) and "projects_name_key" in str(e):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"A project with the name '{name}' already exists. Please choose a different name."
+                detail=f"A project with the name '{name}' already exists. Please choose a different name.",
             )
-        
+
         # Handle other validation errors
         if "ValidationError" in str(type(e)):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid project data: {str(e)}"
+                detail=f"Invalid project data: {str(e)}",
             )
-        
+
         # Handle all other errors
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while creating the project. Please try again."
+            detail="An unexpected error occurred while creating the project. Please try again.",
         )
 
 

@@ -16,8 +16,7 @@ endblock %} {% block extra_css %}
             Projects Dashboard
           </h1>
           <p class="text-muted">Manage and track all your projects</p>
-        </div>
-        <div>
+        </div>        <div>
           <a href="/projects/new" class="btn btn-primary">
             <i class="fas fa-plus me-2"></i>New Project
           </a>
@@ -96,14 +95,11 @@ endblock %} {% block extra_css %}
         <div class="stats-label">Avg Progress</div>
       </div>
     </div>
-  </div>
-
-  <!-- Projects Grid -->
+  </div>  <!-- Projects Grid -->
   <div class="row">
-    {% if projects %} {% for project in projects %}
-    <div class="col-lg-4 col-md-6 mb-4">
-      <div class="project-card">
-        <div class="project-header">
+    {% if projects %}
+    {% for project in projects %}<div class="col-lg-4 col-md-6 mb-4">
+      <div class="project-card">        <div class="project-header">
           <div class="d-flex justify-content-between align-items-start">
             <h5 class="project-title">
               <a href="/projects/{{ project.id }}" class="text-decoration-none">
@@ -208,56 +204,6 @@ endblock %} {% block extra_css %}
     </div>
     {% endif %}
   </div>
-
-  <!-- Quick Task Status Update Widget (for testing notifications) -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header bg-primary text-white">
-          <h5 class="card-title mb-0">
-            <i class="fas fa-tasks me-2"></i>Quick Task Status Update (Demo)
-          </h5>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-4">
-              <label for="taskSelect" class="form-label">Select Task:</label>
-              <select class="form-select" id="taskSelect">
-                <option value="">Loading tasks...</option>
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label for="statusSelect" class="form-label">New Status:</label>
-              <select class="form-select" id="statusSelect">
-                <option value="NOT_STARTED">Not Started</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="COMPLETED">Completed</option>
-                <option value="BLOCKED">Blocked</option>
-                <option value="CANCELLED">Cancelled</option>
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">&nbsp;</label>
-              <button
-                class="btn btn-success d-block"
-                onclick="updateTaskStatus()"
-              >
-                <i class="fas fa-sync me-2"></i>Update Status
-              </button>
-            </div>
-            <div class="col-md-2">
-              <label class="form-label">&nbsp;</label>
-              <button class="btn btn-info d-block" onclick="loadTasks()">
-                <i class="fas fa-refresh me-2"></i>Refresh
-              </button>
-            </div>
-          </div>
-          <div id="updateResult" class="mt-3"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   {% if error %}
   <div class="alert alert-warning" role="alert">
     <i class="fas fa-exclamation-triangle me-2"></i>
@@ -267,149 +213,150 @@ endblock %} {% block extra_css %}
 </div>
 {% endblock %} {% block extra_js %}
 <script src="{{ url_for('static', path='/views/project/static/js/projects.js') }}"></script>
-
-<!-- Task Status Update Demo Script -->
-<script>
-  // Load tasks for the demo widget
-  async function loadTasks() {
-    try {
-      const taskSelect = document.getElementById("taskSelect");
-      taskSelect.innerHTML = '<option value="">Loading tasks...</option>';
-
-      // For demo purposes, we'll load tasks from all projects
-      // Try project ID 1 first, then try to create some sample tasks if none exist
-      let response = await fetch("/api/tasks/project/1", {
-        headers: {
-          Accept: "application/json",
-        },
-      });
-
-      let tasks = [];
-      if (response.ok) {
-        tasks = await response.json();
-      }
-
-      // If no tasks found, try to create some sample tasks
-      if (tasks.length === 0) {
-        await createSampleTasks();
-        // Try loading again
-        response = await fetch("/api/tasks/project/1", {
-          headers: {
-            Accept: "application/json",
-          },
-        });
-        if (response.ok) {
-          tasks = await response.json();
-        }
-      }
-
-      taskSelect.innerHTML = '<option value="">Select a task...</option>';
-      tasks.forEach((task) => {
-        const option = document.createElement("option");
-        option.value = task.id;
-        option.textContent = `${task.name} (${task.status})`;
-        taskSelect.appendChild(option);
-      });
-
-      document.getElementById(
-        "updateResult"
-      ).innerHTML = `<div class="alert alert-info">Loaded ${tasks.length} tasks</div>`;
-    } catch (error) {
-      console.error("Error loading tasks:", error);
-      document.getElementById("updateResult").innerHTML =
-        '<div class="alert alert-warning">Failed to load tasks. This demo requires a project with ID 1 to exist.</div>';
+{% endblock %}
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("🚀 JavaScript is loading...");
+    
+    // Test - make delete button visible for 3 seconds as a test
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    if (deleteBtn) {
+      console.log("✅ Found delete button, making it visible for 3 seconds as test...");
+      deleteBtn.style.display = 'inline-block';
+      deleteBtn.innerHTML = '<i class="fas fa-trash me-2"></i>Delete Button Test';
+      
+      setTimeout(() => {
+        deleteBtn.style.display = 'none';
+        console.log("✅ Test complete, hiding button. Now initializing proper functionality...");
+        // Initialize project deletion functionality
+        initializeProjectDeletion();
+      }, 3000);
+    } else {
+      console.error("❌ Delete button not found!");
+      // Initialize anyway
+      initializeProjectDeletion();
     }
-  }
-
-  // Create sample tasks for testing
-  async function createSampleTasks() {
-    const sampleTasks = [
-      {
-        name: "Design UI mockups",
-        description: "Create user interface mockups for the new feature",
-        project_id: 1,
-      },
-      {
-        name: "Implement backend API",
-        description: "Develop REST API endpoints for data management",
-        project_id: 1,
-      },
-      {
-        name: "Write unit tests",
-        description: "Create comprehensive unit tests for all modules",
-        project_id: 1,
-      },
-    ];
-
-    for (const taskData of sampleTasks) {
-      try {
-        await fetch("/api/tasks/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify(taskData),
-        });
-      } catch (error) {
-        console.log("Could not create sample task:", error);
+  });
+  
+  function initializeProjectDeletion() {
+    const checkboxes = document.querySelectorAll('.project-checkbox');
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    
+    console.log('Initializing project deletion functionality...');
+    console.log('Found checkboxes:', checkboxes.length);
+    console.log('Delete button:', deleteBtn);
+    
+    if (!deleteBtn) {
+      console.error('Delete button not found!');
+      return;
+    }
+    
+    function updateDeleteButton() {
+      const selectedCheckboxes = document.querySelectorAll('.project-checkbox:checked');
+      console.log('Selected checkboxes:', selectedCheckboxes.length);
+      
+      if (selectedCheckboxes.length > 0) {
+        deleteBtn.style.display = 'inline-block';
+        deleteBtn.innerHTML = `<i class="fas fa-trash me-2"></i>Delete ${selectedCheckboxes.length} Selected`;
+        console.log('Showing delete button');
+      } else {
+        deleteBtn.style.display = 'none';
+        console.log('Hiding delete button');
+      }
+      
+      // Update select all checkbox state
+      if (selectAllCheckbox) {
+        selectAllCheckbox.indeterminate = selectedCheckboxes.length > 0 && selectedCheckboxes.length < checkboxes.length;
+        selectAllCheckbox.checked = selectedCheckboxes.length === checkboxes.length && checkboxes.length > 0;
       }
     }
-  }
-
-  // Update task status and trigger notifications
-  async function updateTaskStatus() {
-    try {
-      const taskId = document.getElementById("taskSelect").value;
-      const newStatus = document.getElementById("statusSelect").value;
-
-      if (!taskId) {
-        document.getElementById("updateResult").innerHTML =
-          '<div class="alert alert-warning">Please select a task first</div>';
+    
+    // Add event listeners to project checkboxes
+    checkboxes.forEach((checkbox, index) => {
+      checkbox.addEventListener('change', function() {
+        console.log(`Checkbox ${index} changed:`, this.checked);
+        updateDeleteButton();
+      });
+    });
+    
+    // Handle select all checkbox
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener('change', function() {
+        console.log('Select all changed:', this.checked);
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = this.checked;
+        });
+        updateDeleteButton();
+      });
+    }
+      // Handle delete button click - THIS IS THE IMPORTANT PART
+    deleteBtn.addEventListener('click', async function() {
+      console.log('Delete button clicked!');
+      
+      const selectedCheckboxes = document.querySelectorAll('.project-checkbox:checked');
+      const selectedIds = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
+      
+      console.log('Selected project IDs:', selectedIds);
+      
+      if (selectedIds.length === 0) {
+        alert('Please select projects to delete.');
         return;
       }
-
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          status: newStatus,
-        }),
-      });
-
-      if (response.ok) {
-        const updatedTask = await response.json();
-        document.getElementById(
-          "updateResult"
-        ).innerHTML = `<div class="alert alert-success">
-          <i class="fas fa-check me-2"></i>
-          Task "${updatedTask.name}" status updated to "${updatedTask.status}"! 
-          <br><small>Check the notification bell for real-time updates!</small>
-        </div>`;
-
-        // Refresh the task list
-        await loadTasks();
-      } else {
-        const error = await response.json();
-        document.getElementById(
-          "updateResult"
-        ).innerHTML = `<div class="alert alert-danger">Failed to update task: ${error.detail}</div>`;
+      
+      const confirmMessage = `Are you sure you want to delete ${selectedIds.length} project${selectedIds.length > 1 ? 's' : ''}? This action cannot be undone.`;
+      
+      if (!confirm(confirmMessage)) {
+        console.log('User cancelled deletion');
+        return;
       }
-    } catch (error) {
-      console.error("Error updating task:", error);
-      document.getElementById(
-        "updateResult"
-      ).innerHTML = `<div class="alert alert-danger">Error updating task: ${error.message}</div>`;
-    }
+      
+      try {
+        console.log('Starting deletion process...');
+        
+        let successCount = 0;
+        let failedProjects = [];
+        
+        // Delete each project individually using the existing API
+        for (const projectId of selectedIds) {
+          try {
+            console.log(`Deleting project ${projectId}...`);
+            
+            const response = await fetch(`/api/projects/${projectId}`, {
+              method: 'DELETE',
+              credentials: 'include'
+            });
+            
+            if (response.ok) {
+              console.log(`✅ Successfully deleted project ${projectId}`);
+              successCount++;
+            } else {
+              console.error(`❌ Failed to delete project ${projectId}:`, response.status);
+              failedProjects.push(projectId);
+            }
+          } catch (error) {
+            console.error(`❌ Error deleting project ${projectId}:`, error);
+            failedProjects.push(projectId);
+          }
+        }
+        
+        // Show results to user
+        if (failedProjects.length === 0) {
+          alert(`Successfully deleted ${successCount} project${successCount > 1 ? 's' : ''}!`);
+        } else {
+          alert(`Deleted ${successCount} project${successCount > 1 ? 's' : ''} successfully. ${failedProjects.length} project${failedProjects.length > 1 ? 's' : ''} could not be deleted.`);
+        }
+        
+        // Reload the page to refresh the project list
+        console.log('Reloading page to refresh project list...');
+        window.location.reload();
+        
+      } catch (error) {
+        console.error('Error in deletion process:', error);
+        alert('An error occurred while deleting projects. Please try again.');
+      }
+    });
+    
+    console.log('✅ Project deletion functionality initialized');
   }
-
-  // Load tasks when page loads
-  document.addEventListener("DOMContentLoaded", function () {
-    // Add a small delay to let the user authentication settle
-    setTimeout(loadTasks, 1000);
-  });
 </script>
 {% endblock %}

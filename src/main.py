@@ -10,7 +10,6 @@ API routes are centralized through the api_router module with versioning.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
-import ssl
 import asyncio
 import logging
 
@@ -37,10 +36,6 @@ from fastapi import status
 
 # Set up logging
 app_logger = setup_logging()
-
-# Configure SSL for secure connections
-ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-ssl_context.load_cert_chain(".cert/cert.pem", keyfile=".cert/key.pem")
 
 # Initialize FastAPI application
 app = FastAPI(

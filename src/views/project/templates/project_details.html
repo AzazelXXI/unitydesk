@@ -202,7 +202,7 @@ Project Details{% endblock %} {% block head_extra %}
               </li>
               <li><hr class="dropdown-divider" /></li>
               <li>
-                <a class="dropdown-item text-danger" href="#"
+                <a class="dropdown-item text-danger" href="#" id="deleteProjectBtn"
                   ><i class="bi bi-trash"></i> Delete Project</a
                 >
               </li>
@@ -1077,6 +1077,44 @@ Project Details{% endblock %} {% block head_extra %}
         cutout: "70%",
       },
     });
+  });
+  
+  // Add delete project functionality
+  document.getElementById('deleteProjectBtn').addEventListener('click', async function(e) {
+    e.preventDefault();
+    
+    const projectId = {{ project.id }};
+    const projectName = "{{ project.name }}";
+    
+    // Confirm deletion
+    const confirmMessage = `Are you sure you want to delete the project "${projectName}"? This action cannot be undone.`;
+    
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+    
+    try {
+      console.log(`Deleting project ${projectId}...`);
+      
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        console.log(`✅ Successfully deleted project ${projectId}`);
+        alert(`Project "${projectName}" has been deleted successfully!`);
+        
+        // Redirect to projects list
+        window.location.href = '/project';
+      } else {
+        console.error(`❌ Failed to delete project ${projectId}:`, response.status);
+        alert('Failed to delete the project. Please try again.');
+      }
+    } catch (error) {
+      console.error(`❌ Error deleting project ${projectId}:`, error);
+      alert('An error occurred while deleting the project. Please try again.');
+    }
   });
 </script>
 {% endblock %}
