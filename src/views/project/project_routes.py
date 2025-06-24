@@ -366,6 +366,28 @@ async def project_details(
             }
             tasks.append(task)
 
+        # Get users for task assignment
+        users_query = text(
+            """
+            SELECT id, name, email
+            FROM users
+            WHERE is_active = true
+            ORDER BY name
+        """
+        )
+        users_result = await db.execute(users_query)
+        user_rows = users_result.fetchall()
+
+        users = []
+        for row in user_rows:
+            users.append(
+                {
+                    "id": row.id,
+                    "name": row.name,
+                    "email": row.email,
+                }
+            )
+
         return templates.TemplateResponse(
             "project/templates/project_details.html",
             {
@@ -373,6 +395,7 @@ async def project_details(
                 "current_user": current_user,
                 "project": project,
                 "tasks": tasks,
+                "users": users,
                 "page_title": f"Project: {project['name']}",
             },
         )
