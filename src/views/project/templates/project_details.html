@@ -1109,7 +1109,7 @@ Project Details{% endblock %} {% block head_extra %}
         alert(`Project "${projectName}" has been deleted successfully!`);
 
         // Redirect to projects list
-        window.location.href = '/project';
+        window.location.href = '/projects';
       } else {
         console.error(`❌ Failed to delete project ${projectId}:`, response.status);
         alert('Failed to delete the project. Please try again.');
