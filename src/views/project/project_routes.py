@@ -39,7 +39,6 @@ async def projects_dashboard(
     request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_web),
-    success: Optional[str] = None,
 ):
     """
     Display the projects dashboard with all projects
@@ -49,8 +48,8 @@ async def projects_dashboard(
         print(f"User: {current_user.name} (ID: {current_user.id})")
         print(f"User Type: {current_user.user_type}")
 
-        # Get success message from query parameter
-        success_message = request.query_params.get("success")
+        # Get success message from query parameter (remove this since we don't need it)
+        # success_message = request.query_params.get("success")
 
         # Query all projects with basic statistics
         projects_query = text(
@@ -141,7 +140,6 @@ async def projects_dashboard(
                 "projects": projects,
                 "stats": stats,
                 "page_title": "Projects Dashboard",
-                "success_message": success_message,
             },
         )
 
@@ -226,11 +224,12 @@ async def create_project_web(
             project_data, db, current_user.id
         )
 
-        # Redirect to projects page with success message
-        from fastapi.responses import RedirectResponse
+        print(f"Project created successfully with ID: {new_project.id}")
 
+        # Set a flag in session storage to show success modal
+        # We'll use a redirect with a hash fragment to trigger the modal
         return RedirectResponse(
-            url="/projects?success=Project created successfully",
+            url="/projects#project-created",
             status_code=303,
         )
 

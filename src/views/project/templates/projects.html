@@ -25,25 +25,6 @@ endblock %} {% block head_extra %}
       </div>
     </div>
   </div>
-
-  <!-- Success Message -->
-  {% if success_message %}
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="fas fa-check-circle me-2"></i>
-        {{ success_message }}
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="alert"
-          aria-label="Close"
-        ></button>
-      </div>
-    </div>
-  </div>
-  {% endif %}
-
   <!-- Statistics Cards -->
   <div class="row mb-4">
     <div class="col-6 col-md-2 mb-3 mb-md-0">
@@ -215,6 +196,66 @@ endblock %} {% block head_extra %}
   </div>
   {% endif %}
 </div>
+
+<!-- Success Modal for Project Creation -->
+<div
+  class="modal fade"
+  id="projectCreatedModal"
+  tabindex="-1"
+  aria-labelledby="projectCreatedModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="projectCreatedModalLabel">
+          <i class="fas fa-check-circle me-2"></i>Success!
+        </h5>
+        <button
+          type="button"
+          class="btn-close btn-close-white"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body text-center">
+        <div class="mb-3">
+          <i
+            class="fas fa-check-circle-fill text-success"
+            style="font-size: 3rem"
+          ></i>
+        </div>
+        <h4>Project Created Successfully!</h4>
+        <p class="text-muted">
+          Your new project has been created and is ready for you to start
+          working on.
+        </p>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-success" data-bs-dismiss="modal">
+          <i class="fas fa-arrow-right me-2"></i>Continue
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %} {% block extra_js %}
 <script src="{{ url_for('project_static', path='js/projects.js') }}"></script>
+{% endblock %} {% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Check if we came from project creation (look for hash fragment)
+    if (window.location.hash === "#project-created") {
+      // Show the success modal
+      const modal = new bootstrap.Modal(
+        document.getElementById("projectCreatedModal")
+      );
+      modal.show();
+
+      // Clean up the URL hash without affecting browser history
+      history.replaceState(null, "", window.location.pathname);
+    }
+  });
+</script>
 {% endblock %}

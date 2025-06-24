@@ -305,55 +305,8 @@ Platform{% endblock %} {% block head_extra %}
     document
       .getElementById("newProjectForm")
       .addEventListener("submit", function (e) {
-        e.preventDefault();
-
-        // Collect form data
-        const formData = new FormData(this);
-
-        // Convert empty string to empty string for estimated_budget (API will handle it)
-        // No need to convert to JSON, send as FormData for the Form(...) API endpoint
-
-        // Make API request
-        fetch("/api/projects/", {
-          method: "POST",
-          credentials: "include", // Include cookies for authentication
-          body: formData, // Send as FormData, not JSON
-        })
-          .then((response) => {
-            if (!response.ok) {
-              return response.json().then((errorData) => {
-                throw new Error(
-                  errorData.detail || "Network response was not ok"
-                );
-              });
-            }
-            return response.json();
-          })
-          .then((data) => {
-            // Store project data for later use
-            window.newProjectData = data;
-
-            // Update the modal content with the success message
-            document.querySelector("#successModal .modal-body h4").textContent =
-              data.message || "Project Created Successfully!";
-            document.querySelector(
-              "#successModal .modal-body p"
-            ).textContent = `Project "${data.project_name}" has been created successfully.`;
-
-            // Show success modal
-            const successModal = new bootstrap.Modal(
-              document.getElementById("successModal")
-            );
-            successModal.show();
-          })
-          .catch((error) => {
-            console.error("Error:", error);
-            // Show user-friendly error message
-            alert(
-              error.message ||
-                "There was a problem creating the project. Please try again."
-            );
-          });
+        // Don't prevent default - let the form submit normally to the web route
+        // This will handle the redirect properly
       });
 
     // Handle success modal buttons
