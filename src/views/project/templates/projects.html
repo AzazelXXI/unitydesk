@@ -1,8 +1,8 @@
 {% extends "core/templates/base.html" %} {% block title %}Projects Dashboard{%
-endblock %} {% block extra_css %}
+endblock %} {% block head_extra %}
 <link
   rel="stylesheet"
-  href="{{ url_for('project_static', path='css/projects.css') }}"
+  href="{{ url_for('project_static', path='css/projects.css') }}?v=999999"
 />
 {% endblock %} {% block content %}
 <div class="projects-container">

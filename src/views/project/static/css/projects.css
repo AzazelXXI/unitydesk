@@ -45,34 +45,71 @@
 
 /* Project Cards */
 .project-card {
-  background: #a6a6a6;
+  background: #495057 !important; /* Professional dark gray background */
   border-radius: 12px;
-  border: 1px solid #a6a6a6;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  border: 2px solid #6c757d !important; /* Subtle gray border */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
   overflow: hidden;
   height: 100%;
+  color: #ffffff !important; /* White text for contrast */
 }
 
-.project-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
-  border-color: #007bff;
+/* Ultra-specific selectors to override Bootstrap */
+.projects-container .row .col-lg-4 .project-card,
+.projects-container .row .col-md-6 .project-card {
+  background-color: #495057 !important;
+  border: 2px solid #6c757d !important;
+  color: #ffffff !important;
+  padding: 0 !important;
+  margin-bottom: 1rem !important;
+}
+
+.project-card:hover,
+.projects-container .row .col-lg-4 .project-card:hover,
+.projects-container .row .col-md-6 .project-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  border-color: #007bff !important;
+  background-color: #5a6268 !important; /* Slightly lighter on hover */
 }
 
 .project-header {
   padding: 1.5rem 1.5rem 1rem;
-  border-bottom: 1px solid #f1f3f4;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: transparent;
+}
+
+/* Dark theme overrides for project card elements */
+.project-card .project-header {
+  background-color: transparent !important;
+  color: #ffffff !important;
+  padding: 1.5rem !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.project-card .project-body {
+  background-color: transparent !important;
+  color: #ffffff !important;
+  padding: 0 1.5rem 1rem !important;
+}
+
+.project-card .project-footer {
+  background-color: rgba(0, 0, 0, 0.15) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  padding: 1rem 1.5rem !important;
 }
 
 .project-title {
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 0.75rem;
+  color: #ffffff;
 }
 
 .project-title a {
-  color: #2c3e50;
+  color: #ffffff;
   text-decoration: none;
 }
 
@@ -80,10 +117,25 @@
   color: #007bff;
 }
 
+/* Text color overrides for dark theme */
+.project-card .project-title,
+.project-card .project-title a {
+  color: #ffffff !important;
+}
+
+.project-card .project-title a:hover {
+  color: #007bff !important;
+}
+
+.project-card .text-muted {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
 .project-description {
   font-size: 0.875rem;
   line-height: 1.5;
   margin-bottom: 0;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 /* Project Status Badges */
@@ -166,10 +218,11 @@
 /* Project Body */
 .project-body {
   padding: 1rem 1.5rem;
+  background-color: transparent;
 }
 
 .progress {
-  background-color: #f8f9fa;
+  background-color: rgba(255, 255, 255, 0.2);
   border-radius: 10px;
 }
 
@@ -186,21 +239,39 @@
 .project-stat .stat-number {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: #ffffff;
   margin-bottom: 0.25rem;
 }
 
 .project-stat .stat-label {
   font-size: 0.75rem;
-  color: #6c757d;
+  color: rgba(255, 255, 255, 0.8);
   font-weight: 500;
+}
+
+/* Dark theme stat overrides */
+.project-card .stat-number {
+  color: #ffffff !important;
+}
+
+.project-card .stat-label {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Progress bar styling for dark theme */
+.project-card .progress {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.project-card .progress-bar {
+  background: linear-gradient(45deg, #007bff, #0056b3) !important;
 }
 
 /* Project Footer */
 .project-footer {
   padding: 1rem 1.5rem;
-  background-color: #f8f9fa;
-  border-top: 1px solid #f1f3f4;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .project-actions .btn {

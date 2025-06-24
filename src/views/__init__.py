@@ -23,7 +23,7 @@ from src.controllers.project_controller import router as project_controller_rout
 # Define the list of all web routers for easy inclusion in the main application
 web_routers = [
     core_router,
-    dashboard_router,
+    # dashboard_router,  # Commented out to avoid conflicts with /projects route
     # meeting_router,  # Hidden for now, will be developed later
     calendar_router,
     # projects_router,  # Removed - using project_web_router instead to avoid conflicts

@@ -98,6 +98,10 @@ from src.views.project.project_routes import router as project_web_router
 
 app.include_router(project_web_router)
 
+# Note: Dashboard router temporarily disabled to resolve /projects route conflict
+# from src.views.dashboard_routes import router as dashboard_router
+# app.include_router(dashboard_router)
+
 # Include the centralized API router (which includes all API routes with versioning)
 app.include_router(api_router)
 
