@@ -45,14 +45,14 @@
 
 /* Project Cards */
 .project-card {
-  background: #495057 !important; /* Professional dark gray background */
+  background: #ffffff !important; /* Clean white background */
   border-radius: 12px;
-  border: 2px solid #6c757d !important; /* Subtle gray border */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 2px solid #e9ecef !important; /* Light gray border */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   overflow: hidden;
   height: 100%;
-  color: #ffffff !important; /* White text for contrast */
+  color: #2c3e50 !important; /* Dark text for readability */
 }
 
 /* Clickable card styling */
@@ -68,9 +68,9 @@
 /* Ultra-specific selectors to override Bootstrap */
 .projects-container .row .col-lg-4 .project-card,
 .projects-container .row .col-md-6 .project-card {
-  background-color: #495057 !important;
-  border: 2px solid #6c757d !important;
-  color: #ffffff !important;
+  background-color: #ffffff !important;
+  border: 2px solid #e9ecef !important;
+  color: #2c3e50 !important;
   padding: 0 !important;
   margin-bottom: 1rem !important;
 }
@@ -80,35 +80,35 @@
 .projects-container .row .col-md-6 .project-card:hover,
 .clickable-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
   border-color: #007bff !important;
-  background-color: #5a6268 !important; /* Slightly lighter on hover */
+  background-color: #f8f9fa !important; /* Very light gray on hover */
 }
 
 .project-header {
   padding: 1.5rem 1.5rem 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid #e9ecef;
   background-color: transparent;
 }
 
-/* Dark theme overrides for project card elements */
+/* White theme overrides for project card elements */
 .project-card .project-header {
   background-color: transparent !important;
-  color: #ffffff !important;
+  color: #2c3e50 !important;
   padding: 1.5rem !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-bottom: 1px solid #e9ecef !important;
 }
 
 .project-card .project-body {
   background-color: transparent !important;
-  color: #ffffff !important;
+  color: #2c3e50 !important;
   padding: 0 1.5rem 1rem !important;
 }
 
 .project-card .project-footer {
-  background-color: rgba(0, 0, 0, 0.15) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: #ffffff !important;
+  background-color: #f8f9fa !important;
+  border-top: 1px solid #e9ecef !important;
+  color: #2c3e50 !important;
   padding: 1rem 1.5rem !important;
 }
 
@@ -116,11 +116,11 @@
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 0.75rem;
-  color: #ffffff;
+  color: #2c3e50;
 }
 
 .project-title a {
-  color: #ffffff;
+  color: #2c3e50;
   text-decoration: none;
 }
 
@@ -128,10 +128,10 @@
   color: #007bff;
 }
 
-/* Text color overrides for dark theme */
+/* Text color overrides for white theme */
 .project-card .project-title,
 .project-card .project-title a {
-  color: #ffffff !important;
+  color: #2c3e50 !important;
 }
 
 .project-card .project-title a:hover {
@@ -139,7 +139,7 @@
 }
 
 .project-card .text-muted {
-  color: rgba(255, 255, 255, 0.7) !important;
+  color: #6c757d !important;
 }
 
 .project-description {
@@ -250,28 +250,28 @@
 .project-stat .stat-number {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #ffffff;
+  color: #2c3e50;
   margin-bottom: 0.25rem;
 }
 
 .project-stat .stat-label {
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: #6c757d;
   font-weight: 500;
 }
 
-/* Dark theme stat overrides */
+/* White theme stat overrides */
 .project-card .stat-number {
-  color: #ffffff !important;
+  color: #2c3e50 !important;
 }
 
 .project-card .stat-label {
-  color: rgba(255, 255, 255, 0.8) !important;
+  color: #6c757d !important;
 }
 
-/* Progress bar styling for dark theme */
+/* Progress bar styling for white theme */
 .project-card .progress {
-  background-color: rgba(255, 255, 255, 0.2) !important;
+  background-color: #e9ecef !important;
 }
 
 .project-card .progress-bar {
