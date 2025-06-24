@@ -130,7 +130,7 @@ Platform{% endblock %} {% block head_extra %}
               type="text"
               class="form-control datepicker"
               id="targetEndDate"
-              name="target_end_date"
+              name="end_date"
               placeholder="Select date"
             />
           </div>
@@ -231,7 +231,8 @@ Platform{% endblock %} {% block head_extra %}
   document.addEventListener("DOMContentLoaded", function () {
     // Initialize date pickers
     flatpickr(".datepicker", {
-      dateFormat: "Y-m-d",
+      enableTime: true,
+      dateFormat: "Y-m-d\\TH:i:S",
       allowInput: true,
     });
 
