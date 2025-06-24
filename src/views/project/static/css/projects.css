@@ -55,6 +55,16 @@
   color: #ffffff !important; /* White text for contrast */
 }
 
+/* Clickable card styling */
+.clickable-card {
+  cursor: pointer;
+  user-select: none;
+}
+
+.clickable-card:hover {
+  transform: translateY(-2px) !important;
+}
+
 /* Ultra-specific selectors to override Bootstrap */
 .projects-container .row .col-lg-4 .project-card,
 .projects-container .row .col-md-6 .project-card {
@@ -67,7 +77,8 @@
 
 .project-card:hover,
 .projects-container .row .col-lg-4 .project-card:hover,
-.projects-container .row .col-md-6 .project-card:hover {
+.projects-container .row .col-md-6 .project-card:hover,
+.clickable-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
   border-color: #007bff !important;
@@ -278,6 +289,13 @@
   margin-left: 0.25rem;
   border-radius: 6px;
   padding: 0.4rem 0.8rem;
+  position: relative;
+  z-index: 10;
+}
+
+/* Ensure action buttons work properly with clickable cards */
+.project-actions .btn:hover {
+  transform: none !important;
 }
 
 /* Empty State */
