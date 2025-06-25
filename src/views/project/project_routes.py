@@ -371,7 +371,6 @@ async def project_details(
             """
             SELECT id, name, email
             FROM users
-            WHERE is_active = true
             ORDER BY name
         """
         )

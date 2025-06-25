@@ -88,26 +88,11 @@ async def create_task(
             project_id=task_data.project_id,
             status=task_data.status,
             priority=task_data.priority,
-            estimated_hours=task_data.estimated_hours,
-            start_date=task_data.start_date,
-            due_date=task_data.due_date,
         )
 
         db.add(new_task)
         await db.commit()
         await db.refresh(new_task)
-
-        # Assign the task to the user if specified
-        if task_data.assignee_id:
-            from src.models.association_tables import task_assignees
-            from sqlalchemy import insert
-
-            # Insert the assignment
-            assign_stmt = insert(task_assignees).values(
-                task_id=new_task.id, user_id=task_data.assignee_id
-            )
-            await db.execute(assign_stmt)
-            await db.commit()
 
         logger.info(f"Task {new_task.id} created by user {current_user.id}")
         return new_task
