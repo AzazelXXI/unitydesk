@@ -1136,10 +1136,10 @@ Project Details{% endblock %} {% block head_extra %}
             <div class="col-md-4 mb-3">
               <label for="taskPriority" class="form-label">Priority</label>
               <select class="form-select" id="taskPriority" name="taskPriority">
-                <option value="LOW">Low</option>
-                <option value="MEDIUM" selected>Medium</option>
-                <option value="HIGH">High</option>
-                <option value="URGENT">Urgent</option>
+                <option value="Low">Low</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="High">High</option>
+                <option value="Urgent">Urgent</option>
               </select>
             </div>
           </div>
@@ -1159,10 +1159,10 @@ Project Details{% endblock %} {% block head_extra %}
             <div class="col-md-6 mb-3">
               <label for="taskStatus" class="form-label">Status</label>
               <select class="form-select" id="taskStatus" name="taskStatus">
-                <option value="NOT_STARTED" selected>Not Started</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="BLOCKED">Blocked</option>
-                <option value="COMPLETED">Completed</option>
+                <option value="Not Started" selected>Not Started</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Blocked">Blocked</option>
+                <option value="Completed">Completed</option>
               </select>
             </div>
             <div class="col-md-6 mb-3">
@@ -1242,31 +1242,17 @@ Project Details{% endblock %} {% block head_extra %}
         e.preventDefault();
 
         const formData = new FormData(addTaskForm);
-        const taskData = {
-          name: formData.get('taskName'),
-          description: formData.get('taskDescription'),
-          project_id: {{ project.id }},
-          status: formData.get('taskStatus'),
-          priority: formData.get('taskPriority'),
-          estimated_hours: formData.get('taskEstimatedHours') ? parseInt(formData.get('taskEstimatedHours')) : null,
-          start_date: formData.get('taskStartDate') || null,
-          due_date: formData.get('taskDueDate') || null,
-          assignee_id: formData.get('taskAssignee') || null
-        };
 
         try {
-          const response = await fetch('/api/tasks/', {
+          const response = await fetch(`/projects/{{ project.id }}/tasks`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify(taskData)
+            body: formData,
+            credentials: 'include'
           });
 
-          if (response.ok) {
-            const newTask = await response.json();
+          const result = await response.json();
 
+          if (result.success) {
             // Close the modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('addTaskModal'));
             modal.hide();
@@ -1280,8 +1266,7 @@ Project Details{% endblock %} {% block head_extra %}
             // Reload the page to show the new task
             window.location.reload();
           } else {
-            const errorData = await response.json();
-            alert('Error creating task: ' + (errorData.detail || 'Unknown error'));
+            alert('Error creating task: ' + (result.message || 'Unknown error'));
           }
         } catch (error) {
           console.error('Error creating task:', error);

@@ -7,18 +7,21 @@ This module contains all project-related web routes for the CSA Platform, includ
 - Project creation and editing interfaces
 """
 
-from fastapi import APIRouter, Request, Depends, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Request, Depends, HTTPException, Form
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text, func
 from typing import List, Optional
 import logging
+from datetime import datetime
 
 from src.database import get_db
 from src.middleware.auth_middleware import get_current_user_web
 from src.models.user import User
 from src.models.project import Project, ProjectStatusEnum
+from src.models.task import Task, TaskStatusEnum, TaskPriorityEnum
+from src.models.association_tables import task_assignees
 from src.controllers.project_controller import ProjectController
 
 # Configure logging
@@ -404,3 +407,113 @@ async def project_details(
     except Exception as e:
         logger.error(f"Error loading project details: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Could not load project details")
+
+
+@router.post("/projects/{project_id}/tasks")
+async def create_task(
+    project_id: int,
+    request: Request,
+    taskName: str = Form(...),
+    taskDescription: Optional[str] = Form(None),
+    taskPriority: str = Form("Medium"),
+    taskStatus: str = Form("Not Started"),
+    taskAssignee: Optional[int] = Form(None),
+    taskStartDate: Optional[str] = Form(None),
+    taskDueDate: Optional[str] = Form(None),
+    taskEstimatedHours: Optional[int] = Form(None),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+):
+    """Create a new task for a project"""
+    try:
+        # Verify project exists and user has access
+        project_query = text("SELECT id FROM projects WHERE id = :project_id")
+        project_result = await db.execute(project_query, {"project_id": project_id})
+        if not project_result.fetchone():
+            raise HTTPException(status_code=404, detail="Project not found")
+
+        # Parse dates if provided
+        start_date = None
+        due_date = None
+        if taskStartDate:
+            try:
+                start_date = datetime.strptime(taskStartDate, "%Y-%m-%d")
+            except ValueError:
+                pass
+        if taskDueDate:
+            try:
+                due_date = datetime.strptime(taskDueDate, "%Y-%m-%d")
+            except ValueError:
+                pass
+
+        # Create the task with proper enum conversion
+        new_task = Task(
+            name=taskName,
+            description=taskDescription,
+            project_id=project_id,
+            status=TaskStatusEnum(taskStatus),
+            priority=TaskPriorityEnum(taskPriority),
+            estimated_hours=taskEstimatedHours,
+            start_date=start_date,
+            due_date=due_date,
+        )
+
+        db.add(new_task)
+        await db.commit()
+        await db.refresh(new_task)
+
+        # Assign user if specified
+        if taskAssignee:
+            # Verify user exists
+            user_query = text("SELECT id FROM users WHERE id = :user_id")
+            user_result = await db.execute(user_query, {"user_id": taskAssignee})
+            if user_result.fetchone():
+                # Insert into task_assignees table
+                assign_query = text(
+                    """
+                    INSERT INTO task_assignees (task_id, user_id, assigned_at)
+                    VALUES (:task_id, :user_id, :assigned_at)
+                """
+                )
+                await db.execute(
+                    assign_query,
+                    {
+                        "task_id": new_task.id,
+                        "user_id": taskAssignee,
+                        "assigned_at": datetime.utcnow(),
+                    },
+                )
+                await db.commit()
+
+        logger.info(
+            f"Task {new_task.id} created by user {current_user.id} in project {project_id}"
+        )
+
+        return JSONResponse(
+            status_code=201,
+            content={
+                "success": True,
+                "message": "Task created successfully",
+                "task": {
+                    "id": new_task.id,
+                    "name": new_task.name,
+                    "description": new_task.description,
+                    "status": (
+                        new_task.status.value if new_task.status else "NOT_STARTED"
+                    ),
+                    "priority": (
+                        new_task.priority.value if new_task.priority else "MEDIUM"
+                    ),
+                },
+            },
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating task: {str(e)}", exc_info=True)
+        await db.rollback()
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": "Failed to create task"},
+        )
