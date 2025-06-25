@@ -77,9 +77,9 @@ async def login_submit(
                 },
             )
 
-        # Successful login - redirect to tasks
+        # Successful login - redirect to projects
         logger.info(f"Login successful for username: {username}")
-        response = RedirectResponse(url="/tasks", status_code=303)
+        response = RedirectResponse(url="/projects", status_code=303)
 
         # Set cookie for web authentication
         max_age = 30 * 24 * 3600 if remember_me else 7 * 24 * 3600  # 30 days or 7 days
