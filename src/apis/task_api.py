@@ -88,9 +88,24 @@ async def create_task(
             project_id=task_data.project_id,
             status=task_data.status,
             priority=task_data.priority,
+            estimated_hours=task_data.estimated_hours,
+            start_date=task_data.start_date,
+            due_date=task_data.due_date,
         )
 
         db.add(new_task)
+        await db.flush()  # Flush to get the ID before potential assignee assignment
+
+        # Handle task assignment if assignee_id is provided
+        if task_data.assignee_id:
+            from src.models.association_tables import task_assignees
+
+            # Insert into task_assignees table
+            assignee_stmt = task_assignees.insert().values(
+                task_id=new_task.id, user_id=task_data.assignee_id
+            )
+            await db.execute(assignee_stmt)
+
         await db.commit()
         await db.refresh(new_task)
 

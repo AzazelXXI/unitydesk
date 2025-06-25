@@ -472,8 +472,12 @@ Project Details{% endblock %} {% block head_extra %}
                       style="font-size: 2rem"
                     ></i>
                     <p class="text-muted mb-0">No tasks created yet</p>
-                    <button class="btn btn-sm btn-outline-primary mt-2">
-                      Add First Task
+                    <button
+                      class="btn btn-sm btn-outline-primary mt-2"
+                      data-bs-toggle="modal"
+                      data-bs-target="#addTaskModal"
+                    >
+                      Add Task
                     </button>
                   </div>
                   {% endif %}
@@ -761,8 +765,12 @@ Project Details{% endblock %} {% block head_extra %}
               <p class="text-muted">
                 Get started by creating your first task for this project.
               </p>
-              <button class="btn btn-primary" id="addTaskBtn">
-                <i class="bi bi-plus-lg"></i> Add First Task
+              <button
+                class="btn btn-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#addTaskModal"
+              >
+                <i class="bi bi-plus-lg"></i> Add Task
               </button>
             </div>
             {% endif %}
@@ -1226,6 +1234,61 @@ Project Details{% endblock %} {% block head_extra %}
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     // No chart initialization needed - using CSS progress bars instead
+
+    // Handle Add Task form submission
+    const addTaskForm = document.getElementById('addTaskForm');
+    if (addTaskForm) {
+      addTaskForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(addTaskForm);
+        const taskData = {
+          name: formData.get('taskName'),
+          description: formData.get('taskDescription'),
+          project_id: {{ project.id }},
+          status: formData.get('taskStatus'),
+          priority: formData.get('taskPriority'),
+          estimated_hours: formData.get('taskEstimatedHours') ? parseInt(formData.get('taskEstimatedHours')) : null,
+          start_date: formData.get('taskStartDate') || null,
+          due_date: formData.get('taskDueDate') || null,
+          assignee_id: formData.get('taskAssignee') || null
+        };
+
+        try {
+          const response = await fetch('/api/tasks/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify(taskData)
+          });
+
+          if (response.ok) {
+            const newTask = await response.json();
+
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addTaskModal'));
+            modal.hide();
+
+            // Reset the form
+            addTaskForm.reset();
+
+            // Show success message
+            alert('Task created successfully!');
+
+            // Reload the page to show the new task
+            window.location.reload();
+          } else {
+            const errorData = await response.json();
+            alert('Error creating task: ' + (errorData.detail || 'Unknown error'));
+          }
+        } catch (error) {
+          console.error('Error creating task:', error);
+          alert('Error creating task. Please try again.');
+        }
+      });
+    }
   });
 
   // Add delete project functionality
