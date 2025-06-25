@@ -1,132 +1,9 @@
 {% extends "core/templates/base.html" %} {% block title %}{{ project.name }} |
 Project Details{% endblock %} {% block head_extra %}
-<style>
-  .project-header {
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-  }
-
-  .status-badge {
-    padding: 8px 12px;
-    border-radius: 20px;
-    font-weight: 500;
-  }
-
-  .progress-tracker {
-    position: relative;
-    display: flex;
-    justify-content: space-between;
-    padding: 0;
-    margin: 2rem 0 4rem;
-  }
-
-  .progress-step {
-    position: relative;
-    width: 100%;
-    font-size: 0.75rem;
-    text-align: center;
-  }
-
-  .progress-marker {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 30px;
-    height: 30px;
-    background-color: #e9ecef;
-    border-radius: 50%;
-    margin: 0 auto 8px;
-    z-index: 5;
-  }
-
-  .progress-step.is-active .progress-marker {
-    background-color: #007bff;
-    color: white;
-  }
-
-  .progress-step.is-complete .progress-marker {
-    background-color: #28a745;
-    color: white;
-  }
-
-  .progress-text {
-    font-weight: 500;
-    max-width: 100px;
-    margin: 0 auto;
-    overflow-wrap: break-word;
-  }
-
-  .progress-track {
-    position: absolute;
-    top: 15px;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background-color: #e9ecef;
-    z-index: 0;
-  }
-
-  .progress-track-fill {
-    position: absolute;
-    top: 15px;
-    left: 0;
-    height: 2px;
-    background-color: #28a745;
-    z-index: 1;
-  }
-
-  .task-card {
-    margin-bottom: 15px;
-    border-left: 4px solid #6c757d;
-  }
-
-  .task-card.priority-high {
-    border-left-color: #dc3545;
-  }
-
-  .task-card.priority-medium {
-    border-left-color: #fd7e14;
-  }
-
-  .task-card.priority-low {
-    border-left-color: #17a2b8;
-  }
-
-  .task-card.priority-urgent {
-    border-left-color: #dc3545;
-    background-color: rgba(220, 53, 69, 0.05);
-  }
-
-  .nav-tabs .nav-link {
-    border: none;
-    color: #6c757d;
-    font-weight: 500;
-    padding: 10px 15px;
-    border-bottom: 3px solid transparent;
-  }
-
-  .nav-tabs .nav-link.active {
-    border: none;
-    color: #007bff;
-    border-bottom: 3px solid #007bff;
-  }
-
-  .team-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    overflow: hidden;
-    background-color: #6c757d;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 500;
-    font-size: 14px;
-  }
-</style>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', path='src/views/project/static/css/project_details.css') }}"
+/>
 {% endblock %} {% block content %}
 <div class="container mt-4">
   <!-- Project Header -->
@@ -488,7 +365,9 @@ Project Details{% endblock %} {% block head_extra %}
 
           <!-- Recent Tasks -->
           <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div
+              class="card-header d-flex justify-content-between align-items-center"
+            >
               <h5 class="card-title mb-0">Recent Tasks</h5>
               <div>
                 <button
@@ -510,75 +389,93 @@ Project Details{% endblock %} {% block head_extra %}
             </div>
             <div class="card-body">
               {% if tasks %}
-                <div class="list-group list-group-flush">
-                  {% for task in tasks[:5] %}
-                  <div class="list-group-item px-0 py-3">
-                    <div class="d-flex justify-content-between align-items-start">
-                      <div class="flex-grow-1">
-                        <h6 class="mb-1">{{ task.name }}</h6>
-                        <p class="mb-2 text-muted small">
-                          {{ task.description[:80] + '...' if task.description and task.description|length > 80 else (task.description or 'No description') }}
-                        </p>
-                        <div class="d-flex align-items-center">
-                          <span class="badge {% if task.status == 'Completed' %}bg-success{% elif task.status == 'In Progress' %}bg-primary{% elif task.status == 'Blocked' %}bg-warning text-dark{% else %}bg-secondary{% endif %} me-2">
-                            {{ task.status.replace('_', ' ').title() if task.status else 'Not Started' }}
-                          </span>
-                          <span class="badge {% if task.priority == 'High' or task.priority == 'Urgent' %}bg-danger{% elif task.priority == 'Medium' %}bg-warning text-dark{% else %}bg-info{% endif %} me-2">
-                            {{ task.priority or 'Medium' }}
-                          </span>
-                          {% if task.assignee_name %}
-                          <small class="text-muted">
-                            <i class="bi bi-person me-1"></i>{{ task.assignee_name }}
-                          </small>
-                          {% endif %}
-                        </div>
-                      </div>
-                      <div class="text-end">
-                        {% if task.due_date %}
-                        <small class="text-muted d-block">
-                          <i class="bi bi-calendar-event me-1"></i>
-                          {{ task.due_date.strftime('%b %d') }}
+              <div class="list-group list-group-flush">
+                {% for task in tasks[:5] %}
+                <div class="list-group-item px-0 py-3">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                      <h6 class="mb-1">{{ task.name }}</h6>
+                      <p class="mb-2 text-muted small">
+                        {{ task.description[:80] + '...' if task.description and
+                        task.description|length > 80 else (task.description or
+                        'No description') }}
+                      </p>
+                      <div class="d-flex align-items-center">
+                        <span
+                          class="badge {% if task.status == 'Completed' %}bg-success{% elif task.status == 'In Progress' %}bg-primary{% elif task.status == 'Blocked' %}bg-warning text-dark{% else %}bg-secondary{% endif %} me-2"
+                        >
+                          {{ task.status.replace('_', ' ').title() if
+                          task.status else 'Not Started' }}
+                        </span>
+                        <span
+                          class="badge {% if task.priority == 'High' or task.priority == 'Urgent' %}bg-danger{% elif task.priority == 'Medium' %}bg-warning text-dark{% else %}bg-info{% endif %} me-2"
+                        >
+                          {{ task.priority or 'Medium' }}
+                        </span>
+                        {% if task.assignee_name %}
+                        <small class="text-muted">
+                          <i class="bi bi-person me-1"></i>{{ task.assignee_name
+                          }}
                         </small>
                         {% endif %}
-                        <div class="btn-group btn-group-sm mt-1" role="group">
-                          <button type="button" class="btn btn-outline-secondary btn-sm">
-                            <i class="bi bi-pencil"></i>
-                          </button>
-                          <button type="button" class="btn btn-outline-secondary btn-sm">
-                            <i class="bi bi-eye"></i>
-                          </button>
-                        </div>
+                      </div>
+                    </div>
+                    <div class="text-end">
+                      {% if task.due_date %}
+                      <small class="text-muted d-block">
+                        <i class="bi bi-calendar-event me-1"></i>
+                        {{ task.due_date.strftime('%b %d') }}
+                      </small>
+                      {% endif %}
+                      <div class="btn-group btn-group-sm mt-1" role="group">
+                        <button
+                          type="button"
+                          class="btn btn-outline-secondary btn-sm"
+                        >
+                          <i class="bi bi-pencil"></i>
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-outline-secondary btn-sm"
+                        >
+                          <i class="bi bi-eye"></i>
+                        </button>
                       </div>
                     </div>
                   </div>
-                  {% endfor %}
-                  {% if tasks|length > 5 %}
-                  <div class="list-group-item px-0 py-2 text-center">
-                    <a
-                      href="#tasks"
-                      class="text-primary text-decoration-none"
-                      data-bs-toggle="tab"
-                      data-bs-target="#tasks"
-                    >
-                      <i class="bi bi-arrow-right me-1"></i>
-                      View {{ tasks|length - 5 }} more tasks
-                    </a>
-                  </div>
-                  {% endif %}
                 </div>
-              {% else %}
-                <div class="text-center py-4">
-                  <i class="bi bi-list-check text-muted" style="font-size: 2.5rem"></i>
-                  <h6 class="text-muted mt-3 mb-2">No tasks created yet</h6>
-                  <p class="text-muted mb-3">Get started by creating your first task for this project.</p>
-                  <button
-                    class="btn btn-primary btn-sm"
-                    data-bs-toggle="modal"
-                    data-bs-target="#addTaskModal"
+                {% endfor %} {% if tasks|length > 5 %}
+                <div class="list-group-item px-0 py-2 text-center">
+                  <a
+                    href="#tasks"
+                    class="text-primary text-decoration-none"
+                    data-bs-toggle="tab"
+                    data-bs-target="#tasks"
                   >
-                    <i class="bi bi-plus-lg"></i> Create First Task
-                  </button>
+                    <i class="bi bi-arrow-right me-1"></i>
+                    View {{ tasks|length - 5 }} more tasks
+                  </a>
                 </div>
+                {% endif %}
+              </div>
+              {% else %}
+              <div class="text-center py-4">
+                <i
+                  class="bi bi-list-check text-muted"
+                  style="font-size: 2.5rem"
+                ></i>
+                <h6 class="text-muted mt-3 mb-2">No tasks created yet</h6>
+                <p class="text-muted mb-3">
+                  Get started by creating your first task for this project.
+                </p>
+                <button
+                  class="btn btn-primary btn-sm"
+                  data-bs-toggle="modal"
+                  data-bs-target="#addTaskModal"
+                >
+                  <i class="bi bi-plus-lg"></i> Create First Task
+                </button>
+              </div>
               {% endif %}
             </div>
           </div>
@@ -1327,88 +1224,11 @@ Project Details{% endblock %} {% block head_extra %}
   </div>
 </div>
 
-<!-- Chart.js removed since we're using a simpler progress display -->
+<!-- Project Variables for JavaScript -->
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    // No chart initialization needed - using CSS progress bars instead
-
-    // Handle Add Task form submission
-    const addTaskForm = document.getElementById('addTaskForm');
-    if (addTaskForm) {
-      addTaskForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        const formData = new FormData(addTaskForm);
-
-        try {
-          const response = await fetch(`/projects/{{ project.id }}/tasks`, {
-            method: 'POST',
-            body: formData,
-            credentials: 'include'
-          });
-
-          const result = await response.json();
-
-          if (result.success) {
-            // Close the modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addTaskModal'));
-            modal.hide();
-
-            // Reset the form
-            addTaskForm.reset();
-
-            // Show success message
-            alert('Task created successfully!');
-
-            // Reload the page to show the new task
-            window.location.reload();
-          } else {
-            alert('Error creating task: ' + (result.message || 'Unknown error'));
-          }
-        } catch (error) {
-          console.error('Error creating task:', error);
-          alert('Error creating task. Please try again.');
-        }
-      });
-    }
-  });
-
-  // Add delete project functionality
-  document.getElementById('deleteProjectBtn').addEventListener('click', async function(e) {
-    e.preventDefault();
-
-    const projectId = {{ project.id }};
-    const projectName = "{{ project.name }}";
-
-    // Confirm deletion
-    const confirmMessage = `Are you sure you want to delete the project "${projectName}"? This action cannot be undone.`;
-
-    if (!confirm(confirmMessage)) {
-      return;
-    }
-
-    try {
-      console.log(`Deleting project ${projectId}...`);
-
-      const response = await fetch(`/api/projects/${projectId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        console.log(`✅ Successfully deleted project ${projectId}`);
-        alert(`Project "${projectName}" has been deleted successfully!`);
-
-        // Redirect to projects list
-        window.location.href = '/projects';
-      } else {
-        console.error(`❌ Failed to delete project ${projectId}:`, response.status);
-        alert('Failed to delete the project. Please try again.');
-      }
-    } catch (error) {
-      console.error(`❌ Error deleting project ${projectId}:`, error);
-      alert('An error occurred while deleting the project. Please try again.');
-    }
-  });
+  // Project data for JavaScript
+  const PROJECT_ID = {{ project.id }};
+  const PROJECT_NAME = "{{ project.name }}";
 </script>
+<script src="{{ url_for('static', path='src/views/project/static/js/project_details.js') }}"></script>
 {% endblock %}
