@@ -22,7 +22,9 @@ from src.models.user import User
 from src.models.project import Project, ProjectStatusEnum
 from src.models.task import Task, TaskStatusEnum, TaskPriorityEnum
 from src.models.association_tables import task_assignees
+from src.models.activity import ActivityType
 from src.controllers.project_controller import ProjectController
+from src.services.activity_service import ActivityService
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -390,6 +392,11 @@ async def project_details(
                 }
             )
 
+        # Get recent activities for the project
+        activities = await ActivityService.get_recent_activities(
+            db, project_id, limit=5
+        )
+
         return templates.TemplateResponse(
             "project/templates/project_details.html",
             {
@@ -398,6 +405,7 @@ async def project_details(
                 "project": project,
                 "tasks": tasks,
                 "users": users,
+                "activities": activities,
                 "page_title": f"Project: {project['name']}",
             },
         )
@@ -415,8 +423,8 @@ async def create_task(
     request: Request,
     taskName: str = Form(...),
     taskDescription: Optional[str] = Form(None),
-    taskPriority: str = Form("Medium"),
-    taskStatus: str = Form("Not Started"),
+    taskPriority: TaskPriorityEnum = Form(TaskPriorityEnum.MEDIUM),
+    taskStatus: TaskStatusEnum = Form(TaskStatusEnum.NOT_STARTED),
     taskAssignee: Optional[int] = Form(None),
     taskStartDate: Optional[str] = Form(None),
     taskDueDate: Optional[str] = Form(None),
@@ -446,13 +454,13 @@ async def create_task(
             except ValueError:
                 pass
 
-        # Create the task with proper enum conversion
+        # Create the task
         new_task = Task(
             name=taskName,
             description=taskDescription,
             project_id=project_id,
-            status=TaskStatusEnum(taskStatus),
-            priority=TaskPriorityEnum(taskPriority),
+            status=taskStatus,
+            priority=taskPriority,
             estimated_hours=taskEstimatedHours,
             start_date=start_date,
             due_date=due_date,
@@ -488,6 +496,30 @@ async def create_task(
         logger.info(
             f"Task {new_task.id} created by user {current_user.id} in project {project_id}"
         )
+
+        # Log activity
+        try:
+            description = ActivityService.create_task_activity_description(
+                "created", new_task.name, current_user.name
+            )
+            await ActivityService.log_activity(
+                db=db,
+                project_id=project_id,
+                user_id=current_user.id,
+                activity_type=ActivityType.TASK_CREATED,
+                description=description,
+                target_entity_type="task",
+                target_entity_id=new_task.id,
+                metadata={
+                    "task_name": new_task.name,
+                    "task_priority": (
+                        new_task.priority.value if new_task.priority else None
+                    ),
+                    "task_status": new_task.status.value if new_task.status else None,
+                },
+            )
+        except Exception as e:
+            logger.warning(f"Failed to log task creation activity: {str(e)}")
 
         return JSONResponse(
             status_code=201,

@@ -63,3 +63,6 @@ class Project(Base):
     team_members = relationship(
         "User", secondary="project_members", back_populates="member_projects"
     )
+    activities = relationship(
+        "ProjectActivity", back_populates="project", cascade="all, delete-orphan"
+    )
