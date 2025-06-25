@@ -25,6 +25,94 @@ endblock %} {% block head_extra %}
       </div>
     </div>
   </div>
+
+  <!-- Filters and Search Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card filter-section">
+        <div class="card-header">
+          <h6 class="mb-0">
+            <i class="fas fa-filter me-2"></i>Filter & Sort Projects
+          </h6>
+        </div>
+        <div class="card-body">
+          <form method="GET" action="/projects" id="filterForm">
+            <div class="row g-3">
+              <!-- Search -->
+              <div class="col-md-3">
+                <label for="search" class="form-label">Search</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="search"
+                  name="search"
+                  placeholder="Project name or description..."
+                  value="{{ current_search }}"
+                />
+              </div>
+
+              <!-- Status Filter -->
+              <div class="col-md-2">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" name="status">
+                  {% for option in status_options %}
+                  <option 
+                    value="{{ option.value }}" 
+                    {% if option.value == current_status %}selected{% endif %}
+                  >
+                    {{ option.label }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Sort By -->
+              <div class="col-md-2">
+                <label for="sort_by" class="form-label">Sort By</label>
+                <select class="form-select" id="sort_by" name="sort_by">
+                  {% for option in sort_options %}
+                  <option 
+                    value="{{ option.value }}" 
+                    {% if option.value == current_sort_by %}selected{% endif %}
+                  >
+                    {{ option.label }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Sort Order -->
+              <div class="col-md-2">
+                <label for="sort_order" class="form-label">Order</label>
+                <select class="form-select" id="sort_order" name="sort_order">
+                  <option value="desc" {% if current_sort_order == 'desc' %}selected{% endif %}>
+                    Descending
+                  </option>
+                  <option value="asc" {% if current_sort_order == 'asc' %}selected{% endif %}>
+                    Ascending
+                  </option>
+                </select>
+              </div>
+
+              <!-- Apply Filters Button -->
+              <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-flex gap-2">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i>Apply
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                    <i class="fas fa-times me-1"></i>Clear
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Statistics Cards -->
   <div class="row mb-4">
     <div class="col-6 col-md-2 mb-3 mb-md-0">
@@ -176,15 +264,42 @@ endblock %} {% block head_extra %}
     {% endfor %} {% else %}
     <div class="col-12">
       <div class="empty-state text-center py-5">
+        {% if current_search or current_status != 'all' or current_sort_by != 'created_at' %}
+        <!-- Filtered but no results -->
+        <i
+          class="fas fa-search text-muted"
+          style="font-size: 4rem; opacity: 0.3"
+        ></i>
+        <h3 class="mt-3 text-muted">No Projects Match Your Filters</h3>
+        <p class="text-muted mb-3">
+          Sorry, we couldn't find any projects matching your current search criteria.
+          <br>
+          Try adjusting your filters or search terms to find what you're looking for.
+        </p>
+        <div class="d-flex gap-2 justify-content-center">
+          <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+            <i class="fas fa-times me-1"></i>Clear All Filters
+          </button>
+          <a href="/projects/new" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Create New Project
+          </a>
+        </div>
+        {% else %}
+        <!-- No projects at all -->
         <i
           class="fas fa-folder-open text-muted"
           style="font-size: 4rem; opacity: 0.3"
         ></i>
-        <h3 class="mt-3 text-muted">No Projects Found</h3>
-        <p class="text-muted">Get started by creating your first project</p>
+        <h3 class="mt-3 text-muted">No Projects Yet</h3>
+        <p class="text-muted mb-3">
+          You haven't created any projects yet. 
+          <br>
+          Get started by creating your first project to organize your work.
+        </p>
         <a href="/projects/new" class="btn btn-primary">
           <i class="fas fa-plus me-2"></i>Create Your First Project
         </a>
+        {% endif %}
       </div>
     </div>
     {% endif %}
@@ -244,6 +359,46 @@ endblock %} {% block head_extra %}
 <script src="{{ url_for('project_static', path='js/projects.js') }}"></script>
 {% endblock %} {% block scripts %}
 <script>
+  // Filter and sorting functions
+  function clearFilters() {
+    // Reset all form fields
+    document.getElementById('search').value = '';
+    document.getElementById('status').value = 'all';
+    document.getElementById('sort_by').value = 'created_at';
+    document.getElementById('sort_order').value = 'desc';
+    
+    // Submit the form to apply cleared filters
+    document.getElementById('filterForm').submit();
+  }
+
+  // Auto-submit on select changes for better UX
+  document.addEventListener('DOMContentLoaded', function() {
+    const selects = document.querySelectorAll('#status, #sort_by, #sort_order');
+    selects.forEach(select => {
+      select.addEventListener('change', function() {
+        document.getElementById('filterForm').submit();
+      });
+    });
+
+    // Add debounced search
+    let searchTimeout;
+    const searchInput = document.getElementById('search');
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        document.getElementById('filterForm').submit();
+      }, 500); // 500ms delay
+    });
+
+    // Handle Enter key in search
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        clearTimeout(searchTimeout);
+        document.getElementById('filterForm').submit();
+      }
+    });
+  });
+
   document.addEventListener("DOMContentLoaded", function () {
     // Check if we came from project creation (look for hash fragment)
     if (window.location.hash === "#project-created") {

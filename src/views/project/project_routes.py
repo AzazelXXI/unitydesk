@@ -44,21 +44,78 @@ async def projects_dashboard(
     request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_web),
+    status: Optional[str] = None,
+    sort_by: Optional[str] = "created_at",
+    sort_order: Optional[str] = "desc",
+    search: Optional[str] = None,
+    progress_min: Optional[int] = None,
+    progress_max: Optional[int] = None,
+    budget_min: Optional[float] = None,
+    budget_max: Optional[float] = None,
 ):
     """
-    Display the projects dashboard with all projects
+    Display the projects dashboard with filtering and sorting
     """
     try:
         print(f"=== PROJECTS DASHBOARD ACCESS ===")
         print(f"User: {current_user.name} (ID: {current_user.id})")
-        print(f"User Type: {current_user.user_type}")
+        print(f"Filters: status={status}, sort_by={sort_by}, sort_order={sort_order}")
+        print(
+            f"Search: {search}, progress: {progress_min}-{progress_max}, budget: {budget_min}-{budget_max}"
+        )
 
-        # Get success message from query parameter (remove this since we don't need it)
-        # success_message = request.query_params.get("success")
+        # Build dynamic WHERE clause
+        where_conditions = []
+        params = {}
 
-        # Query all projects with basic statistics
+        if status and status != "all":
+            where_conditions.append("p.status = :status")
+            params["status"] = status
+
+        if search:
+            where_conditions.append(
+                "(p.name ILIKE :search OR p.description ILIKE :search)"
+            )
+            params["search"] = f"%{search}%"
+
+        if progress_min is not None:
+            where_conditions.append("p.progress >= :progress_min")
+            params["progress_min"] = progress_min
+
+        if progress_max is not None:
+            where_conditions.append("p.progress <= :progress_max")
+            params["progress_max"] = progress_max
+
+        if budget_min is not None:
+            where_conditions.append("p.budget >= :budget_min")
+            params["budget_min"] = budget_min
+
+        if budget_max is not None:
+            where_conditions.append("p.budget <= :budget_max")
+            params["budget_max"] = budget_max
+
+        where_clause = (
+            "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
+        )
+
+        # Build ORDER BY clause
+        valid_sort_fields = {
+            "name": "p.name",
+            "created_at": "p.created_at",
+            "start_date": "p.start_date",
+            "end_date": "p.end_date",
+            "progress": "p.progress",
+            "budget": "p.budget",
+            "status": "p.status",
+        }
+
+        sort_field = valid_sort_fields.get(sort_by, "p.created_at")
+        sort_direction = "ASC" if sort_order == "asc" else "DESC"
+        order_clause = f"ORDER BY {sort_field} {sort_direction}"
+
+        # Query projects with filtering and sorting
         projects_query = text(
-            """
+            f"""
             SELECT 
                 p.id,
                 p.name,
@@ -74,16 +131,17 @@ async def projects_dashboard(
                 COUNT(CASE WHEN t.status = 'COMPLETED' THEN 1 END) as completed_tasks
             FROM projects p
             LEFT JOIN tasks t ON p.id = t.project_id
+            {where_clause}
             GROUP BY p.id, p.name, p.description, p.status, p.progress, p.budget, 
                      p.start_date, p.end_date, p.created_at, p.updated_at
-            ORDER BY p.created_at DESC
+            {order_clause}
         """
         )
 
-        result = await db.execute(projects_query)
+        result = await db.execute(projects_query, params)
         project_rows = result.fetchall()
 
-        print(f"Found {len(project_rows)} projects in database")
+        print(f"Found {len(project_rows)} projects after filtering")
 
         # Convert to project objects
         projects = []
@@ -145,6 +203,33 @@ async def projects_dashboard(
                 "projects": projects,
                 "stats": stats,
                 "page_title": "Projects Dashboard",
+                # Filter parameters for maintaining state
+                "current_status": status or "all",
+                "current_sort_by": sort_by,
+                "current_sort_order": sort_order,
+                "current_search": search or "",
+                "current_progress_min": progress_min,
+                "current_progress_max": progress_max,
+                "current_budget_min": budget_min,
+                "current_budget_max": budget_max,
+                # Available options for dropdowns
+                "status_options": [
+                    {"value": "all", "label": "All Statuses"},
+                    {"value": "PLANNING", "label": "Planning"},
+                    {"value": "IN_PROGRESS", "label": "In Progress"},
+                    {"value": "COMPLETED", "label": "Completed"},
+                    {"value": "ON_HOLD", "label": "On Hold"},
+                    {"value": "CANCELED", "label": "Canceled"},
+                ],
+                "sort_options": [
+                    {"value": "created_at", "label": "Date Created"},
+                    {"value": "name", "label": "Project Name"},
+                    {"value": "start_date", "label": "Start Date"},
+                    {"value": "end_date", "label": "End Date"},
+                    {"value": "progress", "label": "Progress"},
+                    {"value": "budget", "label": "Budget"},
+                    {"value": "status", "label": "Status"},
+                ],
             },
         )
 
