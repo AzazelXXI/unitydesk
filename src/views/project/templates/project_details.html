@@ -2,7 +2,7 @@
 Project Details{% endblock %} {% block head_extra %}
 <link
   rel="stylesheet"
-  href="{{ url_for('static', path='src/views/project/static/css/project_details.css') }}"
+  href="{{ url_for('project_static', path='css/project_details.css') }}"
 />
 {% endblock %} {% block content %}
 <div class="container mt-4">
@@ -1230,5 +1230,5 @@ Project Details{% endblock %} {% block head_extra %}
   const PROJECT_ID = {{ project.id }};
   const PROJECT_NAME = "{{ project.name }}";
 </script>
-<script src="{{ url_for('static', path='src/views/project/static/js/project_details.js') }}"></script>
+<script src="{{ url_for('project_static', path='js/project_details.js') }}"></script>
 {% endblock %}
