@@ -343,6 +343,13 @@ async def project_details(
     project_id: int,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_web),
+    # Task filtering parameters
+    task_status: Optional[str] = None,
+    task_priority: Optional[str] = None,
+    task_search: Optional[str] = None,
+    task_sort_by: Optional[str] = "created_at",
+    task_sort_order: Optional[str] = "desc",
+    task_assignee: Optional[str] = None,
 ):
     """
     Display project details page
@@ -417,9 +424,53 @@ async def project_details(
             "client_brief": None,  # No client brief available
         }
 
-        # Get project tasks
+        # Get project tasks with filtering
+        print(f"Task filters: status={task_status}, priority={task_priority}, search={task_search}")
+        print(f"Task sorting: {task_sort_by} {task_sort_order}, assignee={task_assignee}")
+        
+        # Build task WHERE clause
+        task_where_conditions = ["t.project_id = :project_id"]
+        task_params = {"project_id": project_id}
+
+        if task_status and task_status != "all":
+            task_where_conditions.append("t.status = :task_status")
+            task_params["task_status"] = task_status.upper()
+
+        if task_priority and task_priority != "all":
+            task_where_conditions.append("t.priority = :task_priority")
+            task_params["task_priority"] = task_priority.upper()
+
+        if task_search:
+            task_where_conditions.append(
+                "(t.name ILIKE :task_search OR t.description ILIKE :task_search)"
+            )
+            task_params["task_search"] = f"%{task_search}%"
+
+        if task_assignee and task_assignee != "all":
+            if task_assignee == "unassigned":
+                task_where_conditions.append("ta.user_id IS NULL")
+            else:
+                task_where_conditions.append("ta.user_id = :task_assignee")
+                task_params["task_assignee"] = int(task_assignee)
+
+        task_where_clause = " AND ".join(task_where_conditions)
+
+        # Build task ORDER BY clause
+        valid_task_sort_fields = {
+            "name": "t.name",
+            "created_at": "t.created_at",
+            "due_date": "t.due_date",
+            "priority": "t.priority",
+            "status": "t.status",
+            "assignee": "u.name",
+        }
+
+        task_sort_field = valid_task_sort_fields.get(task_sort_by, "t.created_at")
+        task_sort_direction = "ASC" if task_sort_order == "asc" else "DESC"
+        task_order_clause = f"ORDER BY {task_sort_field} {task_sort_direction}"
+
         tasks_query = text(
-            """
+            f"""
             SELECT 
                 t.id,
                 t.name,
@@ -429,17 +480,21 @@ async def project_details(
                 t.start_date,
                 t.due_date,
                 t.completed_date,
-                u.name as assignee_name
+                t.created_at,
+                u.name as assignee_name,
+                u.id as assignee_id
             FROM tasks t
             LEFT JOIN task_assignees ta ON t.id = ta.task_id
             LEFT JOIN users u ON ta.user_id = u.id
-            WHERE t.project_id = :project_id
-            ORDER BY t.created_at DESC
+            WHERE {task_where_clause}
+            {task_order_clause}
         """
         )
 
-        tasks_result = await db.execute(tasks_query, {"project_id": project_id})
+        tasks_result = await db.execute(tasks_query, task_params)
         task_rows = tasks_result.fetchall()
+
+        print(f"Found {len(task_rows)} tasks after filtering")
 
         tasks = []
         for row in task_rows:
@@ -452,7 +507,9 @@ async def project_details(
                 "start_date": row.start_date,
                 "due_date": row.due_date,
                 "completed_date": row.completed_date,
+                "created_at": row.created_at,
                 "assignee_name": row.assignee_name,
+                "assignee_id": row.assignee_id,
             }
             tasks.append(task)
 
@@ -492,6 +549,40 @@ async def project_details(
                 "users": users,
                 "activities": activities,
                 "page_title": f"Project: {project['name']}",
+                # Task filter parameters
+                "current_task_status": task_status or "all",
+                "current_task_priority": task_priority or "all",
+                "current_task_search": task_search or "",
+                "current_task_sort_by": task_sort_by,
+                "current_task_sort_order": task_sort_order,
+                "current_task_assignee": task_assignee or "all",
+                # Task filter options
+                "task_status_options": [
+                    {"value": "all", "label": "All Statuses"},
+                    {"value": "NOT_STARTED", "label": "Not Started"},
+                    {"value": "IN_PROGRESS", "label": "In Progress"},
+                    {"value": "BLOCKED", "label": "Blocked"},
+                    {"value": "COMPLETED", "label": "Completed"},
+                ],
+                "task_priority_options": [
+                    {"value": "all", "label": "All Priorities"},
+                    {"value": "LOW", "label": "Low"},
+                    {"value": "MEDIUM", "label": "Medium"},
+                    {"value": "HIGH", "label": "High"},
+                    {"value": "URGENT", "label": "Urgent"},
+                ],
+                "task_sort_options": [
+                    {"value": "created_at", "label": "Date Created"},
+                    {"value": "name", "label": "Task Name"},
+                    {"value": "due_date", "label": "Due Date"},
+                    {"value": "priority", "label": "Priority"},
+                    {"value": "status", "label": "Status"},
+                    {"value": "assignee", "label": "Assignee"},
+                ],
+                "task_assignee_options": [
+                    {"value": "all", "label": "All Assignees"},
+                    {"value": "unassigned", "label": "Unassigned"},
+                ] + [{"value": str(user["id"]), "label": user["name"]} for user in users],
             },
         )
 
