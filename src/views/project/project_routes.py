@@ -425,9 +425,13 @@ async def project_details(
         }
 
         # Get project tasks with filtering
-        print(f"Task filters: status={task_status}, priority={task_priority}, search={task_search}")
-        print(f"Task sorting: {task_sort_by} {task_sort_order}, assignee={task_assignee}")
-        
+        print(
+            f"Task filters: status={task_status}, priority={task_priority}, search={task_search}"
+        )
+        print(
+            f"Task sorting: {task_sort_by} {task_sort_order}, assignee={task_assignee}"
+        )
+
         # Build task WHERE clause
         task_where_conditions = ["t.project_id = :project_id"]
         task_params = {"project_id": project_id}
@@ -582,7 +586,8 @@ async def project_details(
                 "task_assignee_options": [
                     {"value": "all", "label": "All Assignees"},
                     {"value": "unassigned", "label": "Unassigned"},
-                ] + [{"value": str(user["id"]), "label": user["name"]} for user in users],
+                ]
+                + [{"value": str(user["id"]), "label": user["name"]} for user in users],
             },
         )
 

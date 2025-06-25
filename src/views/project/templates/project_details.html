@@ -505,13 +505,6 @@ Project Details{% endblock %} {% block head_extra %}
             >
               <h5 class="card-title mb-0">Recent Tasks</h5>
               <div>
-                <button
-                  class="btn btn-primary btn-sm me-2"
-                  data-bs-toggle="modal"
-                  data-bs-target="#addTaskModal"
-                >
-                  <i class="bi bi-plus-lg"></i> Add Task
-                </button>
                 <a
                   href="#tasks"
                   class="btn btn-outline-primary btn-sm"
@@ -1398,6 +1391,23 @@ Project Details{% endblock %} {% block head_extra %}
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     // No chart initialization needed - using CSS progress bars instead
+
+    // Initialize Bootstrap tabs and handle "View All" button
+    const viewAllTasksBtn = document.querySelector('a[data-bs-target="#tasks"]');
+    if (viewAllTasksBtn) {
+      viewAllTasksBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // Get the tab button (not the pane)
+        const tabButton = document.querySelector('#tasks-tab');
+        
+        if (tabButton) {
+          // Create Bootstrap tab instance and show it
+          const tab = new bootstrap.Tab(tabButton);
+          tab.show();
+        }
+      });
+    }
 
     // Handle Add Task form submission
     const addTaskForm = document.getElementById('addTaskForm');
