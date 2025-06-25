@@ -10,7 +10,11 @@ import logging
 from datetime import datetime
 
 from src.database import get_db
-from src.middleware.auth_middleware import get_current_user, get_current_user_from_cookie, oauth2_scheme
+from src.middleware.auth_middleware import (
+    get_current_user,
+    get_current_user_from_cookie,
+    oauth2_scheme,
+)
 from src.models.user import User
 from src.models.task import Task, TaskStatusEnum, TaskPriorityEnum
 from src.models.project import Project
@@ -42,7 +46,7 @@ async def get_current_user_flexible(
         return await get_current_user_from_cookie(request, db)
     except Exception as cookie_error:
         logger.debug(f"Cookie auth failed: {cookie_error}")
-        
+
         # Try token authentication (for API clients)
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):
@@ -51,11 +55,10 @@ async def get_current_user_flexible(
                 return await get_current_user(token, db)
             except Exception as token_error:
                 logger.debug(f"Token auth failed: {token_error}")
-        
+
         # Both methods failed
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
         )
 
 
@@ -274,7 +277,7 @@ async def get_task(
             select(
                 Task,
                 User.name.label("assignee_name"),
-                task_assignees.c.user_id.label("assignee_id")
+                task_assignees.c.user_id.label("assignee_id"),
             )
             .outerjoin(task_assignees, Task.id == task_assignees.c.task_id)
             .outerjoin(User, task_assignees.c.user_id == User.id)
