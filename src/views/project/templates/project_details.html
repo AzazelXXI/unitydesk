@@ -485,6 +485,103 @@ Project Details{% endblock %} {% block head_extra %}
               </div>
             </div>
           </div>
+
+          <!-- Recent Tasks -->
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="card-title mb-0">Recent Tasks</h5>
+              <div>
+                <button
+                  class="btn btn-sm btn-outline-primary me-2"
+                  data-bs-toggle="modal"
+                  data-bs-target="#addTaskModal"
+                >
+                  <i class="bi bi-plus-lg"></i> Add Task
+                </button>
+                <a
+                  href="#tasks"
+                  class="btn btn-sm btn-link"
+                  data-bs-toggle="tab"
+                  data-bs-target="#tasks"
+                >
+                  View All
+                </a>
+              </div>
+            </div>
+            <div class="card-body">
+              {% if tasks %}
+                <div class="list-group list-group-flush">
+                  {% for task in tasks[:5] %}
+                  <div class="list-group-item px-0 py-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div class="flex-grow-1">
+                        <h6 class="mb-1">{{ task.name }}</h6>
+                        <p class="mb-2 text-muted small">
+                          {{ task.description[:80] + '...' if task.description and task.description|length > 80 else (task.description or 'No description') }}
+                        </p>
+                        <div class="d-flex align-items-center">
+                          <span class="badge {% if task.status == 'Completed' %}bg-success{% elif task.status == 'In Progress' %}bg-primary{% elif task.status == 'Blocked' %}bg-warning text-dark{% else %}bg-secondary{% endif %} me-2">
+                            {{ task.status.replace('_', ' ').title() if task.status else 'Not Started' }}
+                          </span>
+                          <span class="badge {% if task.priority == 'High' or task.priority == 'Urgent' %}bg-danger{% elif task.priority == 'Medium' %}bg-warning text-dark{% else %}bg-info{% endif %} me-2">
+                            {{ task.priority or 'Medium' }}
+                          </span>
+                          {% if task.assignee_name %}
+                          <small class="text-muted">
+                            <i class="bi bi-person me-1"></i>{{ task.assignee_name }}
+                          </small>
+                          {% endif %}
+                        </div>
+                      </div>
+                      <div class="text-end">
+                        {% if task.due_date %}
+                        <small class="text-muted d-block">
+                          <i class="bi bi-calendar-event me-1"></i>
+                          {{ task.due_date.strftime('%b %d') }}
+                        </small>
+                        {% endif %}
+                        <div class="btn-group btn-group-sm mt-1" role="group">
+                          <button type="button" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-pencil"></i>
+                          </button>
+                          <button type="button" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-eye"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                  {% if tasks|length > 5 %}
+                  <div class="list-group-item px-0 py-2 text-center">
+                    <a
+                      href="#tasks"
+                      class="text-primary text-decoration-none"
+                      data-bs-toggle="tab"
+                      data-bs-target="#tasks"
+                    >
+                      <i class="bi bi-arrow-right me-1"></i>
+                      View {{ tasks|length - 5 }} more tasks
+                    </a>
+                  </div>
+                  {% endif %}
+                </div>
+              {% else %}
+                <div class="text-center py-4">
+                  <i class="bi bi-list-check text-muted" style="font-size: 2.5rem"></i>
+                  <h6 class="text-muted mt-3 mb-2">No tasks created yet</h6>
+                  <p class="text-muted mb-3">Get started by creating your first task for this project.</p>
+                  <button
+                    class="btn btn-primary btn-sm"
+                    data-bs-toggle="modal"
+                    data-bs-target="#addTaskModal"
+                  >
+                    <i class="bi bi-plus-lg"></i> Create First Task
+                  </button>
+                </div>
+              {% endif %}
+            </div>
+          </div>
         </div>
 
         <!-- Project Sidebar -->
