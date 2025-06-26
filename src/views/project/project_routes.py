@@ -543,6 +543,126 @@ async def project_details(
             db, project_id, limit=5
         )
 
+        # Get project members with their roles and task counts
+        members_query = text(
+            """
+            SELECT 
+                u.id,
+                u.name,
+                u.email,
+                pm.role,
+                pm.joined_at,
+                COUNT(DISTINCT ta.task_id) as total_tasks,
+                COUNT(DISTINCT CASE WHEN t.status = 'COMPLETED' THEN ta.task_id END) as completed_tasks
+            FROM users u
+            JOIN project_members pm ON u.id = pm.user_id
+            LEFT JOIN task_assignees ta ON u.id = ta.user_id
+            LEFT JOIN tasks t ON ta.task_id = t.id AND t.project_id = :project_id
+            WHERE pm.project_id = :project_id
+            GROUP BY u.id, u.name, u.email, pm.role, pm.joined_at
+            ORDER BY pm.joined_at ASC
+        """
+        )
+
+        members_result = await db.execute(members_query, {"project_id": project_id})
+        member_rows = members_result.fetchall()
+
+        members = []
+        for row in member_rows:
+            member = {
+                "id": row.id,
+                "name": row.name,
+                "email": row.email,
+                "role": row.role or "Member",
+                "joined_at": row.joined_at,
+                "total_tasks": row.total_tasks or 0,
+                "completed_tasks": row.completed_tasks or 0,
+            }
+            members.append(member)
+
+        # Get project files/attachments
+        files_query = text(
+            """
+            SELECT 
+                a.id,
+                a.file_name,
+                a.file_size,
+                a.mime_type,
+                a.created_at,
+                u.name as uploader_name,
+                u.id as uploader_id
+            FROM attachments a
+            JOIN users u ON a.uploader_id = u.id
+            WHERE a.project_id = :project_id
+            ORDER BY a.created_at DESC
+        """
+        )
+
+        files_result = await db.execute(files_query, {"project_id": project_id})
+        file_rows = files_result.fetchall()
+
+        files = []
+        for row in file_rows:
+            # Determine file type and icon based on mime_type
+            file_type = "Document"
+            file_icon = "bi-file-earmark"
+            file_color = "text-secondary"
+
+            if row.mime_type:
+                if row.mime_type.startswith("image/"):
+                    file_type = "Image"
+                    file_icon = "bi-file-earmark-image"
+                    file_color = "text-success"
+                elif row.mime_type == "application/pdf":
+                    file_type = "PDF"
+                    file_icon = "bi-file-earmark-pdf"
+                    file_color = "text-danger"
+                elif row.mime_type in [
+                    "application/msword",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                ]:
+                    file_type = "Document"
+                    file_icon = "bi-file-earmark-word"
+                    file_color = "text-primary"
+                elif row.mime_type in [
+                    "application/vnd.ms-excel",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                ]:
+                    file_type = "Spreadsheet"
+                    file_icon = "bi-file-earmark-excel"
+                    file_color = "text-success"
+                elif row.mime_type.startswith("video/"):
+                    file_type = "Video"
+                    file_icon = "bi-file-earmark-play"
+                    file_color = "text-info"
+                elif row.mime_type.startswith("audio/"):
+                    file_type = "Audio"
+                    file_icon = "bi-file-earmark-music"
+                    file_color = "text-warning"
+
+            # Format file size
+            file_size_formatted = "Unknown"
+            if row.file_size:
+                if row.file_size < 1024:
+                    file_size_formatted = f"{row.file_size} B"
+                elif row.file_size < 1024 * 1024:
+                    file_size_formatted = f"{row.file_size / 1024:.1f} KB"
+                else:
+                    file_size_formatted = f"{row.file_size / (1024 * 1024):.1f} MB"
+
+            file_data = {
+                "id": row.id,
+                "file_name": row.file_name,
+                "file_type": file_type,
+                "file_icon": file_icon,
+                "file_color": file_color,
+                "file_size": file_size_formatted,
+                "uploader_name": row.uploader_name,
+                "uploader_id": row.uploader_id,
+                "created_at": row.created_at,
+            }
+            files.append(file_data)
+
         return templates.TemplateResponse(
             "project/templates/project_details.html",
             {
@@ -552,6 +672,8 @@ async def project_details(
                 "tasks": tasks,
                 "users": users,
                 "activities": activities,
+                "members": members,
+                "files": files,
                 "page_title": f"Project: {project['name']}",
                 # Task filter parameters
                 "current_task_status": task_status or "all",

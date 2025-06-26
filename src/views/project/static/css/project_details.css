@@ -83,6 +83,116 @@
   border: 1px solid #dee2e6;
 }
 
+/* Task Details Modal Container Styles */
+.task-section-container {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.task-section-container:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.task-section-container.bg-light {
+  background-color: #f8f9fa !important;
+  border: 1px solid #e9ecef;
+}
+
+.task-section-container .section-header {
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 10px;
+  margin-bottom: 15px !important;
+}
+
+.task-section-container .section-header .section-title {
+  color: #495057;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.task-section-container .section-header i {
+  color: #007bff;
+  font-size: 1.1rem;
+}
+
+.task-section-container .section-content {
+  color: #6c757d;
+  line-height: 1.6;
+}
+
+/* Task Header Specific Styles */
+.task-section-container .task-header .task-title {
+  color: #212529;
+  font-weight: 700;
+}
+
+.task-section-container .task-badges .badge {
+  font-size: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.375rem;
+}
+
+/* Grid Layout for Task Details */
+.task-section-container .row .col-md-6:first-child {
+  border-right: 1px solid #e9ecef;
+  padding-right: 20px;
+}
+
+.task-section-container .row .col-md-6:last-child {
+  padding-left: 20px;
+}
+
+/* Attachment Area Styles */
+.task-section-container .attachment-area {
+  background-color: #f8f9fa;
+  border: 2px dashed #dee2e6 !important;
+  border-radius: 0.5rem;
+  transition: border-color 0.2s ease-in-out;
+}
+
+.task-section-container .attachment-area:hover {
+  border-color: #007bff !important;
+}
+
+/* Comments Area Styles */
+.task-section-container .comment-form {
+  border: 1px solid #e9ecef;
+  border-radius: 0.5rem;
+  padding: 15px;
+  background-color: #f8f9fa;
+}
+
+.task-section-container .comment-form textarea {
+  border: none;
+  background-color: transparent;
+  resize: vertical;
+}
+
+.task-section-container .comment-form textarea:focus {
+  box-shadow: none;
+  border: none;
+}
+
+/* User Avatar in Task Details */
+.task-section-container .user-avatar {
+  width: 32px;
+  height: 32px;
+  background-color: #007bff;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Badge Styles */
+.task-section-container .badge {
+  font-size: 0.7rem;
+  padding: 0.3rem 0.5rem;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .task-filter-section .row > div {
@@ -91,5 +201,17 @@
 
   .task-filter-section .form-label {
     font-size: 0.875rem;
+  }
+
+  .task-section-container .row .col-md-6:first-child {
+    border-right: none;
+    border-bottom: 1px solid #e9ecef;
+    padding-right: 15px;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+  }
+
+  .task-section-container .row .col-md-6:last-child {
+    padding-left: 15px;
   }
 }

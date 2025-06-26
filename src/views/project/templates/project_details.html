@@ -137,6 +137,136 @@ Project Details{% endblock %} {% block head_extra %}
     font-weight: 500;
     font-size: 14px;
   }
+
+  /* Task Details Modal Styles */
+  .task-details-container {
+    padding: 1rem;
+  }
+
+  .task-header {
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 1rem;
+  }
+
+  .task-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+
+  .task-badges .badge {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    font-weight: 500;
+  }
+
+  .task-meta {
+    font-size: 0.875rem;
+  }
+
+  .task-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .section-header {
+    border-bottom: 1px solid #f1f3f4;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+  }
+
+  .section-header i {
+    color: #6c757d;
+    font-size: 1rem;
+  }
+
+  .section-content {
+    color: #495057;
+    line-height: 1.5;
+  }
+
+  .user-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .attachment-area {
+    background-color: #f8f9fa;
+    border: 2px dashed #dee2e6 !important;
+    border-radius: 8px;
+  }
+
+  .comment-form textarea {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    resize: none;
+  }
+
+  .comment-form textarea:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
+
+  #taskDetailsModal .modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  }
+
+  #taskDetailsModal .modal-header {
+    border-bottom: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+    border-radius: 12px 12px 0 0;
+    padding: 1.25rem 1.5rem;
+  }
+
+  #taskDetailsModal .modal-title {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1.25rem;
+  }
+
+  #taskDetailsModal .modal-body {
+    max-height: 75vh;
+    overflow-y: auto;
+    padding: 0;
+  }
+
+  #taskDetailsModal .modal-footer {
+    border-top: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+    border-radius: 0 0 12px 12px;
+    padding: 1rem 1.5rem;
+  }
+
+  /* Remove old styles that are no longer needed */
+  .priority-indicator,
+  .checklist,
+  .checklist-item,
+  .checklist-checkbox,
+  .checklist-text,
+  .comments-section .comment,
+  .comment-header,
+  .comment-author,
+  .comment-date,
+  .comment-text,
+  .comment-input {
+    /* These styles are no longer used */
+  }
 </style>
 {% endblock %} {% block content %}
 <div class="container mt-4">
@@ -600,31 +730,31 @@ Project Details{% endblock %} {% block head_extra %}
               class="card-header d-flex justify-content-between align-items-center"
             >
               <h5 class="card-title mb-0">Members</h5>
-              <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+              <a href="#" class="btn btn-sm btn-outline-primary" onclick="showTab('team')">View All</a>
             </div>
             <div class="card-body">
               <div class="d-flex flex-column">
-                {% if project.team_members %} {% for member in
-                project.team_members[:5] %}
+                {% if members %} 
+                {% for member in members[:5] %}
                 <div class="d-flex align-items-center mb-3">
                   <div
                     class="team-avatar me-2"
-                    style="background-color: {{ ['#6f42c1', '#fd7e14', '#20c997', '#0d6efd', '#dc3545']|random }}"
+                    style="background-color: #{{ loop.cycle('6f42c1', 'fd7e14', '20c997', '0d6efd', 'dc3545') }}"
                   >
-                    {{ member.user_id|default('U') }}
+                    {{ member.name[:2].upper() }}
                   </div>
                   <div>
-                    <div class="fw-medium">
-                      {{ member.name|default('Member') }}
-                    </div>
+                    <div class="fw-medium">{{ member.name }}</div>
                     <small class="text-muted">{{ member.role }}</small>
                   </div>
                 </div>
-                {% endfor %} {% if project.team_members|length > 5 %}
-                <a href="#" class="text-primary"
-                  >+{{ project.team_members|length - 5 }} more members</a
+                {% endfor %} 
+                {% if members|length > 5 %}
+                <a href="#" class="text-primary" onclick="showTab('team')"
+                  >+{{ members|length - 5 }} more members</a
                 >
-                {% endif %} {% else %}
+                {% endif %} 
+                {% else %}
                 <p class="text-muted">No members assigned yet.</p>
                 {% endif %}
               </div>
@@ -1016,78 +1146,45 @@ Project Details{% endblock %} {% block head_extra %}
                 </tr>
               </thead>
               <tbody>
+                {% if members %}
+                {% for member in members %}
                 <tr>
                   <td>
                     <div class="d-flex align-items-center">
                       <div
                         class="team-avatar me-2"
-                        style="background-color: #6f42c1"
+                        style="background-color: #{{ loop.cycle('6f42c1', '20c997', '0d6efd', 'fd7e14', 'dc3545') }}"
                       >
-                        JD
+                        {{ member.name[:2].upper() }}
                       </div>
-                      <div>John Doe</div>
+                      <div>
+                        <div>{{ member.name }}</div>
+                        <small class="text-muted">{{ member.email }}</small>
+                      </div>
                     </div>
                   </td>
-                  <td>Project Manager</td>
-                  <td>Apr 20, 2025</td>
-                  <td>4/8 completed</td>
+                  <td>{{ member.role }}</td>
+                  <td>{{ member.joined_at.strftime('%b %d, %Y') if member.joined_at else 'Unknown' }}</td>
+                  <td>{{ member.completed_tasks }}/{{ member.total_tasks }} completed</td>
                   <td class="text-end">
-                    <button class="btn btn-sm btn-outline-primary me-1">
+                    <button class="btn btn-sm btn-outline-primary me-1" title="Send Message">
                       <i class="bi bi-envelope"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger">
+                    <button class="btn btn-sm btn-outline-danger" title="Remove Member">
                       <i class="bi bi-trash"></i>
                     </button>
                   </td>
                 </tr>
+                {% endfor %}
+                {% else %}
                 <tr>
-                  <td>
-                    <div class="d-flex align-items-center">
-                      <div
-                        class="team-avatar me-2"
-                        style="background-color: #20c997"
-                      >
-                        JS
-                      </div>
-                      <div>Jane Smith</div>
-                    </div>
-                  </td>
-                  <td>Designer</td>
-                  <td>Apr 22, 2025</td>
-                  <td>2/5 completed</td>
-                  <td class="text-end">
-                    <button class="btn btn-sm btn-outline-primary me-1">
-                      <i class="bi bi-envelope"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger">
-                      <i class="bi bi-trash"></i>
-                    </button>
+                  <td colspan="5" class="text-center text-muted py-4">
+                    <i class="bi bi-people" style="font-size: 3rem"></i>
+                    <h6 class="mt-3">No members assigned</h6>
+                    <p class="mb-0">Add team members to collaborate on this project.</p>
                   </td>
                 </tr>
-                <tr>
-                  <td>
-                    <div class="d-flex align-items-center">
-                      <div
-                        class="team-avatar me-2"
-                        style="background-color: #0d6efd"
-                      >
-                        MM
-                      </div>
-                      <div>Mark Miller</div>
-                    </div>
-                  </td>
-                  <td>Content Writer</td>
-                  <td>Apr 25, 2025</td>
-                  <td>3/3 completed</td>
-                  <td class="text-end">
-                    <button class="btn btn-sm btn-outline-primary me-1">
-                      <i class="bi bi-envelope"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </td>
-                </tr>
+                {% endif %}
               </tbody>
             </table>
           </div>
@@ -1124,75 +1221,41 @@ Project Details{% endblock %} {% block head_extra %}
               </tr>
             </thead>
             <tbody>
+              {% if files %}
+              {% for file in files %}
               <tr>
                 <td>
                   <div class="d-flex align-items-center">
                     <i
-                      class="bi bi-file-earmark-word text-primary me-2"
+                      class="bi {{ file.file_icon }} {{ file.file_color }} me-2"
                       style="font-size: 1.5rem"
                     ></i>
-                    <span>Project_Brief.docx</span>
+                    <span>{{ file.file_name }}</span>
                   </div>
                 </td>
-                <td>Document</td>
-                <td>423 KB</td>
-                <td>John Doe</td>
-                <td>Apr 25, 2025</td>
+                <td>{{ file.file_type }}</td>
+                <td>{{ file.file_size }}</td>
+                <td>{{ file.uploader_name }}</td>
+                <td>{{ file.created_at.strftime('%b %d, %Y') if file.created_at else 'Unknown' }}</td>
                 <td>
-                  <button class="btn btn-sm btn-outline-primary me-1">
+                  <button class="btn btn-sm btn-outline-primary me-1" title="Download">
                     <i class="bi bi-download"></i>
                   </button>
-                  <button class="btn btn-sm btn-outline-danger">
+                  <button class="btn btn-sm btn-outline-danger" title="Delete">
                     <i class="bi bi-trash"></i>
                   </button>
                 </td>
               </tr>
+              {% endfor %}
+              {% else %}
               <tr>
-                <td>
-                  <div class="d-flex align-items-center">
-                    <i
-                      class="bi bi-file-earmark-pdf text-danger me-2"
-                      style="font-size: 1.5rem"
-                    ></i>
-                    <span>Marketing_Research.pdf</span>
-                  </div>
-                </td>
-                <td>PDF</td>
-                <td>1.2 MB</td>
-                <td>Jane Smith</td>
-                <td>Apr 27, 2025</td>
-                <td>
-                  <button class="btn btn-sm btn-outline-primary me-1">
-                    <i class="bi bi-download"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-danger">
-                    <i class="bi bi-trash"></i>
-                  </button>
+                <td colspan="6" class="text-center text-muted py-4">
+                  <i class="bi bi-folder" style="font-size: 3rem"></i>
+                  <h6 class="mt-3">No files uploaded</h6>
+                  <p class="mb-0">Upload files to share with your team members.</p>
                 </td>
               </tr>
-              <tr>
-                <td>
-                  <div class="d-flex align-items-center">
-                    <i
-                      class="bi bi-file-earmark-image text-success me-2"
-                      style="font-size: 1.5rem"
-                    ></i>
-                    <span>Logo_Draft_v1.png</span>
-                  </div>
-                </td>
-                <td>Image</td>
-                <td>842 KB</td>
-                <td>Mark Miller</td>
-                <td>Apr 29, 2025</td>
-                <td>
-                  <button class="btn btn-sm btn-outline-primary me-1">
-                    <i class="bi bi-download"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-danger">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </td>
-              </tr>
+              {% endif %}
             </tbody>
           </table>
         </div>
@@ -1497,7 +1560,7 @@ Project Details{% endblock %} {% block head_extra %}
   aria-labelledby="taskDetailsModalLabel"
   aria-hidden="true"
 >
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="taskDetailsModalLabel">Task Details</h5>
@@ -1521,8 +1584,11 @@ Project Details{% endblock %} {% block head_extra %}
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
           Close
         </button>
+        <button type="button" class="btn btn-outline-danger btn-sm" id="deleteTaskBtn">
+          <i class="bi bi-trash"></i> Delete Task
+        </button>
         <button type="button" class="btn btn-primary" id="editTaskBtn">
-          Edit Task
+          <i class="bi bi-pencil"></i> Edit Task
         </button>
       </div>
     </div>
@@ -1582,93 +1648,132 @@ Project Details{% endblock %} {% block head_extra %}
       const priorityClass = getPriorityClass(task.priority);
 
       taskDetailsContent.innerHTML = `
-        <div class="row">
-          <div class="col-md-8">
-            <h4 class="mb-3">${task.name}</h4>
-            <div class="mb-3">
-              <h6>Description</h6>
-              <p class="text-muted">${
-                task.description || "No description provided"
-              }</p>
-            </div>
-            
-            <div class="row mb-3">
-              <div class="col-md-6">
-                <h6>Status</h6>
-                <span class="badge ${statusClass}">
-                  ${
-                    task.status
-                      ? task.status
-                          .replace("_", " ")
-                          .replace(/\b\w/g, (l) => l.toUpperCase())
-                      : "Not Started"
-                  }
-                </span>
+        <div class="task-details-container">
+          <!-- Task Header Container -->
+          <div class="task-section-container bg-light rounded p-3 mb-4">
+            <div class="task-header">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <h3 class="task-title mb-0">${task.name}</h3>
+                <div class="task-badges">
+                  <span class="badge ${statusClass} me-2">${task.status ? task.status.replace("_", " ").toUpperCase() : "NOT STARTED"}</span>
+                  <span class="badge ${priorityClass}">${task.priority || "MEDIUM"}</span>
+                </div>
               </div>
-              <div class="col-md-6">
-                <h6>Priority</h6>
-                <span class="badge ${priorityClass}">
-                  ${task.priority || "Medium"}
-                </span>
+              <div class="task-meta text-muted">
+                <small>Created: ${new Date(task.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</small>
               </div>
             </div>
-            
-            <div class="row mb-3">
-              <div class="col-md-6">
-                <h6>Due Date</h6>
-                <p class="mb-0">${
-                  task.due_date
-                    ? new Date(task.due_date).toLocaleDateString()
-                    : "No due date"
-                }</p>
-              </div>
-              <div class="col-md-6">
-                <h6>Assigned To</h6>
-                <p class="mb-0">${task.assignee_name || "Unassigned"}</p>
-              </div>
-            </div>
-            
-            <div class="mb-3">
-              <h6>Created</h6>
-              <p class="mb-0 text-muted">${new Date(
-                task.created_at
-              ).toLocaleString()}</p>
-            </div>
-            
-            ${
-              task.updated_at
-                ? `
-            <div class="mb-3">
-              <h6>Last Updated</h6>
-              <p class="mb-0 text-muted">${new Date(
-                task.updated_at
-              ).toLocaleString()}</p>
-            </div>
-            `
-                : ""
-            }
           </div>
-          
-          <div class="col-md-4">
-            <div class="card bg-light">
-              <div class="card-body">
-                <h6 class="card-title">Task Actions</h6>
-                <div class="d-grid gap-2">
-                  <button class="btn btn-outline-primary btn-sm" onclick="markTaskComplete(${
-                    task.id
-                  })">
-                    <i class="bi bi-check-circle"></i> Mark Complete
-                  </button>
-                  <button class="btn btn-outline-warning btn-sm" onclick="editTask(${
-                    task.id
-                  })">
-                    <i class="bi bi-pencil"></i> Edit Task
-                  </button>
-                  <button class="btn btn-outline-danger btn-sm" onclick="deleteTask(${
-                    task.id
-                  })">
-                    <i class="bi bi-trash"></i> Delete Task
-                  </button>
+
+          <!-- Description Container -->
+          <div class="task-section-container bg-white border rounded p-3 mb-4">
+            <div class="task-section">
+              <div class="section-header d-flex align-items-center mb-3">
+                <i class="bi bi-file-text me-2 text-primary"></i>
+                <h5 class="section-title mb-0">Description</h5>
+              </div>
+              <div class="section-content">
+                <p class="mb-0">${task.description || "No description provided"}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Task Details Grid Container -->
+          <div class="task-section-container bg-white border rounded p-3 mb-4">
+            <div class="row">
+              <!-- Due Date -->
+              <div class="col-md-6">
+                <div class="task-section">
+                  <div class="section-header d-flex align-items-center mb-3">
+                    <i class="bi bi-calendar me-2 text-primary"></i>
+                    <h5 class="section-title mb-0">Due Date</h5>
+                  </div>
+                  <div class="section-content">
+                    <p class="mb-0">${task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : "No due date set"}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Assigned To -->
+              <div class="col-md-6">
+                <div class="task-section">
+                  <div class="section-header d-flex align-items-center mb-3">
+                    <i class="bi bi-person me-2 text-primary"></i>
+                    <h5 class="section-title mb-0">Assigned To</h5>
+                    <button class="btn btn-sm btn-link text-primary ms-auto p-0">
+                      <small>Change</small>
+                    </button>
+                  </div>
+                  <div class="section-content">
+                    <div class="d-flex align-items-center">
+                      <div class="user-avatar me-2">
+                        ${task.assignee_name ? task.assignee_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'UN'}
+                      </div>
+                      <span>${task.assignee_name || "Unassigned"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Project Container -->
+          <div class="task-section-container bg-white border rounded p-3 mb-4">
+            <div class="task-section">
+              <div class="section-header d-flex align-items-center mb-3">
+                <i class="bi bi-folder me-2 text-primary"></i>
+                <h5 class="section-title mb-0">Project</h5>
+              </div>
+              <div class="section-content">
+                <a href="/projects/{{ project.id }}" class="text-decoration-none">{{ project.name }}</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Attachments Container -->
+          <div class="task-section-container bg-white border rounded p-3 mb-4">
+            <div class="task-section">
+              <div class="section-header d-flex align-items-center mb-3">
+                <i class="bi bi-paperclip me-2 text-primary"></i>
+                <h5 class="section-title mb-0">Attachments</h5>
+                <span class="badge bg-secondary ms-2">0</span>
+              </div>
+              <div class="section-content">
+                <div class="attachment-area text-center py-4 bg-light border border-dashed rounded">
+                  <button class="btn btn-sm btn-outline-secondary me-2">Browse...</button>
+                  <span class="text-muted">No files selected.</span>
+                  <button class="btn btn-sm btn-primary ms-2">Upload</button>
+                </div>
+                <small class="text-muted d-block mt-2">Supported: PDF, DOC, XLS, TXT, Images, ZIP (Max 10MB each)</small>
+                <div class="text-center mt-3">
+                  <p class="text-muted mb-0">No attachments yet. Upload files to share with your team!</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comments Container -->
+          <div class="task-section-container bg-white border rounded p-3">
+            <div class="task-section">
+              <div class="section-header d-flex align-items-center mb-3">
+                <i class="bi bi-chat-dots me-2 text-primary"></i>
+                <h5 class="section-title mb-0">Comments</h5>
+                <span class="badge bg-secondary ms-2">0</span>
+              </div>
+              <div class="section-content">
+                <div class="comments-area">
+                  <div class="comment-form mb-3">
+                    <textarea class="form-control" rows="3" placeholder="Add a comment..."></textarea>
+                    <div class="d-flex justify-content-end mt-2">
+                      <button class="btn btn-primary btn-sm">
+                        <i class="bi bi-send me-1"></i>Post Comment
+                      </button>
+                    </div>
+                  </div>
+                  <div class="text-center text-muted py-3">
+                    <i class="bi bi-chat-dots" style="font-size: 2rem;"></i>
+                    <p class="mb-0 mt-2">No comments yet. Be the first to add one!</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1700,7 +1805,7 @@ Project Details{% endblock %} {% block head_extra %}
         case "LOW":
           return "bg-info";
         default:
-          return "bg-info";
+          return "bg-warning text-dark";
       }
     }
 
@@ -1765,6 +1870,16 @@ Project Details{% endblock %} {% block head_extra %}
       }
     };
   });
+
+  // Function to show a specific tab
+  function showTab(tabName) {
+    // Find the tab button and click it
+    const tabButton = document.querySelector(`#${tabName}-tab`);
+    if (tabButton) {
+      const tab = new bootstrap.Tab(tabButton);
+      tab.show();
+    }
+  }
 
   // Task filtering functionality
   function clearTaskFilters() {
