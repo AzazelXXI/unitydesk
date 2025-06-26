@@ -276,7 +276,7 @@ function initializeAddTaskForm() {
   if (addTaskForm) {
     // Initialize dynamic assignee functionality
     initializeDynamicAssignees();
-    
+
     addTaskForm.addEventListener("submit", async function (e) {
       e.preventDefault();
 
@@ -285,12 +285,30 @@ function initializeAddTaskForm() {
 
       // Get all form fields
       formData.append("taskName", document.getElementById("taskName").value);
-      formData.append("taskDescription", document.getElementById("taskDescription").value);
-      formData.append("taskPriority", document.getElementById("taskPriority").value);
-      formData.append("taskStatus", document.getElementById("taskStatus").value);
-      formData.append("taskStartDate", document.getElementById("taskStartDate").value);
-      formData.append("taskDueDate", document.getElementById("taskDueDate").value);
-      formData.append("taskEstimatedHours", document.getElementById("taskEstimatedHours").value);
+      formData.append(
+        "taskDescription",
+        document.getElementById("taskDescription").value
+      );
+      formData.append(
+        "taskPriority",
+        document.getElementById("taskPriority").value
+      );
+      formData.append(
+        "taskStatus",
+        document.getElementById("taskStatus").value
+      );
+      formData.append(
+        "taskStartDate",
+        document.getElementById("taskStartDate").value
+      );
+      formData.append(
+        "taskDueDate",
+        document.getElementById("taskDueDate").value
+      );
+      formData.append(
+        "taskEstimatedHours",
+        document.getElementById("taskEstimatedHours").value
+      );
 
       // Collect all selected assignees from dynamic dropdowns
       const assigneeSelects = document.querySelectorAll(".assignee-select");
@@ -373,15 +391,15 @@ function addAssigneeEventListeners() {
 function addAssigneeRow() {
   const assigneeContainer = document.getElementById("assigneeContainer");
   const existingRows = assigneeContainer.querySelectorAll(".assignee-row");
-  
+
   // Get the template from the first row
   const firstRow = existingRows[0];
   const newRow = firstRow.cloneNode(true);
-  
+
   // Reset the select value
   const newSelect = newRow.querySelector(".assignee-select");
   newSelect.value = "";
-  
+
   // Replace add button with remove button (except for the first row)
   const addBtn = newRow.querySelector(".add-assignee-btn");
   if (existingRows.length > 0) {
@@ -389,13 +407,13 @@ function addAssigneeRow() {
     addBtn.innerHTML = '<i class="bi bi-dash"></i>';
     addBtn.title = "Remove this assignee";
   }
-  
+
   // Add the new row
   assigneeContainer.appendChild(newRow);
-  
+
   // Re-initialize event listeners
   addAssigneeEventListeners();
-  
+
   // Update available options
   updateAvailableOptions();
 }
@@ -406,7 +424,7 @@ function addAssigneeRow() {
 function removeAssigneeRow(event) {
   const row = event.target.closest(".assignee-row");
   const assigneeContainer = document.getElementById("assigneeContainer");
-  
+
   // Don't remove if it's the only row
   if (assigneeContainer.querySelectorAll(".assignee-row").length > 1) {
     row.remove();
@@ -420,18 +438,21 @@ function removeAssigneeRow(event) {
 function updateAvailableOptions() {
   const allSelects = document.querySelectorAll(".assignee-select");
   const selectedValues = Array.from(allSelects)
-    .map(select => select.value)
-    .filter(value => value !== "");
+    .map((select) => select.value)
+    .filter((value) => value !== "");
 
   allSelects.forEach((select) => {
     const currentValue = select.value;
     const options = select.querySelectorAll("option");
-    
+
     options.forEach((option) => {
       if (option.value === "") return; // Skip the "Select a user..." option
-      
+
       // Hide option if it's selected in another dropdown
-      if (selectedValues.includes(option.value) && option.value !== currentValue) {
+      if (
+        selectedValues.includes(option.value) &&
+        option.value !== currentValue
+      ) {
         option.style.display = "none";
       } else {
         option.style.display = "";
@@ -458,7 +479,7 @@ function resetDynamicAssignees() {
   if (firstRow) {
     const select = firstRow.querySelector(".assignee-select");
     select.value = "";
-    
+
     // Make sure the first row has an add button
     const btn = firstRow.querySelector("button");
     btn.className = "btn btn-outline-success btn-sm add-assignee-btn";
