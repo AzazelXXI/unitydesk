@@ -867,7 +867,11 @@
           class="card-header d-flex justify-content-between align-items-center"
         >
           <h5 class="card-title mb-0">Project Members</h5>
-          <button class="btn btn-primary btn-sm">
+          <button 
+            class="btn btn-primary btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#addMemberModal"
+          >
             <i class="bi bi-person-plus"></i> Add Member
           </button>
         </div>
@@ -1181,6 +1185,72 @@
           </button>
           <button type="submit" class="btn btn-primary">
             <i class="bi bi-check-lg me-1"></i>Create Task
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Add Member Modal -->
+<div
+  class="modal fade"
+  id="addMemberModal"
+  tabindex="-1"
+  aria-labelledby="addMemberModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addMemberModalLabel">
+          <i class="bi bi-person-plus me-2"></i>Add Team Member
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <form id="addMemberForm">
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="memberUser" class="form-label">Select User *</label>
+              <select class="form-select" id="memberUser" name="memberUser" required>
+                <option value="">Choose a user...</option>
+                {% for user in users %}
+                <option value="{{ user.id }}">{{ user.name }} ({{ user.email }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="memberRole" class="form-label">Role *</label>
+              <select class="form-select" id="memberRole" name="memberRole" required>
+                <option value="">Select role...</option>
+                <option value="Project Manager">Project Manager</option>
+                <option value="Developer">Developer</option>
+                <option value="Designer">Designer</option>
+                <option value="Analyst">Analyst</option>
+                <option value="Tester">Tester</option>
+                <option value="Stakeholder">Stakeholder</option>
+                <option value="Observer">Observer</option>
+                <option value="Member">Member</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-lg me-1"></i>Add Member
           </button>
         </div>
       </form>

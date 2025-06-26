@@ -15,6 +15,7 @@ from sqlalchemy import select, text, func
 from typing import List, Optional
 import logging
 from datetime import datetime
+import json
 
 from src.database import get_db
 from src.middleware.auth_middleware import get_current_user_web
@@ -732,7 +733,7 @@ async def create_task(
         # Get the raw form data for debugging
         form = await request.form()
         logger.info(f"Raw form data received: {dict(form)}")
-        
+
         # Extract form fields manually
         taskName = form.get("taskName")
         taskDescription = form.get("taskDescription", "")
@@ -742,22 +743,26 @@ async def create_task(
         taskStartDate = form.get("taskStartDate")
         taskDueDate = form.get("taskDueDate")
         taskEstimatedHours = form.get("taskEstimatedHours")
-        
+
         # Validate required fields
         if not taskName:
             raise HTTPException(status_code=422, detail="Task name is required")
-        
+
         # Debug logging
-        logger.info(f"Creating task with data: name={taskName}, priority={taskPriority}, status={taskStatus}, assignee={taskAssignee}")
-        
+        logger.info(
+            f"Creating task with data: name={taskName}, priority={taskPriority}, status={taskStatus}, assignee={taskAssignee}"
+        )
+
         # Convert string values to enums
         try:
             priority_enum = TaskPriorityEnum(taskPriority)
             status_enum = TaskStatusEnum(taskStatus)
         except ValueError as e:
             logger.error(f"Invalid enum value: {e}")
-            raise HTTPException(status_code=422, detail=f"Invalid priority or status value: {e}")
-        
+            raise HTTPException(
+                status_code=422, detail=f"Invalid priority or status value: {e}"
+            )
+
         # Convert assignee to int if provided
         assignee_id = None
         if taskAssignee and taskAssignee.strip():
@@ -765,7 +770,7 @@ async def create_task(
                 assignee_id = int(taskAssignee)
             except ValueError:
                 raise HTTPException(status_code=422, detail="Invalid assignee ID")
-        
+
         # Convert estimated hours to int if provided
         estimated_hours = None
         if taskEstimatedHours and taskEstimatedHours.strip():
@@ -773,7 +778,7 @@ async def create_task(
                 estimated_hours = int(taskEstimatedHours)
             except ValueError:
                 raise HTTPException(status_code=422, detail="Invalid estimated hours")
-        
+
         # Verify project exists and user has access
         project_query = text("SELECT id FROM projects WHERE id = :project_id")
         project_result = await db.execute(project_query, {"project_id": project_id})
@@ -888,4 +893,123 @@ async def create_task(
         return JSONResponse(
             status_code=500,
             content={"success": False, "message": "Failed to create task"},
+        )
+
+
+@router.post("/projects/{project_id}/members")
+async def add_project_member(
+    project_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+):
+    """Add a new member to a project"""
+    try:
+        # Get the request body
+        body = await request.json()
+        user_id = body.get("user_id")
+        role = body.get("role")
+
+        # Validate required fields
+        if not user_id:
+            raise HTTPException(status_code=422, detail="User ID is required")
+        if not role:
+            raise HTTPException(status_code=422, detail="Role is required")
+
+        # Convert user_id to int
+        try:
+            user_id = int(user_id)
+        except ValueError:
+            raise HTTPException(status_code=422, detail="Invalid user ID")
+
+        # Verify project exists
+        project_query = text("SELECT id FROM projects WHERE id = :project_id")
+        project_result = await db.execute(project_query, {"project_id": project_id})
+        if not project_result.fetchone():
+            raise HTTPException(status_code=404, detail="Project not found")
+
+        # Verify user exists
+        user_query = text("SELECT id, name, email FROM users WHERE id = :user_id")
+        user_result = await db.execute(user_query, {"user_id": user_id})
+        user_row = user_result.fetchone()
+        if not user_row:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Check if user is already a member of this project
+        existing_member_query = text(
+            "SELECT project_id FROM project_members WHERE project_id = :project_id AND user_id = :user_id"
+        )
+        existing_result = await db.execute(
+            existing_member_query, {"project_id": project_id, "user_id": user_id}
+        )
+        if existing_result.fetchone():
+            raise HTTPException(
+                status_code=409, detail="User is already a member of this project"
+            )        # Add the member to the project
+        insert_member_query = text(
+            """
+            INSERT INTO project_members (project_id, user_id, role, joined_at)
+            VALUES (:project_id, :user_id, :role, :joined_at)
+            """
+        )
+        
+        await db.execute(
+            insert_member_query,
+            {
+                "project_id": project_id,
+                "user_id": user_id,
+                "role": role,
+                "joined_at": datetime.utcnow(),
+            },
+        )
+        await db.commit()
+
+        logger.info(
+            f"User {user_id} added to project {project_id} with role {role} by user {current_user.id}"
+        )
+
+        # Log activity
+        try:
+            description = (
+                f"{current_user.name} added {user_row.name} as {role} to the project"
+            )
+            await ActivityService.log_activity(
+                db=db,
+                project_id=project_id,
+                user_id=current_user.id,
+                activity_type=ActivityType.MEMBER_ADDED,
+                description=description,
+                target_entity_type="user",
+                target_entity_id=user_id,
+                metadata={
+                    "user_name": user_row.name,
+                    "user_email": user_row.email,
+                    "role": role,
+                },
+            )
+        except Exception as e:
+            logger.warning(f"Failed to log member addition activity: {str(e)}")
+
+        return JSONResponse(
+            status_code=201,
+            content={
+                "success": True,
+                "message": "Member added successfully",
+                "member": {
+                    "user_id": user_id,
+                    "name": user_row.name,
+                    "email": user_row.email,
+                    "role": role,
+                },
+            },
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error adding project member: {str(e)}", exc_info=True)
+        await db.rollback()
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": "Failed to add member"},
         )

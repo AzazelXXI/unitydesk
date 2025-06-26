@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
   initializeProjectTabs();
   initializeTaskModal();
   initializeAddTaskForm();
+  initializeAddMemberForm();
   initializeTaskFiltering();
   initializeProjectActions();
 });
@@ -298,6 +299,62 @@ function initializeAddTaskForm() {
       } catch (error) {
         console.error("Error creating task:", error);
         alert("Error creating task. Please try again.");
+      }
+    });
+  }
+}
+
+/**
+ * Initialize Add Member form functionality
+ */
+function initializeAddMemberForm() {
+  const addMemberForm = document.getElementById("addMemberForm");
+  if (addMemberForm) {
+    addMemberForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const formData = new FormData(addMemberForm);
+      const projectId = getProjectIdFromUrl();
+
+      // Create the data object
+      const memberData = {
+        user_id: formData.get("memberUser"),
+        role: formData.get("memberRole"),
+      };
+
+      try {
+        const response = await fetch(`/projects/${projectId}/members`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(memberData),
+          credentials: "include",
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Close the modal
+          const modal = bootstrap.Modal.getInstance(
+            document.getElementById("addMemberModal")
+          );
+          modal.hide();
+
+          // Reset the form
+          addMemberForm.reset();
+
+          // Show success message
+          alert("Member added successfully!");
+
+          // Reload the page to show the new member
+          window.location.reload();
+        } else {
+          alert("Error adding member: " + (result.message || "Unknown error"));
+        }
+      } catch (error) {
+        console.error("Error adding member:", error);
+        alert("Error adding member. Please try again.");
       }
     });
   }
