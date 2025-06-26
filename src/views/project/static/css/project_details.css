@@ -193,25 +193,264 @@
   padding: 0.3rem 0.5rem;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .task-filter-section .row > div {
-    margin-bottom: 0.5rem;
-  }
+/* Project Details Page Styles */
 
-  .task-filter-section .form-label {
-    font-size: 0.875rem;
-  }
-
-  .task-section-container .row .col-md-6:first-child {
-    border-right: none;
-    border-bottom: 1px solid #e9ecef;
-    padding-right: 15px;
-    padding-bottom: 20px;
-    margin-bottom: 20px;
-  }
-
-  .task-section-container .row .col-md-6:last-child {
-    padding-left: 15px;
-  }
+/* Project Header */
+.project-header {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
 }
+
+.status-badge {
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+/* Progress Tracker */
+.progress-tracker {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  padding: 0;
+  margin: 2rem 0 4rem;
+}
+
+.progress-step {
+  position: relative;
+  width: 100%;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.progress-marker {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 30px;
+  background-color: #e9ecef;
+  border-radius: 50%;
+  margin: 0 auto 8px;
+  z-index: 5;
+}
+
+.progress-step.is-active .progress-marker {
+  background-color: #007bff;
+  color: white;
+}
+
+.progress-step.is-complete .progress-marker {
+  background-color: #28a745;
+  color: white;
+}
+
+.progress-text {
+  font-weight: 500;
+  max-width: 100px;
+  margin: 0 auto;
+  overflow-wrap: break-word;
+}
+
+.progress-track {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #e9ecef;
+  z-index: 0;
+}
+
+.progress-track-fill {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  height: 2px;
+  background-color: #28a745;
+  z-index: 1;
+}
+
+/* Task Cards */
+.task-card {
+  margin-bottom: 15px;
+  border-left: 4px solid #6c757d;
+  transition: all 0.2s ease-in-out;
+}
+
+.task-card.clickable-task:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-left-color: #007bff;
+}
+
+.task-card.priority-high {
+  border-left-color: #dc3545;
+}
+
+.task-card.priority-medium {
+  border-left-color: #fd7e14;
+}
+
+.task-card.priority-low {
+  border-left-color: #17a2b8;
+}
+
+.task-card.priority-urgent {
+  border-left-color: #dc3545;
+  background-color: rgba(220, 53, 69, 0.05);
+}
+
+/* Navigation Tabs */
+.nav-tabs .nav-link {
+  border: none;
+  color: #6c757d;
+  font-weight: 500;
+  padding: 10px 15px;
+  border-bottom: 3px solid transparent;
+}
+
+.nav-tabs .nav-link.active {
+  border: none;
+  color: #007bff;
+  border-bottom: 3px solid #007bff;
+}
+
+/* Team Avatar */
+.team-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: #6c757d;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Task Details Modal Styles */
+.task-details-container {
+  padding: 1rem;
+}
+
+.task-header {
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 1rem;
+}
+
+.task-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.task-badges .badge {
+  font-size: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  font-weight: 500;
+}
+
+.task-meta {
+  font-size: 0.875rem;
+}
+
+.task-section {
+  margin-bottom: 1.5rem;
+}
+
+.section-header {
+  border-bottom: 1px solid #f1f3f4;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #495057;
+  margin: 0;
+}
+
+.section-header i {
+  color: #6c757d;
+  font-size: 1rem;
+}
+
+.section-content {
+  color: #495057;
+  line-height: 1.5;
+}
+
+.user-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #007bff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.attachment-area {
+  background-color: #f8f9fa;
+  border: 2px dashed #dee2e6 !important;
+  border-radius: 8px;
+}
+
+.comment-form textarea {
+  border-radius: 8px;
+  border: 1px solid #ced4da;
+  resize: none;
+}
+
+.comment-form textarea:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Modal Styles */
+#taskDetailsModal .modal-content {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+#taskDetailsModal .modal-header {
+  border-bottom: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+  border-radius: 12px 12px 0 0;
+  padding: 1.25rem 1.5rem;
+}
+
+#taskDetailsModal .modal-title {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 1.25rem;
+}
+
+#taskDetailsModal .modal-body {
+  max-height: 75vh;
+  overflow-y: auto;
+  padding: 0;
+}
+
+#taskDetailsModal .modal-footer {
+  border-top: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+  border-radius: 0 0 12px 12px;
+  padding: 1rem 1.5rem;
+}
+
+/* Remove old styles that are no longer needed */
+/* .priority-indicator, .checklist, .checklist-item, .checklist-checkbox, */
+/* .checklist-text, .comments-section .comment, .comment-header, */
+/* .comment-author, .comment-date, .comment-text, .comment-input */
+/* These styles are no longer used and have been replaced with new container-based styles */

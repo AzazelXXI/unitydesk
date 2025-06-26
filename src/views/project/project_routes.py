@@ -724,19 +724,56 @@ async def project_details(
 async def create_task(
     project_id: int,
     request: Request,
-    taskName: str = Form(...),
-    taskDescription: Optional[str] = Form(None),
-    taskPriority: TaskPriorityEnum = Form(TaskPriorityEnum.MEDIUM),
-    taskStatus: TaskStatusEnum = Form(TaskStatusEnum.NOT_STARTED),
-    taskAssignee: Optional[int] = Form(None),
-    taskStartDate: Optional[str] = Form(None),
-    taskDueDate: Optional[str] = Form(None),
-    taskEstimatedHours: Optional[int] = Form(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_web),
 ):
     """Create a new task for a project"""
     try:
+        # Get the raw form data for debugging
+        form = await request.form()
+        logger.info(f"Raw form data received: {dict(form)}")
+        
+        # Extract form fields manually
+        taskName = form.get("taskName")
+        taskDescription = form.get("taskDescription", "")
+        taskPriority = form.get("taskPriority", "Medium")
+        taskStatus = form.get("taskStatus", "Not Started")
+        taskAssignee = form.get("taskAssignee")
+        taskStartDate = form.get("taskStartDate")
+        taskDueDate = form.get("taskDueDate")
+        taskEstimatedHours = form.get("taskEstimatedHours")
+        
+        # Validate required fields
+        if not taskName:
+            raise HTTPException(status_code=422, detail="Task name is required")
+        
+        # Debug logging
+        logger.info(f"Creating task with data: name={taskName}, priority={taskPriority}, status={taskStatus}, assignee={taskAssignee}")
+        
+        # Convert string values to enums
+        try:
+            priority_enum = TaskPriorityEnum(taskPriority)
+            status_enum = TaskStatusEnum(taskStatus)
+        except ValueError as e:
+            logger.error(f"Invalid enum value: {e}")
+            raise HTTPException(status_code=422, detail=f"Invalid priority or status value: {e}")
+        
+        # Convert assignee to int if provided
+        assignee_id = None
+        if taskAssignee and taskAssignee.strip():
+            try:
+                assignee_id = int(taskAssignee)
+            except ValueError:
+                raise HTTPException(status_code=422, detail="Invalid assignee ID")
+        
+        # Convert estimated hours to int if provided
+        estimated_hours = None
+        if taskEstimatedHours and taskEstimatedHours.strip():
+            try:
+                estimated_hours = int(taskEstimatedHours)
+            except ValueError:
+                raise HTTPException(status_code=422, detail="Invalid estimated hours")
+        
         # Verify project exists and user has access
         project_query = text("SELECT id FROM projects WHERE id = :project_id")
         project_result = await db.execute(project_query, {"project_id": project_id})
@@ -746,12 +783,12 @@ async def create_task(
         # Parse dates if provided
         start_date = None
         due_date = None
-        if taskStartDate:
+        if taskStartDate and taskStartDate.strip():
             try:
                 start_date = datetime.strptime(taskStartDate, "%Y-%m-%d")
             except ValueError:
                 pass
-        if taskDueDate:
+        if taskDueDate and taskDueDate.strip():
             try:
                 due_date = datetime.strptime(taskDueDate, "%Y-%m-%d")
             except ValueError:
@@ -760,11 +797,11 @@ async def create_task(
         # Create the task
         new_task = Task(
             name=taskName,
-            description=taskDescription,
+            description=taskDescription if taskDescription else None,
             project_id=project_id,
-            status=taskStatus,
-            priority=taskPriority,
-            estimated_hours=taskEstimatedHours,
+            status=status_enum,
+            priority=priority_enum,
+            estimated_hours=estimated_hours,
             start_date=start_date,
             due_date=due_date,
         )
@@ -774,10 +811,10 @@ async def create_task(
         await db.refresh(new_task)
 
         # Assign user if specified
-        if taskAssignee:
+        if assignee_id:
             # Verify user exists
             user_query = text("SELECT id FROM users WHERE id = :user_id")
-            user_result = await db.execute(user_query, {"user_id": taskAssignee})
+            user_result = await db.execute(user_query, {"user_id": assignee_id})
             if user_result.fetchone():
                 # Insert into task_assignees table
                 assign_query = text(
@@ -790,7 +827,7 @@ async def create_task(
                     assign_query,
                     {
                         "task_id": new_task.id,
-                        "user_id": taskAssignee,
+                        "user_id": assignee_id,
                         "assigned_at": datetime.utcnow(),
                     },
                 )
