@@ -1,5 +1,5 @@
 import enum
-import datetime
+from datetime import datetime
 from sqlalchemy import (
     Column,
     DateTime,
@@ -54,9 +54,9 @@ class ProjectActivity(Base):
     target_entity_id = Column(Integer, nullable=True)
 
     # Optional: extra data as JSON
-    extra_data = Column(JSON, nullable=True)
+    activity_data = Column(JSON, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Relationships
     project = relationship("Project", back_populates="activities")
@@ -70,7 +70,7 @@ class ProjectActivity(Base):
         description: str,
         target_entity_type: str = None,
         target_entity_id: int = None,
-        extra_data: dict = None,
+        activity_data: dict = None,
     ):
         """Helper method to create activity entries"""
         return ProjectActivity(
@@ -80,12 +80,14 @@ class ProjectActivity(Base):
             description=description,
             target_entity_type=target_entity_type,
             target_entity_id=target_entity_id,
-            extra_data=extra_data or {},
+            activity_data=activity_data or {},
         )
 
     @staticmethod
     def format_activity_icon(activity_type: str) -> str:
         """Return appropriate Bootstrap icon for activity type"""
+        # Convert to lowercase for matching
+        activity_type = activity_type.lower()
         icon_map = {
             "project_created": "bi-folder-plus",
             "project_updated": "bi-pencil-square",
@@ -106,6 +108,8 @@ class ProjectActivity(Base):
     @staticmethod
     def format_activity_color(activity_type: str) -> str:
         """Return appropriate color class for activity type"""
+        # Convert to lowercase for matching
+        activity_type = activity_type.lower()
         color_map = {
             "project_created": "success",
             "project_updated": "info",

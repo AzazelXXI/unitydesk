@@ -881,7 +881,7 @@ async def create_task(
                 description=description,
                 target_entity_type="task",
                 target_entity_id=new_task.id,
-                metadata={
+                activity_data={
                     "task_name": new_task.name,
                     "task_priority": (
                         new_task.priority.value if new_task.priority else None
@@ -1007,7 +1007,7 @@ async def add_project_member(
                 description=description,
                 target_entity_type="user",
                 target_entity_id=user_id,
-                metadata={
+                activity_data={
                     "user_name": user_row.name,
                     "user_email": user_row.email,
                     "role": role,

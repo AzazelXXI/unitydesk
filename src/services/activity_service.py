@@ -24,7 +24,7 @@ class ActivityService:
         description: str,
         target_entity_type: str = None,
         target_entity_id: int = None,
-        metadata: dict = None,
+        activity_data: dict = None,
     ) -> ProjectActivity:
         """Log a new activity for a project"""
         try:
@@ -35,7 +35,7 @@ class ActivityService:
                 description=description,
                 target_entity_type=target_entity_type,
                 target_entity_id=target_entity_id,
-                metadata=metadata,
+                activity_data=activity_data,
             )
 
             db.add(activity)
@@ -66,7 +66,7 @@ class ActivityService:
                     pa.description,
                     pa.target_entity_type,
                     pa.target_entity_id,
-                    pa.metadata,
+                    pa.activity_data,
                     pa.created_at,
                     u.id as user_id,
                     u.name as user_name,
@@ -90,7 +90,7 @@ class ActivityService:
                     "description": row.description,
                     "target_entity_type": row.target_entity_type,
                     "target_entity_id": row.target_entity_id,
-                    "metadata": row.metadata,
+                    "extra_data": row.activity_data,
                     "created_at": row.created_at,
                     "user": {
                         "id": row.user_id,
