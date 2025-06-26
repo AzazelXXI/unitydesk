@@ -168,20 +168,31 @@ function initializeTaskModal() {
                   </button>
                 </div>
                 <div class="section-content">
-                  <div class="d-flex align-items-center">
-                    <div class="user-avatar me-2">
-                      ${
-                        task.assignee_name
-                          ? task.assignee_name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .toUpperCase()
-                          : "UN"
-                      }
-                    </div>
-                    <span>${task.assignee_name || "Unassigned"}</span>
-                  </div>
+                  ${
+                    task.assignee_names && task.assignee_names.length > 0
+                      ? task.assignee_names
+                          .map(
+                            (name, index) => `
+                          <div class="d-flex align-items-center mb-2">
+                            <div class="user-avatar me-2">
+                              ${name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .toUpperCase()}
+                            </div>
+                            <span>${name}</span>
+                          </div>
+                        `
+                          )
+                          .join("")
+                      : `
+                        <div class="d-flex align-items-center">
+                          <div class="user-avatar me-2">UN</div>
+                          <span>Unassigned</span>
+                        </div>
+                      `
+                  }
                 </div>
               </div>
             </div>
@@ -263,11 +274,31 @@ function initializeTaskModal() {
 function initializeAddTaskForm() {
   const addTaskForm = document.getElementById("addTaskForm");
   if (addTaskForm) {
+    // Initialize dynamic assignee functionality
+    initializeDynamicAssignees();
+    
     addTaskForm.addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const formData = new FormData(addTaskForm);
+      const formData = new FormData();
       const projectId = getProjectIdFromUrl();
+
+      // Get all form fields
+      formData.append("taskName", document.getElementById("taskName").value);
+      formData.append("taskDescription", document.getElementById("taskDescription").value);
+      formData.append("taskPriority", document.getElementById("taskPriority").value);
+      formData.append("taskStatus", document.getElementById("taskStatus").value);
+      formData.append("taskStartDate", document.getElementById("taskStartDate").value);
+      formData.append("taskDueDate", document.getElementById("taskDueDate").value);
+      formData.append("taskEstimatedHours", document.getElementById("taskEstimatedHours").value);
+
+      // Collect all selected assignees from dynamic dropdowns
+      const assigneeSelects = document.querySelectorAll(".assignee-select");
+      assigneeSelects.forEach((select) => {
+        if (select.value && select.value !== "") {
+          formData.append("taskAssignees", select.value);
+        }
+      });
 
       try {
         const response = await fetch(`/projects/${projectId}/tasks`, {
@@ -287,6 +318,7 @@ function initializeAddTaskForm() {
 
           // Reset the form
           addTaskForm.reset();
+          resetDynamicAssignees();
 
           // Show success message
           alert("Task created successfully!");
@@ -302,6 +334,140 @@ function initializeAddTaskForm() {
       }
     });
   }
+}
+
+/**
+ * Initialize dynamic assignee functionality
+ */
+function initializeDynamicAssignees() {
+  const assigneeContainer = document.getElementById("assigneeContainer");
+  if (!assigneeContainer) return;
+
+  // Add event listeners for existing add buttons
+  addAssigneeEventListeners();
+}
+
+/**
+ * Add event listeners to assignee add/remove buttons
+ */
+function addAssigneeEventListeners() {
+  // Add event listeners to all add buttons
+  document.querySelectorAll(".add-assignee-btn").forEach((btn) => {
+    btn.addEventListener("click", addAssigneeRow);
+  });
+
+  // Add event listeners to all remove buttons
+  document.querySelectorAll(".remove-assignee-btn").forEach((btn) => {
+    btn.addEventListener("click", removeAssigneeRow);
+  });
+
+  // Add event listeners to select changes to hide/show used options
+  document.querySelectorAll(".assignee-select").forEach((select) => {
+    select.addEventListener("change", updateAvailableOptions);
+  });
+}
+
+/**
+ * Add a new assignee row
+ */
+function addAssigneeRow() {
+  const assigneeContainer = document.getElementById("assigneeContainer");
+  const existingRows = assigneeContainer.querySelectorAll(".assignee-row");
+  
+  // Get the template from the first row
+  const firstRow = existingRows[0];
+  const newRow = firstRow.cloneNode(true);
+  
+  // Reset the select value
+  const newSelect = newRow.querySelector(".assignee-select");
+  newSelect.value = "";
+  
+  // Replace add button with remove button (except for the first row)
+  const addBtn = newRow.querySelector(".add-assignee-btn");
+  if (existingRows.length > 0) {
+    addBtn.className = "btn btn-outline-danger btn-sm remove-assignee-btn";
+    addBtn.innerHTML = '<i class="bi bi-dash"></i>';
+    addBtn.title = "Remove this assignee";
+  }
+  
+  // Add the new row
+  assigneeContainer.appendChild(newRow);
+  
+  // Re-initialize event listeners
+  addAssigneeEventListeners();
+  
+  // Update available options
+  updateAvailableOptions();
+}
+
+/**
+ * Remove an assignee row
+ */
+function removeAssigneeRow(event) {
+  const row = event.target.closest(".assignee-row");
+  const assigneeContainer = document.getElementById("assigneeContainer");
+  
+  // Don't remove if it's the only row
+  if (assigneeContainer.querySelectorAll(".assignee-row").length > 1) {
+    row.remove();
+    updateAvailableOptions();
+  }
+}
+
+/**
+ * Update available options in all dropdowns to prevent duplicates
+ */
+function updateAvailableOptions() {
+  const allSelects = document.querySelectorAll(".assignee-select");
+  const selectedValues = Array.from(allSelects)
+    .map(select => select.value)
+    .filter(value => value !== "");
+
+  allSelects.forEach((select) => {
+    const currentValue = select.value;
+    const options = select.querySelectorAll("option");
+    
+    options.forEach((option) => {
+      if (option.value === "") return; // Skip the "Select a user..." option
+      
+      // Hide option if it's selected in another dropdown
+      if (selectedValues.includes(option.value) && option.value !== currentValue) {
+        option.style.display = "none";
+      } else {
+        option.style.display = "";
+      }
+    });
+  });
+}
+
+/**
+ * Reset dynamic assignees to initial state
+ */
+function resetDynamicAssignees() {
+  const assigneeContainer = document.getElementById("assigneeContainer");
+  if (!assigneeContainer) return;
+
+  // Remove all rows except the first one
+  const rows = assigneeContainer.querySelectorAll(".assignee-row");
+  for (let i = 1; i < rows.length; i++) {
+    rows[i].remove();
+  }
+
+  // Reset the first row
+  const firstRow = assigneeContainer.querySelector(".assignee-row");
+  if (firstRow) {
+    const select = firstRow.querySelector(".assignee-select");
+    select.value = "";
+    
+    // Make sure the first row has an add button
+    const btn = firstRow.querySelector("button");
+    btn.className = "btn btn-outline-success btn-sm add-assignee-btn";
+    btn.innerHTML = '<i class="bi bi-plus"></i>';
+    btn.title = "Add another assignee";
+  }
+
+  // Update available options
+  updateAvailableOptions();
 }
 
 /**

@@ -486,12 +486,13 @@ async def project_details(
                 t.due_date,
                 t.completed_date,
                 t.created_at,
-                u.name as assignee_name,
-                u.id as assignee_id
+                STRING_AGG(u.name, ', ') as assignee_names,
+                STRING_AGG(CAST(u.id AS TEXT), ',') as assignee_ids
             FROM tasks t
             LEFT JOIN task_assignees ta ON t.id = ta.task_id
             LEFT JOIN users u ON ta.user_id = u.id
             WHERE {task_where_clause}
+            GROUP BY t.id, t.name, t.description, t.status, t.priority, t.start_date, t.due_date, t.completed_date, t.created_at
             {task_order_clause}
         """
         )
@@ -503,6 +504,20 @@ async def project_details(
 
         tasks = []
         for row in task_rows:
+            # Process assignee data
+            assignee_names = []
+            assignee_ids = []
+            if row.assignee_names:
+                assignee_names = [
+                    name.strip() for name in row.assignee_names.split(",")
+                ]
+            if row.assignee_ids:
+                assignee_ids = [
+                    int(id_str.strip())
+                    for id_str in row.assignee_ids.split(",")
+                    if id_str.strip()
+                ]
+
             task = {
                 "id": row.id,
                 "name": row.name,
@@ -513,8 +528,11 @@ async def project_details(
                 "due_date": row.due_date,
                 "completed_date": row.completed_date,
                 "created_at": row.created_at,
-                "assignee_name": row.assignee_name,
-                "assignee_id": row.assignee_id,
+                "assignee_names": assignee_names,
+                "assignee_ids": assignee_ids,
+                # For backward compatibility
+                "assignee_name": assignee_names[0] if assignee_names else None,
+                "assignee_id": assignee_ids[0] if assignee_ids else None,
             }
             tasks.append(task)
 
@@ -739,7 +757,7 @@ async def create_task(
         taskDescription = form.get("taskDescription", "")
         taskPriority = form.get("taskPriority", "Medium")
         taskStatus = form.get("taskStatus", "Not Started")
-        taskAssignee = form.get("taskAssignee")
+        taskAssignees = form.getlist("taskAssignees")  # Get list of assignees
         taskStartDate = form.get("taskStartDate")
         taskDueDate = form.get("taskDueDate")
         taskEstimatedHours = form.get("taskEstimatedHours")
@@ -750,7 +768,7 @@ async def create_task(
 
         # Debug logging
         logger.info(
-            f"Creating task with data: name={taskName}, priority={taskPriority}, status={taskStatus}, assignee={taskAssignee}"
+            f"Creating task with data: name={taskName}, priority={taskPriority}, status={taskStatus}, assignees={taskAssignees}"
         )
 
         # Convert string values to enums
@@ -763,13 +781,17 @@ async def create_task(
                 status_code=422, detail=f"Invalid priority or status value: {e}"
             )
 
-        # Convert assignee to int if provided
-        assignee_id = None
-        if taskAssignee and taskAssignee.strip():
-            try:
-                assignee_id = int(taskAssignee)
-            except ValueError:
-                raise HTTPException(status_code=422, detail="Invalid assignee ID")
+        # Convert assignees to int list if provided
+        assignee_ids = []
+        if taskAssignees:
+            for assignee in taskAssignees:
+                if assignee and assignee.strip():
+                    try:
+                        assignee_ids.append(int(assignee))
+                    except ValueError:
+                        raise HTTPException(
+                            status_code=422, detail=f"Invalid assignee ID: {assignee}"
+                        )
 
         # Convert estimated hours to int if provided
         estimated_hours = None
@@ -815,28 +837,32 @@ async def create_task(
         await db.commit()
         await db.refresh(new_task)
 
-        # Assign user if specified
-        if assignee_id:
-            # Verify user exists
-            user_query = text("SELECT id FROM users WHERE id = :user_id")
-            user_result = await db.execute(user_query, {"user_id": assignee_id})
-            if user_result.fetchone():
-                # Insert into task_assignees table
-                assign_query = text(
+        # Assign users if specified
+        if assignee_ids:
+            for assignee_id in assignee_ids:
+                # Verify user exists
+                user_query = text("SELECT id FROM users WHERE id = :user_id")
+                user_result = await db.execute(user_query, {"user_id": assignee_id})
+                if user_result.fetchone():
+                    # Insert into task_assignees table
+                    assign_query = text(
+                        """
+                        INSERT INTO task_assignees (task_id, user_id, assigned_at)
+                        VALUES (:task_id, :user_id, :assigned_at)
                     """
-                    INSERT INTO task_assignees (task_id, user_id, assigned_at)
-                    VALUES (:task_id, :user_id, :assigned_at)
-                """
-                )
-                await db.execute(
-                    assign_query,
-                    {
-                        "task_id": new_task.id,
-                        "user_id": assignee_id,
-                        "assigned_at": datetime.utcnow(),
-                    },
-                )
-                await db.commit()
+                    )
+                    await db.execute(
+                        assign_query,
+                        {
+                            "task_id": new_task.id,
+                            "user_id": assignee_id,
+                            "assigned_at": datetime.utcnow(),
+                        },
+                    )
+                else:
+                    logger.warning(f"User {assignee_id} not found, skipping assignment")
+
+            await db.commit()
 
         logger.info(
             f"Task {new_task.id} created by user {current_user.id} in project {project_id}"
@@ -945,14 +971,14 @@ async def add_project_member(
         if existing_result.fetchone():
             raise HTTPException(
                 status_code=409, detail="User is already a member of this project"
-            )        # Add the member to the project
+            )  # Add the member to the project
         insert_member_query = text(
             """
             INSERT INTO project_members (project_id, user_id, role, joined_at)
             VALUES (:project_id, :user_id, :role, :joined_at)
             """
         )
-        
+
         await db.execute(
             insert_member_query,
             {

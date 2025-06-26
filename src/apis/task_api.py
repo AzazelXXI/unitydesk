@@ -89,8 +89,10 @@ class TaskResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     project_id: int
-    assignee_id: Optional[int]
-    assignee_name: Optional[str]
+    assignee_id: Optional[int]  # Keep for backward compatibility
+    assignee_name: Optional[str]  # Keep for backward compatibility
+    assignee_ids: Optional[List[int]] = []  # New field for multiple assignees
+    assignee_names: Optional[List[str]] = []  # New field for multiple assignee names
     tags: Optional[str]
 
     class Config:
@@ -272,29 +274,31 @@ async def get_task(
     Get a specific task with assignee information
     """
     try:
-        # Join with User table through task_assignees to get assignee name
-        task_query = (
-            select(
-                Task,
-                User.name.label("assignee_name"),
-                task_assignees.c.user_id.label("assignee_id"),
-            )
-            .outerjoin(task_assignees, Task.id == task_assignees.c.task_id)
-            .outerjoin(User, task_assignees.c.user_id == User.id)
-            .where(Task.id == task_id)
-        )
+        # First get the task
+        task_query = select(Task).where(Task.id == task_id)
         task_result = await db.execute(task_query)
-        result = task_result.first()
+        task = task_result.scalar_one_or_none()
 
-        if not result:
+        if not task:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Task with ID {task_id} not found",
             )
 
-        task, assignee_name, assignee_id = result
+        # Get all assignees for this task
+        assignees_query = (
+            select(User.id, User.name)
+            .join(task_assignees, User.id == task_assignees.c.user_id)
+            .where(task_assignees.c.task_id == task_id)
+        )
+        assignees_result = await db.execute(assignees_query)
+        assignees = assignees_result.fetchall()
 
-        # Create response dict with assignee name
+        # Extract assignee data
+        assignee_ids = [assignee.id for assignee in assignees]
+        assignee_names = [assignee.name for assignee in assignees]
+
+        # Create response dict with all assignee information
         task_dict = {
             "id": task.id,
             "name": task.name,
@@ -309,8 +313,11 @@ async def get_task(
             "created_at": task.created_at,
             "updated_at": task.updated_at,
             "project_id": task.project_id,
-            "assignee_id": assignee_id,
-            "assignee_name": assignee_name,
+            "assignee_ids": assignee_ids,
+            "assignee_names": assignee_names,
+            # For backward compatibility
+            "assignee_id": assignee_ids[0] if assignee_ids else None,
+            "assignee_name": assignee_names[0] if assignee_names else None,
             "tags": task.tags,
         }
 

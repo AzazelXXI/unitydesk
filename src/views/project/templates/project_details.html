@@ -430,11 +430,13 @@
                           %d') }} {% else %} No due date {% endif %}
                         </small>
                       </div>
-                      {% if task.assignee_name %}
+                      {% if task.assignee_names %}
                       <div class="mt-2">
                         <small class="text-muted">
-                          <i class="bi bi-person me-1"></i>{{ task.assignee_name
-                          }}
+                          <i class="bi bi-person me-1"></i>
+                          {% for name in task.assignee_names %}
+                            {{ name }}{% if not loop.last %}, {% endif %}
+                          {% endfor %}
                         </small>
                       </div>
                       {% endif %}
@@ -792,10 +794,12 @@
                     <span>Due: {{ task.due_date.strftime('%b %d, %Y') }}</span>
                     {% else %}
                     <span>No due date</span>
-                    {% endif %} {% if task.assignee_name %}
-                    <span class="ms-2"
-                      >Assigned to: {{ task.assignee_name }}</span
-                    >
+                    {% endif %} {% if task.assignee_names %}
+                    <span class="ms-2">Assigned to: 
+                      {% for name in task.assignee_names %}
+                        {{ name }}{% if not loop.last %}, {% endif %}
+                      {% endfor %}
+                    </span>
                     {% else %}
                     <span class="ms-2">Unassigned</span>
                     {% endif %}
@@ -1128,13 +1132,21 @@
               </select>
             </div>
             <div class="col-md-6 mb-3">
-              <label for="taskAssignee" class="form-label">Assign To</label>
-              <select class="form-select" id="taskAssignee" name="taskAssignee">
-                <option value="">Unassigned</option>
-                {% for user in users %}
-                <option value="{{ user.id }}">{{ user.name }}</option>
-                {% endfor %}
-              </select>
+              <label for="taskAssignees" class="form-label">Assign To</label>
+              <div id="assigneeContainer">
+                <div class="assignee-row d-flex align-items-center mb-2">
+                  <select class="form-select assignee-select me-2" name="taskAssignees">
+                    <option value="">Select a user...</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.name }}</option>
+                    {% endfor %}
+                  </select>
+                  <button type="button" class="btn btn-outline-success btn-sm add-assignee-btn" title="Add another assignee">
+                    <i class="bi bi-plus"></i>
+                  </button>
+                </div>
+              </div>
+              <small class="form-text text-muted">Click the + button to assign multiple users</small>
             </div>
           </div>
 

@@ -449,6 +449,70 @@
   padding: 1rem 1.5rem;
 }
 
+/* Assignee Management Styles */
+.assignee-row {
+  transition: all 0.3s ease;
+}
+
+.assignee-row:hover {
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  padding: 2px;
+}
+
+.assignee-select {
+  flex: 1;
+  min-width: 0;
+}
+
+.add-assignee-btn,
+.remove-assignee-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.add-assignee-btn:hover {
+  background-color: #198754;
+  color: white;
+  transform: scale(1.05);
+}
+
+.remove-assignee-btn:hover {
+  background-color: #dc3545;
+  color: white;
+  transform: scale(1.05);
+}
+
+.assignee-row + .assignee-row {
+  margin-top: 0.5rem;
+}
+
+/* Animation for new assignee rows */
+.assignee-row {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Disabled option styling */
+.assignee-select option[style*="display: none"] {
+  display: none !important;
+}
+
 /* Remove old styles that are no longer needed */
 /* .priority-indicator, .checklist, .checklist-item, .checklist-checkbox, */
 /* .checklist-text, .comments-section .comment, .comment-header, */
