@@ -513,6 +513,232 @@
   display: none !important;
 }
 
+/* Activity Feed Styles */
+.activity-feed-container {
+  max-height: 400px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #007bff #f8f9fa;
+}
+
+/* Custom scrollbar for webkit browsers */
+.activity-feed-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.activity-feed-container::-webkit-scrollbar-track {
+  background: #f8f9fa;
+  border-radius: 3px;
+}
+
+.activity-feed-container::-webkit-scrollbar-thumb {
+  background: #007bff;
+  border-radius: 3px;
+  transition: background 0.3s ease;
+}
+
+.activity-feed-container::-webkit-scrollbar-thumb:hover {
+  background: #0056b3;
+}
+
+/* Activity Item Styles */
+.activity-item {
+  transition: all 0.2s ease-in-out;
+  border-left: 3px solid transparent;
+}
+
+.activity-item:hover {
+  background-color: #f8f9fa;
+  border-left-color: #007bff;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+/* Activity Avatar Styles */
+.activity-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.activity-item:hover .activity-avatar {
+  transform: scale(1.05);
+}
+
+/* Activity Icon Styles */
+.activity-icon {
+  font-size: 16px;
+  margin-right: 8px;
+  transition: transform 0.2s ease;
+}
+
+.activity-item:hover .activity-icon {
+  transform: scale(1.1);
+}
+
+/* Activity Timestamp */
+.activity-timestamp {
+  font-size: 0.75rem;
+  color: #6c757d;
+  font-weight: 400;
+}
+
+/* Full Activity Tab Styles */
+.activity-tab-container {
+  max-height: 600px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #007bff #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.activity-tab-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.activity-tab-container::-webkit-scrollbar-track {
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.activity-tab-container::-webkit-scrollbar-thumb {
+  background: #007bff;
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.activity-tab-container::-webkit-scrollbar-thumb:hover {
+  background: #0056b3;
+}
+
+/* Enhanced Activity List Management */
+.activity-show-more {
+  background: linear-gradient(to bottom, transparent 0%, rgba(248, 249, 250, 0.8) 50%, #f8f9fa 100%);
+  border-top: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.activity-show-more:hover {
+  background: linear-gradient(to bottom, transparent 0%, rgba(0, 123, 255, 0.05) 50%, rgba(0, 123, 255, 0.1) 100%);
+}
+
+.activity-show-more a {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.activity-show-more a:hover {
+  color: #0056b3;
+}
+
+/* Activity Tab Enhancements */
+.activity-tab-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 2px solid #e9ecef;
+}
+
+.activity-tab-stats {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 2px;
+}
+
+/* Print styles for activity log */
+@media print {
+  .activity-tab-container {
+    max-height: none;
+    overflow: visible;
+    border: none;
+  }
+  
+  .activity-item::before {
+    background: #000 !important;
+    color: #fff !important;
+  }
+  
+  .activity-avatar {
+    background: #000 !important;
+  }
+  
+  .activity-icon {
+    color: #000 !important;
+  }
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 768px) {
+  .activity-feed-container {
+    max-height: 300px;
+  }
+  
+  .activity-tab-container {
+    max-height: 400px;
+  }
+  
+  .activity-tab-container .activity-item::before {
+    width: 20px;
+    height: 20px;
+    font-size: 0.65rem;
+    left: 0.25rem;
+  }
+  
+  .activity-tab-container .activity-item .d-flex {
+    margin-left: 1.5rem;
+  }
+  
+  .activity-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 12px;
+  }
+  
+  .activity-tab-container .activity-avatar {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+/* Activity search and filter (for future enhancement) */
+.activity-search-container {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.activity-search-input {
+  border-radius: 20px;
+  padding-left: 40px;
+  border: 1px solid #ced4da;
+  transition: all 0.3s ease;
+}
+
+.activity-search-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  border-color: #007bff;
+}
+
+.activity-search-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+}
+
 /* Remove old styles that are no longer needed */
 /* .priority-indicator, .checklist, .checklist-item, .checklist-checkbox, */
 /* .checklist-text, .comments-section .comment, .comment-header, */

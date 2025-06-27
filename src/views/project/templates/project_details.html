@@ -564,37 +564,49 @@
             </div>
             <div class="card-body p-0">
               {% if activities %}
-              <div class="list-group list-group-flush border-bottom">
-                {% for activity in activities %}
-                <div class="list-group-item p-3">
-                  <div class="d-flex">
-                    <div class="flex-shrink-0">
-                      <div
-                        class="team-avatar"
-                        style="background-color: #{{ loop.cycle('6f42c1', '20c997', '0d6efd', 'fd7e14', 'dc3545') }}"
-                      >
-                        {{ activity.user.name[:2].upper() }}
+              <div class="activity-feed-container">
+                <div class="list-group list-group-flush">
+                  {% for activity in activities[:10] %}
+                  <div class="list-group-item activity-item p-3">
+                    <div class="d-flex">
+                      <div class="flex-shrink-0">
+                        <div
+                          class="activity-avatar"
+                          style="background-color: #{{ loop.cycle('6f42c1', '20c997', '0d6efd', 'fd7e14', 'dc3545') }}"
+                        >
+                          {{ activity.user.name[:2].upper() }}
+                        </div>
                       </div>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
-                      <div class="d-flex align-items-center">
-                        <i
-                          class="{{ activity.icon }} text-{{ activity.color }} me-2"
-                        ></i>
-                        <span>{{ activity.description }}</span>
+                      <div class="flex-grow-1 ms-3">
+                        <div class="d-flex align-items-center">
+                          <i
+                            class="activity-icon {{ activity.icon }} text-{{ activity.color }}"
+                          ></i>
+                          <span>{{ activity.description }}</span>
+                        </div>
+                        <small class="activity-timestamp">
+                          {{ activity.created_at.strftime('%b %d, %Y at %I:%M %p')
+                          if activity.created_at else 'Unknown time' }}
+                        </small>
                       </div>
-                      <small class="text-muted">
-                        {{ activity.created_at.strftime('%b %d, %Y at %I:%M %p')
-                        if activity.created_at else 'Unknown time' }}
-                      </small>
                     </div>
                   </div>
+                  {% endfor %}
+                  {% if activities|length > 10 %}
+                  <div class="list-group-item text-center py-2">
+                    <small class="text-muted">
+                      <a href="#activity" data-bs-toggle="tab" data-bs-target="#activity" class="text-decoration-none">
+                        <i class="bi bi-arrow-down me-1"></i>
+                        View {{ activities|length - 10 }} more activities
+                      </a>
+                    </small>
+                  </div>
+                  {% endif %}
                 </div>
-                {% endfor %}
               </div>
               {% else %}
-              <div class="p-4 text-center text-muted">
-                <i class="bi bi-activity" style="font-size: 2rem"></i>
+              <div class="activity-empty-state">
+                <i class="bi bi-activity"></i>
                 <p class="mt-2 mb-0">No recent activity</p>
                 <small
                   >Activities will appear here as team members work on the
@@ -1016,42 +1028,75 @@
       aria-labelledby="activity-tab"
     >
       <div class="card">
-        <div class="card-header">
-          <h5 class="card-title mb-0">Activity Log</h5>
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="card-title mb-0">Activity Log</h5>
+            {% if activities %}
+            <small class="text-muted">Complete project activity history</small>
+            {% endif %}
+          </div>
+          {% if activities %}
+          <div class="d-flex align-items-center gap-2">
+            <span class="activity-counter">{{ activities|length }} total activities</span>
+            <button class="btn btn-sm btn-outline-primary" onclick="window.print()" title="Print Activity Log">
+              <i class="bi bi-printer"></i>
+            </button>
+          </div>
+          {% endif %}
         </div>
         <div class="card-body p-0">
           {% if activities %}
-          <div class="list-group list-group-flush border-bottom">
-            {% for activity in activities %}
-            <div class="list-group-item p-3">
-              <div class="d-flex">
-                <div class="flex-shrink-0">
-                  <div
-                    class="team-avatar"
-                    style="background-color: #{{ loop.cycle('6f42c1', '20c997', '0d6efd', 'fd7e14', 'dc3545') }}"
-                  >
-                    {{ activity.user.name[:2].upper() }}
+          <div class="activity-tab-container">
+            <div class="list-group list-group-flush">
+              {% for activity in activities %}
+              <div class="list-group-item activity-item">
+                <div class="d-flex">
+                  <div class="flex-shrink-0">
+                    <div
+                      class="activity-avatar"
+                      style="background-color: #{{ loop.cycle('6f42c1', '20c997', '0d6efd', 'fd7e14', 'dc3545') }}"
+                    >
+                      {{ activity.user.name[:2].upper() }}
+                    </div>
                   </div>
-                </div>
-                <div class="flex-grow-1 ms-3">
-                  <div class="d-flex align-items-center">
-                    <i
-                      class="{{ activity.icon }} text-{{ activity.color }} me-2"
-                    ></i>
-                    <span>{{ activity.description }}</span>
+                  <div class="flex-grow-1 ms-3">
+                    <div class="d-flex align-items-start">
+                      <i
+                        class="activity-icon {{ activity.icon }} text-{{ activity.color }}"
+                      ></i>
+                      <div class="flex-grow-1">
+                        <div class="activity-description">
+                          {{ activity.description }}
+                        </div>
+                        <div class="activity-timestamp">
+                          {{ activity.created_at.strftime('%b %d, %Y at %I:%M %p') if
+                          activity.created_at else 'Unknown time' }}
+                        </div>
+                        {% if activity.extra_data and activity.extra_data != '{}' %}
+                        <div class="mt-2">
+                          <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {% if activity.extra_data.task_name %}
+                              Task: {{ activity.extra_data.task_name }}
+                            {% elif activity.extra_data.user_name %}
+                              User: {{ activity.extra_data.user_name }}
+                            {% elif activity.extra_data.role %}
+                              Role: {{ activity.extra_data.role }}
+                            {% endif %}
+                          </small>
+                        </div>
+                        {% endif %}
+                      </div>
+                    </div>
                   </div>
-                  <small class="text-muted">
-                    {{ activity.created_at.strftime('%b %d, %Y at %I:%M %p') if
-                    activity.created_at else 'Unknown time' }}
-                  </small>
                 </div>
               </div>
+              {% endfor %}
             </div>
-            {% endfor %}
           </div>
           {% else %}
-          <div class="p-4 text-center text-muted">
-            <i class="bi bi-activity" style="font-size: 3rem"></i>
+          <div class="activity-empty-state">
+            <i class="bi bi-activity"></i>
             <h6 class="mt-3">No activity yet</h6>
             <p class="mb-0">
               Project activities will appear here as team members work on tasks,

@@ -557,9 +557,9 @@ async def project_details(
                 }
             )
 
-        # Get recent activities for the project
+        # Get recent activities for the project (increased limit for better activity log)
         activities = await ActivityService.get_recent_activities(
-            db, project_id, limit=5
+            db, project_id, limit=50
         )
 
         # Get project members with their roles and task counts
