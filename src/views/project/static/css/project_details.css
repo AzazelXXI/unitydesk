@@ -625,13 +625,23 @@
 
 /* Enhanced Activity List Management */
 .activity-show-more {
-  background: linear-gradient(to bottom, transparent 0%, rgba(248, 249, 250, 0.8) 50%, #f8f9fa 100%);
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(248, 249, 250, 0.8) 50%,
+    #f8f9fa 100%
+  );
   border-top: 1px solid #e9ecef;
   transition: all 0.3s ease;
 }
 
 .activity-show-more:hover {
-  background: linear-gradient(to bottom, transparent 0%, rgba(0, 123, 255, 0.05) 50%, rgba(0, 123, 255, 0.1) 100%);
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 123, 255, 0.05) 50%,
+    rgba(0, 123, 255, 0.1) 100%
+  );
 }
 
 .activity-show-more a {
@@ -664,16 +674,16 @@
     overflow: visible;
     border: none;
   }
-  
+
   .activity-item::before {
     background: #000 !important;
     color: #fff !important;
   }
-  
+
   .activity-avatar {
     background: #000 !important;
   }
-  
+
   .activity-icon {
     color: #000 !important;
   }
@@ -684,28 +694,28 @@
   .activity-feed-container {
     max-height: 300px;
   }
-  
+
   .activity-tab-container {
     max-height: 400px;
   }
-  
+
   .activity-tab-container .activity-item::before {
     width: 20px;
     height: 20px;
     font-size: 0.65rem;
     left: 0.25rem;
   }
-  
+
   .activity-tab-container .activity-item .d-flex {
     margin-left: 1.5rem;
   }
-  
+
   .activity-avatar {
     width: 36px;
     height: 36px;
     font-size: 12px;
   }
-  
+
   .activity-tab-container .activity-avatar {
     width: 38px;
     height: 38px;
