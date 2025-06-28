@@ -4,6 +4,7 @@ Revision ID: 58a38c0df9ac
 Revises: 109990564e22
 Create Date: 2025-06-27 00:11:35.142048
 
+This migration is now a no-op because the 'metadata' column does not exist in the database.
 """
 
 from typing import Sequence, Union
@@ -20,12 +21,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    """Upgrade schema."""
-    # Rename metadata column to activity_data in project_activities table
-    op.alter_column("project_activities", "metadata", new_column_name="activity_data")
+    # No-op: 'metadata' column does not exist, nothing to rename
+    pass
 
 
 def downgrade() -> None:
-    """Downgrade schema."""
-    # Revert the column name change
-    op.alter_column("project_activities", "activity_data", new_column_name="metadata")
+    # No-op: nothing to revert
+    pass

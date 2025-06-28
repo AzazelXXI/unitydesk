@@ -35,7 +35,7 @@ class ProjectCustomStatus(Base):
     is_final = Column(
         Boolean, default=False, nullable=False
     )  # For statuses like "Completed", "Canceled"
-    sort_order = Column(Integer, default=0, nullable=False)  # For ordering in dropdowns
+    # sort_order removed: no longer used for ordering in dropdowns
     created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     updated_at = Column(
         DateTime,
