@@ -44,20 +44,15 @@ class ProjectStatusService:
                         "color": default_colors.get(status, "#6c757d"),
                         "description": f"Default {status} status",
                         "is_final": status in ["Completed", "Canceled"],
-                        "sort_order": list(DEFAULT_PROJECT_STATUSES).index(status) * 10,
                         "id": None,
                         "project_id": project_id,
                     }
                 )
 
             # Get custom statuses for this specific project
-            query = (
-                select(ProjectCustomStatus)
-                .where(
-                    ProjectCustomStatus.project_id == project_id,
-                    ProjectCustomStatus.is_active == True,
-                )
-                .order_by(ProjectCustomStatus.sort_order)
+            query = select(ProjectCustomStatus).where(
+                ProjectCustomStatus.project_id == project_id,
+                ProjectCustomStatus.is_active == True,
             )
 
             result = await db.execute(query)
@@ -73,14 +68,12 @@ class ProjectStatusService:
                         "description": custom_status.description
                         or f"Custom {custom_status.display_name} status",
                         "is_final": custom_status.is_final,
-                        "sort_order": custom_status.sort_order,
                         "id": custom_status.id,
                         "project_id": project_id,
                     }
                 )
 
-            # Sort by sort_order
-            statuses.sort(key=lambda x: x["sort_order"])
+            # No sort_order: statuses are returned in the order they were added
             return statuses
 
         except Exception as e:
@@ -96,11 +89,10 @@ class ProjectStatusService:
                     "color": "#6c757d",
                     "description": f"Default {status} status",
                     "is_final": status in ["Completed", "Canceled"],
-                    "sort_order": i * 10,
                     "id": None,
                     "project_id": project_id,
                 }
-                for i, status in enumerate(DEFAULT_PROJECT_STATUSES)
+                for status in DEFAULT_PROJECT_STATUSES
             ]
 
     @staticmethod
@@ -124,10 +116,9 @@ class ProjectStatusService:
                 "color": default_colors.get(status, "#6c757d"),
                 "description": f"Default {status} status",
                 "is_final": status in ["Completed", "Canceled"],
-                "sort_order": i * 10,
                 "id": None,
             }
-            for i, status in enumerate(DEFAULT_PROJECT_STATUSES)
+            for status in DEFAULT_PROJECT_STATUSES
         ]
 
     @staticmethod
@@ -139,7 +130,6 @@ class ProjectStatusService:
         description: str = None,
         color: str = "#007bff",
         is_final: bool = False,
-        sort_order: int = 99,
     ) -> ProjectCustomStatus:
         """Create a new custom status for a specific project"""
         try:
@@ -167,7 +157,6 @@ class ProjectStatusService:
                 description=description,
                 color=color,
                 is_final=is_final,
-                sort_order=sort_order,
             )
 
             db.add(custom_status)
@@ -193,7 +182,6 @@ class ProjectStatusService:
         description: str = None,
         color: str = None,
         is_final: bool = None,
-        sort_order: int = None,
         is_active: bool = None,
     ) -> ProjectCustomStatus:
         """Update an existing custom project status"""
@@ -218,8 +206,6 @@ class ProjectStatusService:
                 custom_status.color = color
             if is_final is not None:
                 custom_status.is_final = is_final
-            if sort_order is not None:
-                custom_status.sort_order = sort_order
             if is_active is not None:
                 custom_status.is_active = is_active
 

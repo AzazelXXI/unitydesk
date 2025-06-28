@@ -1094,7 +1094,6 @@ async def create_project_custom_status(
     description: Optional[str] = Form(None),
     color: str = Form("#007bff"),
     is_final: bool = Form(False),
-    sort_order: int = Form(99),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_web),
 ):
@@ -1123,7 +1122,6 @@ async def create_project_custom_status(
             description=description,
             color=color,
             is_final=is_final,
-            sort_order=sort_order,
         )
 
         return {
@@ -1159,7 +1157,6 @@ async def update_project_custom_status(
     description: Optional[str] = Form(None),
     color: Optional[str] = Form(None),
     is_final: Optional[bool] = Form(None),
-    sort_order: Optional[int] = Form(None),
     is_active: Optional[bool] = Form(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_web),
@@ -1188,7 +1185,6 @@ async def update_project_custom_status(
             description=description,
             color=color,
             is_final=is_final,
-            sort_order=sort_order,
             is_active=is_active,
         )
 
