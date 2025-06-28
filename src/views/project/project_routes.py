@@ -26,6 +26,7 @@ from src.models.association_tables import task_assignees
 from src.models.activity import ActivityType
 from src.controllers.project_controller import ProjectController
 from src.services.activity_service import ActivityService
+from src.services.project_status_service import ProjectStatusService
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -262,16 +263,40 @@ async def projects_dashboard(
 @router.get("/projects/new", response_class=HTMLResponse)
 async def new_project(
     request: Request,
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_web),
 ):
     """
     Display new project creation form
     """
+    try:
+        # Get all available project statuses (default + custom)
+        from src.services.project_status_service import ProjectStatusService
+
+        project_statuses = await ProjectStatusService.get_all_project_statuses(db)
+
+    except Exception as e:
+        logger.error(f"Error fetching project statuses: {str(e)}")
+        # Fallback to default statuses
+        from src.models.project import DEFAULT_PROJECT_STATUSES
+
+        project_statuses = [
+            {
+                "status_name": status,
+                "display_name": status,
+                "color": "#6c757d",
+                "is_custom": False,
+                "description": f"Default {status} status",
+            }
+            for status in DEFAULT_PROJECT_STATUSES
+        ]
+
     return templates.TemplateResponse(
         "project/templates/new_project.html",
         {
             "request": request,
             "current_user": current_user,
+            "project_statuses": project_statuses,
             "page_title": "Create New Project",
         },
     )
@@ -1039,3 +1064,254 @@ async def add_project_member(
             status_code=500,
             content={"success": False, "message": "Failed to add member"},
         )
+
+
+# =============================================================================
+# Project-Specific Custom Status Management Routes
+# =============================================================================
+
+
+@router.get("/api/projects/{project_id}/statuses", response_class=JSONResponse)
+async def get_project_statuses(
+    project_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+):
+    """Get all statuses for a specific project (default + custom)"""
+    try:
+        statuses = await ProjectStatusService.get_project_statuses(db, project_id)
+        return {"success": True, "data": statuses, "count": len(statuses)}
+    except Exception as e:
+        logger.error(f"Error getting statuses for project {project_id}: {str(e)}")
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/api/projects/{project_id}/statuses", response_class=JSONResponse)
+async def create_project_custom_status(
+    project_id: int,
+    status_name: str = Form(...),
+    display_name: str = Form(...),
+    description: Optional[str] = Form(None),
+    color: str = Form("#007bff"),
+    is_final: bool = Form(False),
+    sort_order: int = Form(99),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+):
+    """Create a new custom status for a specific project"""
+    try:
+        # Check if user has permission to manage this project
+        project_query = select(Project).where(Project.id == project_id)
+        project_result = await db.execute(project_query)
+        project = project_result.scalar_one_or_none()
+
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+
+        # Check permissions: owner, admin, or project manager
+        if not (
+            current_user.user_type in ["system_admin", "project_manager"]
+            or project.owner_id == current_user.id
+        ):
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+        custom_status = await ProjectStatusService.create_custom_project_status(
+            db=db,
+            project_id=project_id,
+            status_name=status_name,
+            display_name=display_name,
+            description=description,
+            color=color,
+            is_final=is_final,
+            sort_order=sort_order,
+        )
+
+        return {
+            "success": True,
+            "data": {
+                "id": custom_status.id,
+                "status_name": custom_status.status_name,
+                "display_name": custom_status.display_name,
+                "color": custom_status.color,
+                "description": custom_status.description,
+                "is_final": custom_status.is_final,
+                "project_id": custom_status.project_id,
+            },
+            "message": f"Custom status '{custom_status.display_name}' created for this project",
+        }
+
+    except ValueError as e:
+        return {"success": False, "error": str(e)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating custom status for project {project_id}: {str(e)}")
+        return {"success": False, "error": "Failed to create custom status"}
+
+
+@router.put(
+    "/api/projects/{project_id}/statuses/{status_id}", response_class=JSONResponse
+)
+async def update_project_custom_status(
+    project_id: int,
+    status_id: int,
+    display_name: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    color: Optional[str] = Form(None),
+    is_final: Optional[bool] = Form(None),
+    sort_order: Optional[int] = Form(None),
+    is_active: Optional[bool] = Form(None),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+):
+    """Update a custom status for a specific project"""
+    try:
+        # Check permissions
+        project_query = select(Project).where(Project.id == project_id)
+        project_result = await db.execute(project_query)
+        project = project_result.scalar_one_or_none()
+
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+
+        if not (
+            current_user.user_type in ["system_admin", "project_manager"]
+            or project.owner_id == current_user.id
+        ):
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+        custom_status = await ProjectStatusService.update_custom_project_status(
+            db=db,
+            status_id=status_id,
+            project_id=project_id,
+            display_name=display_name,
+            description=description,
+            color=color,
+            is_final=is_final,
+            sort_order=sort_order,
+            is_active=is_active,
+        )
+
+        return {
+            "success": True,
+            "data": {
+                "id": custom_status.id,
+                "status_name": custom_status.status_name,
+                "display_name": custom_status.display_name,
+                "color": custom_status.color,
+                "description": custom_status.description,
+                "is_final": custom_status.is_final,
+            },
+            "message": f"Status '{custom_status.display_name}' updated successfully",
+        }
+
+    except ValueError as e:
+        return {"success": False, "error": str(e)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            f"Error updating custom status {status_id} for project {project_id}: {str(e)}"
+        )
+        return {"success": False, "error": "Failed to update custom status"}
+
+
+@router.delete(
+    "/api/projects/{project_id}/statuses/{status_id}", response_class=JSONResponse
+)
+async def delete_project_custom_status(
+    project_id: int,
+    status_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+):
+    """Delete a custom status for a specific project"""
+    try:
+        # Check permissions
+        project_query = select(Project).where(Project.id == project_id)
+        project_result = await db.execute(project_query)
+        project = project_result.scalar_one_or_none()
+
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+
+        if not (
+            current_user.user_type in ["system_admin", "project_manager"]
+            or project.owner_id == current_user.id
+        ):
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+        was_deleted = await ProjectStatusService.delete_custom_project_status(
+            db=db, status_id=status_id, project_id=project_id
+        )
+
+        return {
+            "success": True,
+            "deleted": was_deleted,
+            "message": (
+                "Status deleted successfully"
+                if was_deleted
+                else "Status deactivated (was in use)"
+            ),
+        }
+
+    except ValueError as e:
+        return {"success": False, "error": str(e)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            f"Error deleting custom status {status_id} for project {project_id}: {str(e)}"
+        )
+        return {"success": False, "error": "Failed to delete custom status"}
+
+
+@router.get("/projects/manage-statuses", response_class=HTMLResponse)
+async def manage_project_statuses(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+):
+    """
+    Display project status management page
+    """
+    try:
+        # Only allow admins and project managers
+        if current_user.user_type not in ["system_admin", "project_manager"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Insufficient permissions to manage project statuses",
+            )
+
+        # Get all available project statuses (default + custom)
+        project_statuses = await ProjectStatusService.get_all_project_statuses(db)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching project statuses for management: {str(e)}")
+        # Fallback to default statuses
+        from src.models.project import DEFAULT_PROJECT_STATUSES
+
+        project_statuses = [
+            {
+                "status_name": status,
+                "display_name": status,
+                "color": "#6c757d",
+                "is_custom": False,
+                "description": f"Default {status} status",
+                "is_final": status in ["Completed", "Canceled"],
+                "id": None,
+            }
+            for status in DEFAULT_PROJECT_STATUSES
+        ]
+
+    return templates.TemplateResponse(
+        "project/templates/manage_project_statuses.html",
+        {
+            "request": request,
+            "current_user": current_user,
+            "project_statuses": project_statuses,
+            "page_title": "Manage Project Statuses",
+        },
+    )

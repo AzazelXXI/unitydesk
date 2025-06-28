@@ -206,6 +206,22 @@
         <i class="bi bi-folder"></i> Files
       </button>
     </li>
+    {% if current_user.user_type in ['system_admin', 'project_manager'] or (project.owner_id == current_user.id) %}
+    <li class="nav-item" role="presentation">
+      <button
+        class="nav-link"
+        id="statuses-tab"
+        data-bs-toggle="tab"
+        data-bs-target="#statuses"
+        type="button"
+        role="tab"
+        aria-controls="statuses"
+        aria-selected="false"
+      >
+        <i class="bi bi-flag"></i> Status Management
+      </button>
+    </li>
+    {% endif %}
     <li class="nav-item" role="presentation">
       <button
         class="nav-link"
@@ -1020,6 +1036,42 @@
       </div>
     </div>
 
+    <!-- Status Management Tab -->
+    {% if current_user.user_type in ['system_admin', 'project_manager'] or (project.owner_id == current_user.id) %}
+    <div
+      class="tab-pane fade"
+      id="statuses"
+      role="tabpanel"
+      aria-labelledby="statuses-tab"
+    >
+      <div class="card">
+        <div class="card-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="card-title mb-0">
+                <i class="bi bi-flag me-2"></i>Project Status Management
+              </h5>
+              <small class="text-muted">Customize statuses specific to this project</small>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="showCreateStatusModal()">
+              <i class="bi bi-plus-lg me-1"></i>Add Custom Status
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="projectStatusList">
+            <!-- Status list will be loaded here via JavaScript -->
+            <div class="text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading statuses...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
     <!-- Activity Tab -->
     <div
       class="tab-pane fade"
@@ -1317,6 +1369,458 @@
 
 <!-- Include Task Details Modal from separate template -->
 {% include "project/templates/partials/task_details_modal.html" %}
+
+<!-- Create Custom Status Modal -->
+<div class="modal fade" id="createCustomStatusModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-plus-lg me-2"></i>Add Custom Status
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="createCustomStatusForm">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="customStatusName" class="form-label">Status Name *</label>
+            <input type="text" class="form-control" id="customStatusName" name="status_name" required
+                   placeholder="e.g., Review, Testing, Deployed">
+            <div class="form-text">Internal identifier (will be auto-formatted)</div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="customDisplayName" class="form-label">Display Name *</label>
+            <input type="text" class="form-control" id="customDisplayName" name="display_name" required
+                   placeholder="e.g., Under Review, Testing Phase, Ready for Deployment">
+            <div class="form-text">Human-readable name shown in UI</div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="customDescription" class="form-label">Description</label>
+            <textarea class="form-control" id="customDescription" name="description" rows="2"
+                      placeholder="Optional description of when to use this status"></textarea>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <label for="customColor" class="form-label">Color</label>
+              <div class="d-flex align-items-center">
+                <input type="color" class="form-control form-control-color" id="customColor" name="color" value="#007bff">
+                <span class="ms-2" id="customColorPreview" style="width: 30px; height: 30px; background-color: #007bff; border-radius: 4px; border: 2px solid #dee2e6;"></span>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <label for="customSortOrder" class="form-label">Sort Order</label>
+              <input type="number" class="form-control" id="customSortOrder" name="sort_order" value="50" min="0" max="100">
+            </div>
+          </div>
+          
+          <div class="mt-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="customIsFinal" name="is_final">
+              <label class="form-check-label" for="customIsFinal">
+                Final Status (indicates project completion)
+              </label>
+            </div>
+          </div>
+          
+          <div class="mt-3 p-3 bg-light rounded">
+            <strong>Preview:</strong>
+            <span id="customStatusPreview" class="ms-2" style="padding: 4px 8px; border-radius: 4px; color: white; background-color: #007bff; font-size: 0.8rem;">
+              New Status
+            </span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-lg me-2"></i>Create Status
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Custom Status Modal -->
+<div class="modal fade" id="editCustomStatusModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-pencil me-2"></i>Edit Custom Status
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="editCustomStatusForm">
+        <input type="hidden" id="editStatusId" name="status_id">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="editStatusName" class="form-label">Status Name</label>
+            <input type="text" class="form-control" id="editStatusName" name="status_name" disabled
+                   placeholder="e.g., Review, Testing, Deployed">
+            <div class="form-text">Internal identifier (cannot be changed)</div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="editDisplayName" class="form-label">Display Name *</label>
+            <input type="text" class="form-control" id="editDisplayName" name="display_name" required
+                   placeholder="e.g., Under Review, Testing Phase, Ready for Deployment">
+            <div class="form-text">Human-readable name shown in UI</div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="editDescription" class="form-label">Description</label>
+            <textarea class="form-control" id="editDescription" name="description" rows="2"
+                      placeholder="Optional description of when to use this status"></textarea>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <label for="editColor" class="form-label">Color</label>
+              <div class="d-flex align-items-center">
+                <input type="color" class="form-control form-control-color" id="editColor" name="color" value="#007bff">
+                <span class="ms-2" id="editColorPreview" style="width: 30px; height: 30px; background-color: #007bff; border-radius: 4px; border: 2px solid #dee2e6;"></span>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <label for="editSortOrder" class="form-label">Sort Order</label>
+              <input type="number" class="form-control" id="editSortOrder" name="sort_order" value="50" min="0" max="100">
+            </div>
+          </div>
+          
+          <div class="mt-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="editIsFinal" name="is_final">
+              <label class="form-check-label" for="editIsFinal">
+                Final Status (indicates project completion)
+              </label>
+            </div>
+          </div>
+          
+          <div class="mt-3 p-3 bg-light rounded">
+            <strong>Preview:</strong>
+            <span id="editStatusPreview" class="ms-2" style="padding: 4px 8px; border-radius: 4px; color: white; background-color: #007bff; font-size: 0.8rem;">
+              Updated Status
+            </span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-lg me-2"></i>Update Status
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Status Management JavaScript -->
+<script>
+// Status Management Functions
+let projectStatusData = [];
+
+// Load project statuses when status tab is activated
+document.addEventListener('DOMContentLoaded', function() {
+  // Load statuses when status tab is clicked
+  const statusTab = document.getElementById('statuses-tab');
+  if (statusTab) {
+    statusTab.addEventListener('shown.bs.tab', function() {
+      loadProjectStatuses();
+    });
+  }
+  
+  // Setup status creation form
+  const createForm = document.getElementById('createCustomStatusForm');
+  if (createForm) {
+    setupStatusForm();
+  }
+});
+
+async function loadProjectStatuses() {
+  try {
+    const response = await fetch(`/api/projects/{{ project.id }}/statuses`);
+    const data = await response.json();
+    
+    if (data.success) {
+      projectStatusData = data.data;
+      renderProjectStatuses(data.data);
+    } else {
+      showStatusError('Failed to load project statuses: ' + data.error);
+    }
+  } catch (error) {
+    showStatusError('Error loading statuses: ' + error.message);
+  }
+}
+
+function renderProjectStatuses(statuses) {
+  const container = document.getElementById('projectStatusList');
+  if (!container) return;
+  
+  let html = '';
+  
+  statuses.forEach(status => {
+    const customBadge = status.is_custom ? 
+      '<span class="badge bg-info ms-2">Custom</span>' : 
+      '<span class="badge bg-light text-dark ms-2">Default</span>';
+    
+    const finalBadge = status.is_final ? 
+      '<span class="badge bg-warning ms-1">Final</span>' : '';
+    
+    const actions = status.is_custom ? `
+      <button class="btn btn-sm btn-outline-primary me-2" onclick="editStatus(${status.id})">
+        <i class="bi bi-pencil"></i>
+      </button>
+      <button class="btn btn-sm btn-outline-danger" onclick="deleteStatus(${status.id})">
+        <i class="bi bi-trash"></i>
+      </button>
+    ` : '';
+    
+    html += `
+      <div class="card mb-3" style="border-left: 4px solid ${status.color};">
+        <div class="card-body py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="mb-1">
+                ${status.display_name}
+                <span class="badge" style="background-color: ${status.color}; color: white; font-size: 0.7rem;">
+                  ${status.status_name}
+                </span>
+                ${customBadge}
+                ${finalBadge}
+              </h6>
+              ${status.description ? `<p class="text-muted mb-0 small">${status.description}</p>` : ''}
+            </div>
+            <div>
+              ${actions}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  
+  if (html === '') {
+    html = `
+      <div class="text-center py-4">
+        <i class="bi bi-flag" style="font-size: 3rem; color: #dee2e6;"></i>
+        <h6 class="mt-3">Only Default Statuses</h6>
+        <p class="text-muted">Create custom statuses specific to this project</p>
+      </div>
+    `;
+  }
+  
+  container.innerHTML = html;
+}
+
+function setupStatusForm() {
+  // Setup create form
+  const colorInput = document.getElementById('customColor');
+  const colorPreview = document.getElementById('customColorPreview');
+  const statusPreview = document.getElementById('customStatusPreview');
+  const statusNameInput = document.getElementById('customStatusName');
+  const displayNameInput = document.getElementById('customDisplayName');
+  
+  function updateCreatePreview() {
+    const color = colorInput.value;
+    const displayName = displayNameInput.value || statusNameInput.value || 'New Status';
+    
+    colorPreview.style.backgroundColor = color;
+    statusPreview.style.backgroundColor = color;
+    statusPreview.textContent = displayName;
+  }
+  
+  colorInput.addEventListener('change', updateCreatePreview);
+  statusNameInput.addEventListener('input', function() {
+    if (!displayNameInput.value) {
+      displayNameInput.value = this.value;
+    }
+    updateCreatePreview();
+  });
+  displayNameInput.addEventListener('input', updateCreatePreview);
+  
+  // Create form submission
+  document.getElementById('createCustomStatusForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    await createCustomStatus();
+  });
+  
+  // Setup edit form
+  const editColorInput = document.getElementById('editColor');
+  const editColorPreview = document.getElementById('editColorPreview');
+  const editStatusPreview = document.getElementById('editStatusPreview');
+  const editDisplayNameInput = document.getElementById('editDisplayName');
+  
+  function updateEditPreview() {
+    const color = editColorInput.value;
+    const displayName = editDisplayNameInput.value || 'Updated Status';
+    
+    editColorPreview.style.backgroundColor = color;
+    editStatusPreview.style.backgroundColor = color;
+    editStatusPreview.textContent = displayName;
+  }
+  
+  editColorInput.addEventListener('change', updateEditPreview);
+  editDisplayNameInput.addEventListener('input', updateEditPreview);
+  
+  // Edit form submission
+  document.getElementById('editCustomStatusForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    await updateCustomStatus();
+  });
+}
+
+function showCreateStatusModal() {
+  const modal = new bootstrap.Modal(document.getElementById('createCustomStatusModal'));
+  modal.show();
+}
+
+async function createCustomStatus() {
+  const form = document.getElementById('createCustomStatusForm');
+  const formData = new FormData(form);
+  
+  try {
+    const response = await fetch(`/api/projects/{{ project.id }}/statuses`, {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      showStatusMessage('Success! Custom status created: ' + result.data.display_name, 'success');
+      bootstrap.Modal.getInstance(document.getElementById('createCustomStatusModal')).hide();
+      form.reset();
+      loadProjectStatuses(); // Reload the list
+    } else {
+      showStatusMessage('Error: ' + result.error, 'danger');
+    }
+  } catch (error) {
+    showStatusMessage('Error creating status: ' + error.message, 'danger');
+  }
+}
+
+function showStatusMessage(message, type = 'info') {
+  // Create a toast or alert for status messages
+  const alertHtml = `
+    <div class="alert alert-${type} alert-dismissible fade show mt-3" role="alert">
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+  
+  const container = document.getElementById('projectStatusList');
+  container.insertAdjacentHTML('afterbegin', alertHtml);
+  
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    const alert = container.querySelector('.alert');
+    if (alert) alert.remove();
+  }, 5000);
+}
+
+function showStatusError(message) {
+  const container = document.getElementById('projectStatusList');
+  container.innerHTML = `
+    <div class="text-center py-4">
+      <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+      <h6 class="mt-3">Error Loading Statuses</h6>
+      <p class="text-muted">${message}</p>
+      <button class="btn btn-outline-primary btn-sm" onclick="loadProjectStatuses()">
+        <i class="bi bi-arrow-clockwise me-1"></i>Retry
+      </button>
+    </div>
+  `;
+}
+
+function editStatus(statusId) {
+  const status = projectStatusData.find(s => s.id === statusId);
+  if (!status || !status.is_custom) {
+    showStatusMessage('Cannot edit default statuses', 'warning');
+    return;
+  }
+  
+  // Populate edit form with current values
+  document.getElementById('editStatusId').value = statusId;
+  document.getElementById('editStatusName').value = status.status_name;
+  document.getElementById('editDisplayName').value = status.display_name;
+  document.getElementById('editDescription').value = status.description || '';
+  document.getElementById('editColor').value = status.color;
+  document.getElementById('editIsFinal').checked = status.is_final;
+  document.getElementById('editSortOrder').value = status.sort_order;
+  
+  // Update preview
+  const editColorPreview = document.getElementById('editColorPreview');
+  const editStatusPreview = document.getElementById('editStatusPreview');
+  editColorPreview.style.backgroundColor = status.color;
+  editStatusPreview.style.backgroundColor = status.color;
+  editStatusPreview.textContent = status.display_name;
+  
+  // Show edit modal
+  const modal = new bootstrap.Modal(document.getElementById('editCustomStatusModal'));
+  modal.show();
+}
+
+async function updateCustomStatus() {
+  const form = document.getElementById('editCustomStatusForm');
+  const formData = new FormData(form);
+  const statusId = document.getElementById('editStatusId').value;
+  
+  try {
+    const response = await fetch(`/api/projects/{{ project.id }}/statuses/${statusId}`, {
+      method: 'PUT',
+      body: formData
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      showStatusMessage('Success! Custom status updated: ' + result.data.display_name, 'success');
+      bootstrap.Modal.getInstance(document.getElementById('editCustomStatusModal')).hide();
+      form.reset();
+      loadProjectStatuses(); // Reload the list
+    } else {
+      showStatusMessage('Error: ' + result.error, 'danger');
+    }
+  } catch (error) {
+    showStatusMessage('Error updating status: ' + error.message, 'danger');
+  }
+}
+
+async function deleteStatus(statusId) {
+  const status = projectStatusData.find(s => s.id === statusId);
+  if (!status || !status.is_custom) {
+    showStatusMessage('Cannot delete default statuses', 'warning');
+    return;
+  }
+  
+  const confirmMessage = `Are you sure you want to delete "${status.display_name}"?\n\nNote: If this status is being used by tasks, it will be deactivated instead of deleted.`;
+  
+  if (confirm(confirmMessage)) {
+    try {
+      const response = await fetch(`/api/projects/{{ project.id }}/statuses/${statusId}`, {
+        method: 'DELETE'
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        const action = result.deleted ? 'deleted' : 'deactivated (was in use)';
+        showStatusMessage(`Success! Custom status ${action}`, 'success');
+        loadProjectStatuses(); // Reload the list
+      } else {
+        showStatusMessage('Error: ' + result.error, 'danger');
+      }
+    } catch (error) {
+      showStatusMessage('Error deleting status: ' + error.message, 'danger');
+    }
+  }
+}
+</script>
 
 <!-- Project Details JavaScript loaded from external file -->
 <script src="{{ url_for('project_static', path='js/project_details.js') }}?v=999999"></script>

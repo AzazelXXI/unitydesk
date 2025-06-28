@@ -10,6 +10,7 @@ from .user import (
     SystemAdmin,
 )
 from .project import Project
+from .custom_project_status import ProjectCustomStatus
 from .task import Task
 from .comment import Comment
 from .attachment import Attachment
@@ -38,6 +39,7 @@ __all__ = [
     "Designer",
     "SystemAdmin",
     "Project",
+    "ProjectCustomStatus",
     "Task",
     "Comment",
     "Attachment",

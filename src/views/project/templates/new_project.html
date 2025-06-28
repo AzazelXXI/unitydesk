@@ -48,6 +48,35 @@ Platform{% endblock %} {% block head_extra %}
   .team-member-row:hover {
     background-color: #e9ecef;
   }
+
+  /* Status Selection Styling */
+  .status-preview {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  .status-option {
+    display: flex;
+    align-items: center;
+  }
+
+  #projectStatus {
+    padding-left: 12px;
+  }
+
+  /* Custom status indicator */
+  .custom-status-badge {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background-color: #e7f3ff;
+    color: #0066cc;
+    margin-left: 8px;
+  }
 </style>
 {% endblock %} {% block content %}
 <div class="container mt-4">
@@ -95,11 +124,20 @@ Platform{% endblock %} {% block head_extra %}
           <div class="col-md-6 mb-3">
             <label for="projectStatus" class="form-label">Status</label>
             <select class="form-select" id="projectStatus" name="status">
-              <option value="Planning">Planning</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
-              <option value="Canceled">Canceled</option>
+              {% for status in project_statuses %}
+              <option value="{{ status.status_name }}" 
+                      data-color="{{ status.color }}"
+                      {% if status.status_name == 'Planning' %}selected{% endif %}>
+                {{ status.display_name }}
+              </option>
+              {% endfor %}
             </select>
+            <div class="form-text">
+              <small class="text-muted">
+                <i class="bi bi-info-circle"></i>
+                Select the initial status for your project. You can add custom statuses after creating the project.
+              </small>
+            </div>
           </div>
         </div>
       </div>
@@ -235,6 +273,24 @@ Platform{% endblock %} {% block head_extra %}
       dateFormat: "Y-m-d\\TH:i:S",
       allowInput: true,
     });
+
+    // Project status color preview
+    const projectStatusSelect = document.getElementById("projectStatus");
+    
+    function updateStatusPreview() {
+      const selectedOption = projectStatusSelect.options[projectStatusSelect.selectedIndex];
+      const color = selectedOption.dataset.color || '#6c757d';
+      
+      // Update the select border color to match the status
+      projectStatusSelect.style.borderLeftColor = color;
+      projectStatusSelect.style.borderLeftWidth = '3px';
+    }
+    
+    // Initialize status preview
+    updateStatusPreview();
+    
+    // Update preview when status changes
+    projectStatusSelect.addEventListener('change', updateStatusPreview);
 
     // Team members functionality
     const teamMembersContainer = document.getElementById(

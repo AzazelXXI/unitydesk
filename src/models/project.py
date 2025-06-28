@@ -66,3 +66,46 @@ class Project(Base):
     activities = relationship(
         "ProjectActivity", back_populates="project", cascade="all, delete-orphan"
     )
+
+
+# Default project statuses - can be extended with custom statuses
+DEFAULT_PROJECT_STATUSES = [
+    "Planning",
+    "In Progress",
+    "Completed",
+    "Canceled",
+]
+
+
+# Helper function to get all available project statuses (default + custom)
+def get_available_project_statuses():
+    """
+    Get all available project statuses including default and custom statuses.
+    This can be extended to fetch custom statuses from database or configuration.
+    For now, returns default statuses. Use ProjectStatusService for full functionality.
+    """
+    return DEFAULT_PROJECT_STATUSES.copy()
+
+
+# Helper function to validate project status
+def is_valid_project_status(project_status: str) -> bool:
+    """Validate if a project status is allowed (basic validation for default statuses)"""
+    return project_status in DEFAULT_PROJECT_STATUSES
+
+
+# Helper function to get display name for project status
+def get_project_status_display_name(project_status: str) -> str:
+    """Get display name for project status (fallback for when DB is not available)"""
+    return project_status.title()
+
+
+# Helper function to get status color
+def get_project_status_color(project_status: str) -> str:
+    """Get color for project status for UI display"""
+    status_colors = {
+        "Planning": "#6c757d",  # Gray
+        "In Progress": "#007bff",  # Blue
+        "Completed": "#28a745",  # Green
+        "Canceled": "#dc3545",  # Red
+    }
+    return status_colors.get(project_status, "#6c757d")
