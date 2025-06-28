@@ -18,7 +18,7 @@ from .base import Base
 
 class CustomUserType(Base):
     """Model for storing custom user types"""
-
+    
     __tablename__ = "custom_user_types"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -34,23 +34,22 @@ class CustomUserType(Base):
         nullable=False,
     )
 
-    @validates("type_name")
+    @validates('type_name')
     def validate_type_name(self, key, type_name):
         """Ensure type_name follows naming conventions"""
         if not type_name:
             raise ValueError("Type name cannot be empty")
-
+        
         # Convert to lowercase and replace spaces with underscores
-        cleaned_name = type_name.lower().replace(" ", "_").replace("-", "_")
-
+        cleaned_name = type_name.lower().replace(' ', '_').replace('-', '_')
+        
         # Remove any non-alphanumeric characters except underscores
         import re
-
-        cleaned_name = re.sub(r"[^a-z0-9_]", "", cleaned_name)
-
+        cleaned_name = re.sub(r'[^a-z0-9_]', '', cleaned_name)
+        
         if len(cleaned_name) < 2:
             raise ValueError("Type name must be at least 2 characters long")
-
+        
         return cleaned_name
 
     def __repr__(self):

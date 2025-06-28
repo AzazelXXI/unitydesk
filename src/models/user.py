@@ -21,7 +21,6 @@ class UserStatusEnum(str, enum.Enum):
     IDLE = "Idle"
 
 
-# Keep the enum for backward compatibility but use list-based approach for flexibility
 class UserTypeEnum(str, enum.Enum):
     USER = "user"
     PROJECT_MANAGER = "project_manager"
@@ -34,7 +33,6 @@ class UserTypeEnum(str, enum.Enum):
 
 
 # Default user types - can be extended with custom types
-# This list maintains the original enum values but allows for dynamic extension
 DEFAULT_USER_TYPES = [
     "user",
     "project_manager",
@@ -46,30 +44,24 @@ DEFAULT_USER_TYPES = [
     "team_member",
 ]
 
-
-# Helper functions for backward compatibility (use UserTypeService for full functionality)
+# Helper function to get all available user types (default + custom)
 def get_available_user_types():
     """
-    Get default user types for backward compatibility.
-    For full functionality including custom types, use UserTypeService.get_all_user_types()
+    Get all available user types including default and custom types.
+    This can be extended to fetch custom types from database or configuration.
+    For now, returns default types. Use UserTypeService for full functionality.
     """
     return DEFAULT_USER_TYPES.copy()
 
-
+# Helper function to validate user type
 def is_valid_user_type(user_type: str) -> bool:
-    """
-    Validate if a user type is in the default list (basic validation).
-    For full validation including custom types, use UserTypeService.is_valid_user_type()
-    """
+    """Validate if a user type is allowed (basic validation for default types)"""
     return user_type in DEFAULT_USER_TYPES
 
-
+# Helper function to get display name for user type
 def get_user_type_display_name(user_type: str) -> str:
-    """
-    Get display name for user type (fallback for when DB is not available).
-    For full functionality, use UserTypeService.get_user_type_display_name()
-    """
-    return user_type.replace("_", " ").title()
+    """Get display name for user type (fallback for when DB is not available)"""
+    return user_type.replace('_', ' ').title()
 
 
 class User(Base):
