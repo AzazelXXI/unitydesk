@@ -21,6 +21,7 @@ class UserStatusEnum(str, enum.Enum):
     IDLE = "Idle"
 
 
+# Keep the enum for backward compatibility but use list-based approach for flexibility
 class UserTypeEnum(str, enum.Enum):
     USER = "user"
     PROJECT_MANAGER = "project_manager"
@@ -30,6 +31,45 @@ class UserTypeEnum(str, enum.Enum):
     DESIGNER = "designer"
     SYSTEM_ADMIN = "system_admin"
     TEAM_MEMBER = "team_member"  # Generic team member
+
+
+# Default user types - can be extended with custom types
+# This list maintains the original enum values but allows for dynamic extension
+DEFAULT_USER_TYPES = [
+    "user",
+    "project_manager",
+    "team_leader",
+    "developer",
+    "tester",
+    "designer",
+    "system_admin",
+    "team_member",
+]
+
+
+# Helper functions for backward compatibility (use UserTypeService for full functionality)
+def get_available_user_types():
+    """
+    Get default user types for backward compatibility.
+    For full functionality including custom types, use UserTypeService.get_all_user_types()
+    """
+    return DEFAULT_USER_TYPES.copy()
+
+
+def is_valid_user_type(user_type: str) -> bool:
+    """
+    Validate if a user type is in the default list (basic validation).
+    For full validation including custom types, use UserTypeService.is_valid_user_type()
+    """
+    return user_type in DEFAULT_USER_TYPES
+
+
+def get_user_type_display_name(user_type: str) -> str:
+    """
+    Get display name for user type (fallback for when DB is not available).
+    For full functionality, use UserTypeService.get_user_type_display_name()
+    """
+    return user_type.replace("_", " ").title()
 
 
 class User(Base):
