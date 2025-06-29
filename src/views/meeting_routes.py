@@ -80,7 +80,7 @@ async def get_meeting_room(request: Request, room_id: str):
 
     return templates.TemplateResponse(
         request=request,
-        name="modern_meeting_room.html",
+        name="index.html",
         context={"request": request, "meeting": meeting, "participants": participants},
     )
 

@@ -1,7 +1,7 @@
-{% extends "main.html" %}
+{% extends "base.html" %}
 {% block script  %}
     <link rel='stylesheet' type='text/css' media='screen' href="{{ url_for('static', path='/css/video.css') }}">
-    <script src="{{ url_for('static', path='/js/index.js') }}""></script>
+    <script src="{{ url_for('static', path='/js/index.js') }}"></script>
 {% endblock %}
 {% block content %}
     <div id="videos">
