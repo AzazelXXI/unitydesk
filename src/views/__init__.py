@@ -10,8 +10,7 @@ The routes are organized by module, with each module having its own router file.
 from src.views.core_routes import router as core_router
 from src.views.dashboard_routes import router as dashboard_router
 
-# Meeting module will be developed later
-# from src.views.meeting_routes import router as meeting_router
+from src.views.meeting_routes import router as meeting_router
 from src.views.calendar_routes import router as calendar_router
 from src.views.projects_routes import router as projects_router
 from src.views.task.web_routes import task_web_router  # Specific routes first
@@ -24,7 +23,7 @@ from src.controllers.project_controller import router as project_controller_rout
 web_routers = [
     core_router,
     # dashboard_router,  # Commented out to avoid conflicts with /projects route
-    # meeting_router,  # Hidden for now, will be developed later
+    meeting_router,
     calendar_router,
     # projects_router,  # Removed - using project_web_router instead to avoid conflicts
     task_web_router,  # Specific routes like /tasks/create (FIRST)

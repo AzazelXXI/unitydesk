@@ -70,6 +70,13 @@ app.mount(
     name="project_static",
 )
 
+# Mount static files for meeting views
+app.mount(
+    "/meeting/static",
+    StaticFiles(directory="src/views/meeting/static"),
+    name="meeting_static",
+)
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
