@@ -33,7 +33,12 @@
 
       .sidebar {
         min-height: calc(100vh - 56px);
+        width: 150px;
+        max-width: 150px;
         background-color: var(--secondary-color);
+        padding-left: 0;
+        padding-right: 0;
+        transition: width 0.3s;
       }
 
       .sidebar .nav-link {
@@ -48,13 +53,23 @@
         color: #fff;
         font-weight: 500;
       }
-      .sidebar .nav-link i {
-        margin-right: 8px;
-        width: 16px;
-        text-align: center;
+
+      .sidebar .nav-link span {
+        display: none;
       }
-      .content {
-        padding: 20px;
+
+      .sidebar .nav-link i {
+        margin-right: 0;
+        width: 32px;
+        text-align: center;
+        font-size: 1.2rem;
+      }
+
+      .content,
+      main.content {
+        margin-left: 120px !important;
+        width: calc(100% - 120px) !important;
+        transition: margin-left 0.3s, width 0.3s;
       }
 
       /* Notification Styles */
@@ -252,7 +267,7 @@
       <div class="row">
         <!-- Sidebar (optional, can be toggled via block sidebar) -->
         {% block sidebar %}
-        <div class="col-md-2 col-lg-2 d-md-block bg-dark sidebar collapse">
+        <div class="sidebar d-md-block bg-dark collapse">
           <div class="position-sticky pt-3">
             <ul class="nav flex-column">
               <li class="nav-item">
@@ -286,9 +301,7 @@
         {% endblock %}
 
         <!-- Main Content Area -->
-        <main
-          class="{% block main_class %}col-md-10 ms-sm-auto col-lg-10 px-md-4{% endblock %}"
-        >
+        <main class="{% block main_class %}content{% endblock %}">
           <div
             class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
           >
