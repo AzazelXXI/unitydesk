@@ -5,6 +5,30 @@
   transition: margin-left 0.3s;
 }
 
+/* Target the exact header container from base.html to add extra spacing beyond the sidebar */
+.content
+  .d-flex.justify-content-between.flex-wrap.flex-md-nowrap.align-items-center.pt-3.pb-2.mb-3.border-bottom {
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+}
+
+/* Alternative: target the h1.h2 directly with additional padding */
+.content h1.h2 {
+  padding-left: 16px !important;
+}
+
+/* Move the page title (Meetings) to account for sidebar spacing */
+.page-title,
+.header-title,
+.module-title,
+h1.page-header,
+h2.page-header {
+  margin-left: 80px !important;
+  transition: margin-left 0.3s;
+}
+
+/* Keep brand/logo in original position - no margin changes */
+
 /* Ensure header content also respects sidebar spacing */
 .main-header,
 .page-header,
