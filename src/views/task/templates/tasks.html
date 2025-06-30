@@ -11,314 +11,322 @@ endblock %} {% block header %}{% endblock %} {% block head_extra %}
   content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
 />
 {% endblock %}{% block content %}
-<div class="container task-container mt-4">
-  <div class="row mb-4">
-    <div class="col">
-      <div
-        class="d-flex justify-content-between align-items-center task-details-header"
-      >
-        <h2><i class="fas fa-tasks me-2"></i>Task Management</h2>
-        <a href="/tasks/create" class="btn btn-primary btn-task-primary">
-          <i class="fas fa-plus me-1"></i> Create New Task
-        </a>
-      </div>
-    </div>
-  </div>
-  <!-- Task Statistics -->
-  <div class="row mb-4">
-    <div class="col-6 col-md-3 mb-3 mb-md-0">
-      <div class="task-stats-card bg-white">
-        <i
-          class="fas fa-clipboard-list text-primary"
-          style="font-size: 1.5rem"
-        ></i>
-        <div class="task-stats-number">{{ task_stats.total_tasks }}</div>
-        <div class="task-stats-label">Total Tasks</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3 mb-3 mb-md-0">
-      <div class="task-stats-card bg-white">
-        <i class="fas fa-spinner text-warning" style="font-size: 1.5rem"></i>
-        <div class="task-stats-number">{{ task_stats.in_progress }}</div>
-        <div class="task-stats-label">In Progress</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="task-stats-card bg-white">
-        <i
-          class="fas fa-exclamation-circle text-danger"
-          style="font-size: 1.5rem"
-        ></i>
-        <div class="task-stats-number">{{ task_stats.overdue_tasks }}</div>
-        <div class="task-stats-label">Overdue</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="task-stats-card bg-white">
-        <i
-          class="fas fa-check-circle text-success"
-          style="font-size: 1.5rem"
-        ></i>
-        <div class="task-stats-number">{{ task_stats.completed }}</div>
-        <div class="task-stats-label">Completed</div>
-      </div>
-    </div>
-  </div>
-  <!-- Task Filters -->
-  <div class="row mb-4">
-    <div class="col-12 task-filter-section">
-      <div class="row g-3">
-        <div class="col-md-3">
-          <select class="form-select">
-            <option selected>All Projects</option>
-            {% for project in projects %}
-            <option value="{{ project.id }}">{{ project.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-3">
-          <select class="form-select">
-            <option selected>All Assignees</option>
-            {% for user in users %}
-            <option value="{{ user.id }}">{{ user.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-3">
-          <select class="form-select">
-            <option selected>All Statuses</option>
-            <option>Not Started</option>
-            <option>In Progress</option>
-            <option>Under Review</option>
-            <option>Completed</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <input
-            type="text"
-            class="form-control"
-            placeholder="Search tasks..."
-          />
+<div class="main-content">
+  <div class="container task-container mt-4">
+    <div class="row mb-4">
+      <div class="col">
+        <div
+          class="d-flex justify-content-between align-items-center task-details-header"
+        >
+          <h2><i class="fas fa-tasks me-2"></i>Task Management</h2>
+          <a href="/tasks/create" class="btn btn-primary btn-task-primary">
+            <i class="fas fa-plus me-1"></i> Create New Task
+          </a>
         </div>
       </div>
     </div>
-  </div>
-  <div class="row mb-3">
-    <div class="col-12 overflow-auto">
-      <ul class="nav nav-tabs flex-nowrap">
-        <li class="nav-item">
-          <a class="nav-link active" href="/tasks/list">List View</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/tasks">Board View</a>
-        </li>
-      </ul>
+    <!-- Task Statistics -->
+    <div class="row mb-4">
+      <div class="col-6 col-md-3 mb-3 mb-md-0">
+        <div class="task-stats-card bg-white">
+          <i
+            class="fas fa-clipboard-list text-primary"
+            style="font-size: 1.5rem"
+          ></i>
+          <div class="task-stats-number">{{ task_stats.total_tasks }}</div>
+          <div class="task-stats-label">Total Tasks</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3 mb-3 mb-md-0">
+        <div class="task-stats-card bg-white">
+          <i class="fas fa-spinner text-warning" style="font-size: 1.5rem"></i>
+          <div class="task-stats-number">{{ task_stats.in_progress }}</div>
+          <div class="task-stats-label">In Progress</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="task-stats-card bg-white">
+          <i
+            class="fas fa-exclamation-circle text-danger"
+            style="font-size: 1.5rem"
+          ></i>
+          <div class="task-stats-number">{{ task_stats.overdue_tasks }}</div>
+          <div class="task-stats-label">Overdue</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="task-stats-card bg-white">
+          <i
+            class="fas fa-check-circle text-success"
+            style="font-size: 1.5rem"
+          ></i>
+          <div class="task-stats-number">{{ task_stats.completed }}</div>
+          <div class="task-stats-label">Completed</div>
+        </div>
+      </div>
     </div>
-  </div>
-  <!-- Task List -->
-  <div class="row">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-hover mb-0">
-              <thead class="table-light">
-                <tr>
-                  <th width="40">
-                    <input type="checkbox" class="form-check-input" />
-                  </th>
-                  <th>Task</th>
-                  <th>Project</th>
-                  <th>Assignee</th>
-                  <th>Status</th>
-                  <th>Due Date</th>
-                  <th>Priority</th>
-                  <th width="100">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for task in tasks %}
-                <tr
-                  class="task-row"
-                  data-task-id="{{ task.id }}"
-                  style="cursor: pointer"
-                >
-                  <td>
-                    <input
-                      type="checkbox"
-                      class="form-check-input"
-                      onclick="event.stopPropagation();"
-                    />
-                  </td>
-                  <td>{{ task.title }}</td>
-                  <td>{{ task.project }}</td>
-                  <td>{{ task.assignee }}</td>
-                  <td>
-                    <span
-                      class="badge {% if task.status == 'In Progress' %}bg-warning{% elif task.status == 'Completed' %}bg-success{% elif task.status == 'Scheduled' %}bg-info{% else %}bg-secondary{% endif %}"
-                    >
-                      {{ task.status }}
-                    </span>
-                  </td>
-                  <td>{{ task.due_date }}</td>
-                  <td>
-                    <span
-                      class="badge {% if task.priority == 'High' %}bg-danger{% elif task.priority == 'Medium' %}bg-warning text-dark{% else %}bg-success{% endif %}"
-                    >
-                      {{ task.priority }}
-                    </span>
-                  </td>
-                  <td>
-                    <div class="dropdown" onclick="event.stopPropagation();">
-                      <button
-                        class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                        type="button"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false"
-                      >
-                        Actions
-                      </button>
-                      <ul class="dropdown-menu">
-                        <li>
-                          <a class="dropdown-item" href="/tasks/{{ task.id }}"
-                            >View Details</a
-                          >
-                        </li>
-                        <li>
-                          <a
-                            class="dropdown-item"
-                            href="/tasks/{{ task.id }}/edit"
-                            >Edit</a
-                          >
-                        </li>
-                        <li><hr class="dropdown-divider" /></li>
-                        <li>
-                          <a class="dropdown-item text-danger" href="#"
-                            >Delete</a
-                          >
-                        </li>
-                      </ul>
-                    </div>
-                  </td>
-                </tr>
-                {% endfor %}
-                <!-- Sample tasks if no data provided -->
-                {% if not tasks %}
-                <tr class="task-row" data-task-id="1" style="cursor: pointer">
-                  <td>
-                    <input
-                      type="checkbox"
-                      class="form-check-input"
-                      onclick="event.stopPropagation();"
-                    />
-                  </td>
-                  <td>Complete project proposal</td>
-                  <td>Website Redesign</td>
-                  <td>Jane Doe</td>
-                  <td><span class="badge bg-warning">In Progress</span></td>
-                  <td>Apr 26, 2025</td>
-                  <td><span class="badge bg-danger">High</span></td>
-                  <td>
-                    <div class="dropdown" onclick="event.stopPropagation();">
-                      <button
-                        class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                        type="button"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false"
-                      >
-                        Actions
-                      </button>
-                      <ul class="dropdown-menu">
-                        <li>
-                          <a class="dropdown-item" href="/tasks/1"
-                            >View Details</a
-                          >
-                        </li>
-                        <li>
-                          <a class="dropdown-item" href="/tasks/1/edit">Edit</a>
-                        </li>
-                        <li><hr class="dropdown-divider" /></li>
-                        <li>
-                          <a class="dropdown-item text-danger" href="#"
-                            >Delete</a
-                          >
-                        </li>
-                      </ul>
-                    </div>
-                  </td>
-                </tr>
-                <tr class="task-row" data-task-id="2" style="cursor: pointer">
-                  <td>
-                    <input
-                      type="checkbox"
-                      class="form-check-input"
-                      onclick="event.stopPropagation();"
-                    />
-                  </td>
-                  <td>Schedule team meeting</td>
-                  <td>Mobile App Development</td>
-                  <td>John Smith</td>
-                  <td><span class="badge bg-info">Scheduled</span></td>
-                  <td>Apr 25, 2025</td>
-                  <td>
-                    <span class="badge bg-warning text-dark">Medium</span>
-                  </td>
-                  <td>
-                    <div class="dropdown" onclick="event.stopPropagation();">
-                      <button
-                        class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                        type="button"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false"
-                      >
-                        Actions
-                      </button>
-                      <ul class="dropdown-menu">
-                        <li>
-                          <a class="dropdown-item" href="/tasks/2"
-                            >View Details</a
-                          >
-                        </li>
-                        <li>
-                          <a class="dropdown-item" href="/tasks/2/edit">Edit</a>
-                        </li>
-                        <li><hr class="dropdown-divider" /></li>
-                        <li>
-                          <a class="dropdown-item text-danger" href="#"
-                            >Delete</a
-                          >
-                        </li>
-                      </ul>
-                    </div>
-                  </td>
-                </tr>
-                {% endif %}
-              </tbody>
-            </table>
+    <!-- Task Filters -->
+    <div class="row mb-4">
+      <div class="col-12 task-filter-section">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <select class="form-select">
+              <option selected>All Projects</option>
+              {% for project in projects %}
+              <option value="{{ project.id }}">{{ project.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <select class="form-select">
+              <option selected>All Assignees</option>
+              {% for user in users %}
+              <option value="{{ user.id }}">{{ user.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <select class="form-select">
+              <option selected>All Statuses</option>
+              <option>Not Started</option>
+              <option>In Progress</option>
+              <option>Under Review</option>
+              <option>Completed</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Search tasks..."
+            />
           </div>
         </div>
       </div>
-      <div
-        class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mt-3"
-      >
-        <div class="mb-3 mb-md-0">
-          Showing {{ tasks|length }} of {{ task_stats.total_tasks }} tasks
+    </div>
+    <div class="row mb-3">
+      <div class="col-12 overflow-auto">
+        <ul class="nav nav-tabs flex-nowrap">
+          <li class="nav-item">
+            <a class="nav-link active" href="/tasks/list">List View</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/tasks">Board View</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <!-- Task List -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th width="40">
+                      <input type="checkbox" class="form-check-input" />
+                    </th>
+                    <th>Task</th>
+                    <th>Project</th>
+                    <th>Assignee</th>
+                    <th>Status</th>
+                    <th>Due Date</th>
+                    <th>Priority</th>
+                    <th width="100">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for task in tasks %}
+                  <tr
+                    class="task-row"
+                    data-task-id="{{ task.id }}"
+                    style="cursor: pointer"
+                  >
+                    <td>
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        onclick="event.stopPropagation();"
+                      />
+                    </td>
+                    <td>{{ task.title }}</td>
+                    <td>{{ task.project }}</td>
+                    <td>{{ task.assignee }}</td>
+                    <td>
+                      <span
+                        class="badge {% if task.status == 'In Progress' %}bg-warning{% elif task.status == 'Completed' %}bg-success{% elif task.status == 'Scheduled' %}bg-info{% else %}bg-secondary{% endif %}"
+                      >
+                        {{ task.status }}
+                      </span>
+                    </td>
+                    <td>{{ task.due_date }}</td>
+                    <td>
+                      <span
+                        class="badge {% if task.priority == 'High' %}bg-danger{% elif task.priority == 'Medium' %}bg-warning text-dark{% else %}bg-success{% endif %}"
+                      >
+                        {{ task.priority }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="dropdown" onclick="event.stopPropagation();">
+                        <button
+                          class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                          type="button"
+                          data-bs-toggle="dropdown"
+                          aria-expanded="false"
+                        >
+                          Actions
+                        </button>
+                        <ul class="dropdown-menu">
+                          <li>
+                            <a class="dropdown-item" href="/tasks/{{ task.id }}"
+                              >View Details</a
+                            >
+                          </li>
+                          <li>
+                            <a
+                              class="dropdown-item"
+                              href="/tasks/{{ task.id }}/edit"
+                              >Edit</a
+                            >
+                          </li>
+                          <li><hr class="dropdown-divider" /></li>
+                          <li>
+                            <a class="dropdown-item text-danger" href="#"
+                              >Delete</a
+                            >
+                          </li>
+                        </ul>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                  <!-- Sample tasks if no data provided -->
+                  {% if not tasks %}
+                  <tr class="task-row" data-task-id="1" style="cursor: pointer">
+                    <td>
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        onclick="event.stopPropagation();"
+                      />
+                    </td>
+                    <td>Complete project proposal</td>
+                    <td>Website Redesign</td>
+                    <td>Jane Doe</td>
+                    <td><span class="badge bg-warning">In Progress</span></td>
+                    <td>Apr 26, 2025</td>
+                    <td><span class="badge bg-danger">High</span></td>
+                    <td>
+                      <div class="dropdown" onclick="event.stopPropagation();">
+                        <button
+                          class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                          type="button"
+                          data-bs-toggle="dropdown"
+                          aria-expanded="false"
+                        >
+                          Actions
+                        </button>
+                        <ul class="dropdown-menu">
+                          <li>
+                            <a class="dropdown-item" href="/tasks/1"
+                              >View Details</a
+                            >
+                          </li>
+                          <li>
+                            <a class="dropdown-item" href="/tasks/1/edit"
+                              >Edit</a
+                            >
+                          </li>
+                          <li><hr class="dropdown-divider" /></li>
+                          <li>
+                            <a class="dropdown-item text-danger" href="#"
+                              >Delete</a
+                            >
+                          </li>
+                        </ul>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class="task-row" data-task-id="2" style="cursor: pointer">
+                    <td>
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        onclick="event.stopPropagation();"
+                      />
+                    </td>
+                    <td>Schedule team meeting</td>
+                    <td>Mobile App Development</td>
+                    <td>John Smith</td>
+                    <td><span class="badge bg-info">Scheduled</span></td>
+                    <td>Apr 25, 2025</td>
+                    <td>
+                      <span class="badge bg-warning text-dark">Medium</span>
+                    </td>
+                    <td>
+                      <div class="dropdown" onclick="event.stopPropagation();">
+                        <button
+                          class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                          type="button"
+                          data-bs-toggle="dropdown"
+                          aria-expanded="false"
+                        >
+                          Actions
+                        </button>
+                        <ul class="dropdown-menu">
+                          <li>
+                            <a class="dropdown-item" href="/tasks/2"
+                              >View Details</a
+                            >
+                          </li>
+                          <li>
+                            <a class="dropdown-item" href="/tasks/2/edit"
+                              >Edit</a
+                            >
+                          </li>
+                          <li><hr class="dropdown-divider" /></li>
+                          <li>
+                            <a class="dropdown-item text-danger" href="#"
+                              >Delete</a
+                            >
+                          </li>
+                        </ul>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
-        <nav aria-label="Task pagination">
-          <ul class="pagination pagination-sm flex-wrap justify-content-center">
-            <li class="page-item disabled">
-              <a class="page-link" href="#" tabindex="-1">Previous</a>
-            </li>
-            <li class="page-item active">
-              <a class="page-link" href="#">1</a>
-            </li>
-            <li class="page-item"><a class="page-link" href="#">2</a></li>
-            <li class="page-item"><a class="page-link" href="#">3</a></li>
-            <li class="page-item">
-              <a class="page-link" href="#">Next</a>
-            </li>
-          </ul>
-        </nav>
+        <div
+          class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mt-3"
+        >
+          <div class="mb-3 mb-md-0">
+            Showing {{ tasks|length }} of {{ task_stats.total_tasks }} tasks
+          </div>
+          <nav aria-label="Task pagination">
+            <ul
+              class="pagination pagination-sm flex-wrap justify-content-center"
+            >
+              <li class="page-item disabled">
+                <a class="page-link" href="#" tabindex="-1">Previous</a>
+              </li>
+              <li class="page-item active">
+                <a class="page-link" href="#">1</a>
+              </li>
+              <li class="page-item"><a class="page-link" href="#">2</a></li>
+              <li class="page-item"><a class="page-link" href="#">3</a></li>
+              <li class="page-item">
+                <a class="page-link" href="#">Next</a>
+              </li>
+            </ul>
+          </nav>
+        </div>
       </div>
     </div>
   </div>

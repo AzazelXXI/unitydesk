@@ -48,8 +48,8 @@ body {
   gap: 16px;
   width: 95%;
   max-width: 1500px;
-  margin: -80px auto 0; /* Điều chỉnh từ -60px lên -80px để đẩy cao hơn nữa */
-  padding: 12px;
+  margin: -80px 16px 0 16px; /* Add space left/right */
+  padding: 12px 32px 12px 32px;
   background-color: transparent;
   overflow: hidden;
   flex: 1;

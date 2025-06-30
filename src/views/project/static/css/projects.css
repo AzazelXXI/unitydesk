@@ -3,9 +3,12 @@ body {
 }
 /* Project Dashboard Styles */
 .projects-container {
-  padding: 20px;
+  padding: 20px 32px 20px 32px;
   background-color: #f8f9fa;
   min-height: 100vh;
+  margin-left: 16px;
+  margin-right: 16px;
+  box-sizing: border-box;
 }
 
 .page-title {

@@ -4,12 +4,22 @@ body {
   font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
 
+/* Sidebar-aware main content spacing (match /projects) */
+.main-content {
+  margin-left: 16px; /* Typical sidebar width for /projects */
+  margin-right: 16px;
+  transition: margin-left 0.3s;
+}
+
 .task-container {
   background-color: #ffffff;
-  padding: 30px;
+  padding: 30px 24px 30px 24px;
   border-radius: 12px;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
   margin-top: 30px;
+  margin-left: 0;
+  margin-right: 16px;
+  box-sizing: border-box;
 }
 
 /* Task List Styles */
