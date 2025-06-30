@@ -39,6 +39,12 @@
         padding-left: 0;
         padding-right: 0;
         transition: width 0.3s;
+        float: left;
+        position: fixed;
+        top: 56px;
+        left: 0;
+        height: calc(100vh - 56px);
+        z-index: 1030;
       }
 
       .sidebar .nav-link {
@@ -67,9 +73,10 @@
 
       .content,
       main.content {
-        margin-left: 120px !important;
-        width: calc(100% - 120px) !important;
+        margin-left: 150px !important;
+        width: calc(100% - 150px) !important;
         transition: margin-left 0.3s, width 0.3s;
+        min-height: calc(100vh - 56px);
       }
 
       /* Notification Styles */
@@ -263,57 +270,57 @@
       </div>
     </nav>
 
-    <div class="container-fluid">
-      <div class="row">
-        <!-- Sidebar (optional, can be toggled via block sidebar) -->
-        {% block sidebar %}
-        <div class="sidebar d-md-block bg-dark collapse">
-          <div class="position-sticky pt-3">
-            <ul class="nav flex-column">
-              <li class="nav-item">
-                <a class="nav-link" href="/dashboard">
-                  <i class="bi bi-speedometer2"></i> Dashboard
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/projects">
-                  <i class="bi bi-kanban"></i> Projects
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/tasks">
-                  <i class="bi bi-check2-square"></i> Tasks
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/meeting">
-                  <i class="bi bi-camera-video"></i> Meetings
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/calendar">
-                  <i class="bi bi-calendar-week"></i> Calendar
-                </a>
-              </li>
-            </ul>
-          </div>
+    <div class="container-fluid" style="padding-left: 0; padding-right: 0">
+      {% block sidebar %}
+      <div class="sidebar d-md-block bg-dark collapse">
+        <div class="position-sticky pt-3">
+          <ul class="nav flex-column">
+            <li class="nav-item">
+              <a class="nav-link" href="/dashboard">
+                <i class="bi bi-speedometer2"></i> Dashboard
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/projects">
+                <i class="bi bi-kanban"></i> Projects
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/tasks">
+                <i class="bi bi-check2-square"></i> Tasks
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/meeting">
+                <i class="bi bi-camera-video"></i> Meetings
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/calendar">
+                <i class="bi bi-calendar-week"></i> Calendar
+              </a>
+            </li>
+          </ul>
         </div>
-        {% endblock %}
-
-        <!-- Main Content Area -->
-        <main class="{% block main_class %}content{% endblock %}">
-          <div
-            class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
-          >
-            <h1 class="h2">{% block header %}Dashboard{% endblock %}</h1>
-            {% block header_actions %}{% endblock %}
-          </div>
-
-          {% block content %}
-          <!-- Content will be filled by child templates -->
-          {% endblock %}
-        </main>
       </div>
+      {% endblock %}
+
+      <!-- Main Content Area -->
+      <main
+        class="{% block main_class %}content{% endblock %}"
+        style="padding-left: 0; padding-right: 0"
+      >
+        <div
+          class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
+        >
+          <h1 class="h2">{% block header %}Dashboard{% endblock %}</h1>
+          {% block header_actions %}{% endblock %}
+        </div>
+
+        {% block content %}
+        <!-- Content will be filled by child templates -->
+        {% endblock %}
+      </main>
     </div>
 
     <footer class="footer mt-auto py-3 bg-dark text-white">
