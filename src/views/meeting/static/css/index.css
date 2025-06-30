@@ -22,6 +22,22 @@
   --border-color: #444; /* Màu viền */
 }
 
+/* Sidebar-aware main content spacing (match /projects and /tasks) */
+.main-content {
+  margin-left: 16px; /* Typical sidebar width for consistency */
+  margin-right: 16px;
+  transition: margin-left 0.3s;
+}
+
+/* Ensure header content also respects sidebar spacing */
+.main-header,
+.page-header,
+.content-header {
+  margin-left: 80px;
+  margin-right: 16px;
+  transition: margin-left 0.3s;
+}
+
 html,
 body {
   height: 100%;

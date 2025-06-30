@@ -1,6 +1,16 @@
 body {
   font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
+
+/* Ensure header content also respects sidebar spacing */
+.main-header,
+.page-header,
+.content-header {
+  margin-left: 80px;
+  margin-right: 16px;
+  transition: margin-left 0.3s;
+}
+
 /* Project Dashboard Styles */
 .projects-container {
   padding: 20px 32px 20px 32px;

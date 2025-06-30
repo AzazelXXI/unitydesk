@@ -1,5 +1,19 @@
-/* Task Interface Styles */
-body {
+/* Tas/* Sidebar-aware main content spacing (match /projects) */
+.main-content {
+  margin-left: 80px; /* Typical sidebar width for /projects */
+  margin-right: 16px;
+  transition: margin-left 0.3s;
+}
+
+/* Ensure header content also respects sidebar spacing */
+.main-header,
+.page-header,
+.content-header {
+  margin-left: 80px;
+  margin-right: 16px;
+  transition: margin-left 0.3s;
+}
+rface Styles */ body {
   background-color: #f8f9fa;
   font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
