@@ -55,16 +55,31 @@
           <div
             class="d-flex align-items-center justify-content-center gap-2 mb-4"
           >
-            <!-- User Profile (left) -->
+            <!-- User Profile Avatar (left) -->
             <div class="dropdown">
               <button
-                class="btn btn-primary dropdown-toggle"
+                class="btn p-0 border-0 bg-transparent dropdown-toggle"
                 type="button"
                 id="userDropdown"
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
+                style="outline: none; box-shadow: none;"
               >
-                <i class="bi bi-person-circle"></i>
+                {% if user is defined and (user.name or user.username) %}
+                  <img
+                    src="https://ui-avatars.com/api/?name={{ user.name or user.username }}&background=0D8ABC&color=fff&size=40"
+                    alt="User Avatar"
+                    class="rounded-circle"
+                    width="40" height="40"
+                  />
+                {% else %}
+                  <img
+                    src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff&size=40"
+                    alt="User Avatar"
+                    class="rounded-circle"
+                    width="40" height="40"
+                  />
+                {% endif %}
               </button>
               <ul
                 class="dropdown-menu dropdown-menu-end"
@@ -152,11 +167,11 @@
         style="padding-left: 0; padding-right: 0"
       >
         <div
-            class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3"
-          >
-            <h1 class="h2">{% block header %}{% endblock %}</h1>
-            {% block header_actions %}{% endblock %}
-          </div>
+          class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-1 pb-1 mb-1"
+        >
+          <h1 class="h2">{% block header %}{% endblock %}</h1>
+          {% block header_actions %}{% endblock %}
+        </div>
 
         {% block content %}
         <!-- Content will be filled by child templates -->
