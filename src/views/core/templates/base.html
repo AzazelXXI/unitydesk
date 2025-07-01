@@ -46,54 +46,38 @@
       console.log('No user found in template context');
       {% endif %}
     </script>
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="/">CSA Platform</a>
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-          aria-controls="navbarNav"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav me-auto">
-            <li class="nav-item">
-              <a class="nav-link" href="/">Home</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/dashboard">Dashboard</a>
-            </li>
-            <li class="nav-item dropdown">
-              <a
-                class="nav-link dropdown-toggle"
-                href="#"
-                id="navbarDropdown"
-                role="button"
+    <!-- Navigation Bar and Top Blackbar Removed -->
+    <div class="container-fluid" style="padding-left: 0; padding-right: 0">
+      {% block sidebar %}
+      <div class="sidebar d-md-block bg-dark collapse">
+        <div class="position-sticky pt-3">
+          <!-- User Profile and Notification at Top of Sidebar -->
+          <div
+            class="d-flex align-items-center justify-content-center gap-2 mb-4"
+          >
+            <!-- User Profile (left) -->
+            <div class="dropdown">
+              <button
+                class="btn btn-primary dropdown-toggle"
+                type="button"
+                id="userDropdown"
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
               >
-                Modules
-              </a>
-              <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                <li><a class="dropdown-item" href="/projects">Projects</a></li>
-                <li><a class="dropdown-item" href="/tasks">Tasks</a></li>
-                <li><a class="dropdown-item" href="/meeting">Meetings</a></li>
-                <li><a class="dropdown-item" href="/calendar">Calendar</a></li>
+                <i class="bi bi-person-circle"></i>
+              </button>
+              <ul
+                class="dropdown-menu dropdown-menu-end"
+                aria-labelledby="userDropdown"
+              >
+                <li><a class="dropdown-item" href="#">Profile</a></li>
+                <li><a class="dropdown-item" href="#">Settings</a></li>
+                <li><hr class="dropdown-divider" /></li>
+                <li><a class="dropdown-item" href="/logout">Logout</a></li>
               </ul>
-            </li>
-          </ul>
-          <div class="d-flex">
-            <a class="btn btn-outline-light me-2" href="/api/v1/docs"
-              >API Docs</a
-            >
-            <!-- Notification Bell -->
-            <div class="dropdown me-2">
+            </div>
+            <!-- Notification Bell (right) -->
+            <div class="dropdown">
               <button
                 class="btn btn-outline-light position-relative"
                 type="button"
@@ -135,35 +119,7 @@
                 </li>
               </ul>
             </div>
-            <div class="dropdown">
-              <button
-                class="btn btn-primary dropdown-toggle"
-                type="button"
-                id="userDropdown"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                <i class="bi bi-person-circle"></i>
-              </button>
-              <ul
-                class="dropdown-menu dropdown-menu-end"
-                aria-labelledby="userDropdown"
-              >
-                <li><a class="dropdown-item" href="#">Profile</a></li>
-                <li><a class="dropdown-item" href="#">Settings</a></li>
-                <li><hr class="dropdown-divider" /></li>
-                <li><a class="dropdown-item" href="/logout">Logout</a></li>
-              </ul>
-            </div>
           </div>
-        </div>
-      </div>
-    </nav>
-
-    <div class="container-fluid" style="padding-left: 0; padding-right: 0">
-      {% block sidebar %}
-      <div class="sidebar d-md-block bg-dark collapse">
-        <div class="position-sticky pt-3">
           <ul class="nav flex-column">
             <li class="nav-item">
               <a class="nav-link" href="/projects">
