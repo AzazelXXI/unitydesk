@@ -1,8 +1,8 @@
-# CSA Hello - Enterprise Information & Collaboration System
+# UnityDesk - Enterprise Information & Collaboration System
 
 ## Overview
 
-CSA Hello is an all-in-one enterprise information and collaboration management system designed to enhance productivity, optimize information flow, and strengthen team cohesion within organizations of any size. The platform provides a comprehensive suite of integrated modules that replace the need for multiple disconnected tools.
+UnityDesk is an all-in-one enterprise information and collaboration management system designed to enhance productivity, optimize information flow, and strengthen team cohesion within organizations of any size. The platform provides a comprehensive suite of integrated modules that replace the need for multiple disconnected tools.
 
 ## Core Modules
 
@@ -19,13 +19,13 @@ CSA Hello is an all-in-one enterprise information and collaboration management s
 
 ## Architecture
 
-CSA Hello is built on a microservices architecture using containerized services managed by Kubernetes. The system is designed for deployment flexibility, supporting both on-premises and cloud environments.
+UnityDesk is built on a microservices architecture using containerized services managed by Kubernetes. The system is designed for deployment flexibility, supporting both on-premises and cloud environments.
 
 ### Key Components
 
-- **Frontend**: Web (React + TypeScript), mobile (Flutter/React Native), and desktop (Tauri + React) clients
-- **Backend**: FastAPI microservices running in containers
-- **Database**: PostgreSQL for relational data, Redis for caching
+- **Frontend**: Jinja2 templates (server-rendered via FastAPI), JavaScript (vanilla and Bootstrap)
+- **Backend**: FastAPI microservices
+- **Database**: PostgreSQL for relational data  
 - **Storage**: MinIO object storage for files
 - **Messaging**: RabbitMQ/Kafka for inter-service communication
 - **Real-time**: WebSockets for real-time updates and notifications
@@ -34,42 +34,41 @@ CSA Hello is built on a microservices architecture using containerized services 
 ## Getting Started
 
 ### Prerequisites
-- Docker Desktop with Kubernetes enabled
-- Node.js 18+
-- Python 3.9+
+- Python 3.13+
+- PostgreSQL 17
 - Git
+- make
 
 ### Installation
 
 1. Clone the repository:
    ```
-   git clone https://github.com/your-organization/csa-hello.git
-   cd csa-hello
+   git clone https://github.com/your-organization/unitydesk.git
+   cd unitydesk
    ```
 
-2. Set up the development environment:
+2. Create a virtual environment:
    ```
-   ./scripts/setup-dev.sh
-   ```
-
-3. Start the development servers:
-   ```
-   ./scripts/start-dev.sh
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-4. Access the application at `http://localhost:3000`
+3. Install dependencies:
+   ```
+   pip install -r requirements.in
+   ```
 
-## Technology Stack
+4. Apply database migrations:
+   ```
+   alembic upgrade head
+   ```
 
-- **Backend**: Python 3.9+ with FastAPI
-- **Frontend**: React, TypeScript, Zustand/Redux Toolkit
-- **Mobile**: Flutter or React Native
-- **Desktop**: Tauri with React
-- **Database**: PostgreSQL, Redis
-- **Storage**: MinIO (S3-compatible)
-- **Containerization**: Docker
-- **Orchestration**: Kubernetes
-- **CI/CD**: GitHub Actions or GitLab CI
+5. Run the application:
+   ```
+   make run
+   ```
+
+6. Access the application at `http://localhost:8000`
 
 ## Security Features
 
@@ -78,20 +77,3 @@ CSA Hello is built on a microservices architecture using containerized services 
 - Keycloak integration for OAuth2/OIDC
 - Data encryption in transit and at rest
 - Network policies for service-to-service communication
-
-## Development Status
-
-This project is currently in the initial development phase. Last updated: April 8, 2025.
-
-## Contributing
-
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Contact
-
-For any inquiries, please reach out to the CSA Hello team at csa.vn.agency@csaapp.com
-
