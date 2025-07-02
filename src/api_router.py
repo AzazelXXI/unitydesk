@@ -18,7 +18,6 @@ from src.apis.notification_views import ws_router as notification_ws_router
 from src.apis.task_views import task_router
 from src.apis.task_api import router as task_api_router
 from src.apis.project_views import router as project_router
-from src.apis.simple_task_api import router as simple_task_router
 
 # Import new modular task and project API
 from src.modules.tasks.project import router as project_module_router
@@ -64,7 +63,6 @@ api_router.include_router(api_router_v1)
 # Include task_router directly in main api_router to provide /api/tasks endpoints
 api_router.include_router(task_router)
 api_router.include_router(task_api_router)  # Include the comprehensive task API
-api_router.include_router(simple_task_router)
 
 # Include web routers
 # Don't include task_web_router in api_router, it will be included directly in main app
