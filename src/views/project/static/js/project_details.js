@@ -93,6 +93,9 @@ function initializeTaskModal() {
     const statusClass = getStatusClass(task.status);
     const priorityClass = getPriorityClass(task.priority);
 
+    // Set the clone form action for this task
+    setCloneTaskFormAction(task.id);
+
     taskDetailsContent.innerHTML = `
       <div class="task-details-container">
         <!-- Task Header Container -->

@@ -424,3 +424,41 @@ async def delete_task(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete task: {str(e)}",
         )
+
+
+@router.post("/clone/{task_id}", response_model=TaskResponse)
+async def clone_task(
+    task_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Clone an existing task"""
+    # Fetch the task to be cloned
+    task_to_clone = await db.get(Task, task_id)
+    if not task_to_clone:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found",
+        )
+
+    # Duplicate the task attributes (only use fields that exist in Task model)
+    cloned_task = Task(
+        name=f"Copy of {task_to_clone.name}",
+        description=task_to_clone.description,
+        project_id=task_to_clone.project_id,
+        status=task_to_clone.status,
+        priority=task_to_clone.priority,
+        estimated_hours=task_to_clone.estimated_hours,
+        actual_hours=task_to_clone.actual_hours,
+        tags=task_to_clone.tags,
+        start_date=task_to_clone.start_date,
+        due_date=task_to_clone.due_date,
+        completed_date=None,  # Reset completed date for cloned task
+    )
+
+    # Add the cloned task to the database
+    db.add(cloned_task)
+    await db.commit()
+    await db.refresh(cloned_task)
+
+    return cloned_task

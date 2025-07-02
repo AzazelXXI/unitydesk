@@ -37,6 +37,11 @@
         >
           <i class="bi bi-trash"></i> Delete Task
         </button>
+        <form method="POST" action="#" id="cloneTaskForm" style="display: inline;">
+          <button type="submit" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-files"></i> Clone Task
+          </button>
+        </form>
         <button type="button" class="btn btn-primary" id="editTaskBtn">
           <i class="bi bi-pencil"></i> Edit Task
         </button>
@@ -44,3 +49,21 @@
     </div>
   </div>
 </div>
+<script>
+// This script assumes you have a way to know the current task id when opening the modal
+// For example, you might set it as a data attribute on the modal or fetch it from JS context
+function setCloneTaskFormAction(taskId) {
+    var form = document.getElementById('cloneTaskForm');
+    console.log('[DEBUG] setCloneTaskFormAction called with taskId:', taskId, 'form:', form);
+    if (form && taskId) {
+        form.action = '/tasks/' + taskId + '/clone';
+        console.log('[DEBUG] cloneTaskForm action set to:', form.action);
+    } else {
+        console.warn('[DEBUG] cloneTaskForm not found or taskId missing');
+    }
+}
+// Example: when showing the modal, call setCloneTaskFormAction with the correct taskId
+// You may need to adapt this to your modal/task loading logic
+// Example usage:
+//   setCloneTaskFormAction(selectedTaskId);
+</script>

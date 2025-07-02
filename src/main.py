@@ -115,6 +115,11 @@ app.include_router(api_router)
 # Include WebSocket router separately
 app.include_router(notification_ws_router)
 
+# Include the task web router
+from src.views.task.web_routes import task_web_router
+
+app.include_router(task_web_router)
+
 # Add exception handlers
 app.add_exception_handler(RedirectToLoginException, redirect_to_login_exception_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)

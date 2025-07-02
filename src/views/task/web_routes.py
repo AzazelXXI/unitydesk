@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Request, Depends, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
+import logging
 
 from src.database import get_db
 from src.middleware.auth_middleware import get_current_user_web
@@ -12,6 +13,7 @@ from src.modules.tasks.task.service import TaskService
 from src.modules.tasks.project.service import ProjectService
 from src.controllers.task_controller import TaskController
 from src.controllers.project_controller import ProjectController
+from src.apis.task_api import clone_task as api_clone_task
 
 # --- Jinja2 Templates Configuration ---
 # It's best practice to have a single, globally configured Jinja2Templates instance,
@@ -271,4 +273,26 @@ async def get_task_board_page(
                 "current_user": current_user,
                 "error": f"Failed to load tasks: {str(e)}",
             },
+        )
+
+
+@task_web_router.post("/{task_id}/clone")
+async def clone_task_web(
+    task_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+):
+    """Web route to clone a task and redirect to the new task's details page."""
+    logging.warning(
+        f"[CLONE TASK] Route called for task_id={task_id} by user={getattr(current_user, 'id', None)}"
+    )
+    try:
+        new_task = await api_clone_task(task_id, db, current_user)
+        # Redirect to the project details page after cloning
+        return RedirectResponse(url=f"/projects/{new_task.project_id}", status_code=303)
+    except Exception as e:
+        logging.error(f"[CLONE TASK ERROR] {e}")
+        return HTMLResponse(
+            f"<h2>Clone Task Error</h2><pre>{str(e)}</pre>", status_code=500
         )
