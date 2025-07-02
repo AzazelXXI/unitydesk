@@ -25,6 +25,26 @@
             </div>
           </div>
         </div>
+        <!-- Inline-editable fields for status and priority (hidden by default, shown when context loaded) -->
+        <div id="taskInlineEditFields" style="display: none;">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="taskStatusDropdown" class="form-label">Status</label>
+              <select id="taskStatusDropdown" class="form-select">
+                <!-- Options injected dynamically -->
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label for="taskPriorityDropdown" class="form-label">Priority</label>
+              <select id="taskPriorityDropdown" class="form-select">
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="URGENT">Urgent</option>
+              </select>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -50,71 +70,5 @@
     </div>
   </div>
 </div>
-<script>
-// This script assumes you have a way to know the current task id when opening the modal
-// For example, you might set it as a data attribute on the modal or fetch it from JS context
-function setCloneTaskFormAction(taskId) {
-    var form = document.getElementById('cloneTaskForm');
-    console.log('[DEBUG] setCloneTaskFormAction called with taskId:', taskId, 'form:', form);
-    if (form && taskId) {
-        form.action = '/tasks/' + taskId + '/clone';
-        console.log('[DEBUG] cloneTaskForm action set to:', form.action);
-        // Also set the task id on the delete button for consistency
-        var deleteBtn = document.getElementById('deleteTaskBtn');
-        if (deleteBtn) {
-            deleteBtn.setAttribute('data-task-id', taskId);
-        }
-    } else {
-        console.warn('[DEBUG] cloneTaskForm not found or taskId missing');
-    }
-}
-// Example: when showing the modal, call setCloneTaskFormAction with the correct taskId
-// You may need to adapt this to your modal/task loading logic
-// Example usage:
-//   setCloneTaskFormAction(selectedTaskId);
-
-// Delete Task button logic
-document.addEventListener('DOMContentLoaded', function() {
-    var deleteBtn = document.getElementById('deleteTaskBtn');
-    if (deleteBtn) {
-        deleteBtn.addEventListener('click', function() {
-            var taskId = deleteBtn.getAttribute('data-task-id');
-            if (!taskId) {
-                alert('Task ID not found.');
-                return;
-            }
-            if (!confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
-                return;
-            }
-            fetch('/api/tasks/' + taskId, {
-                method: 'DELETE',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Content-Type': 'application/json',
-                },
-            })
-            .then(function(response) {
-                if (response.ok) {
-                    // Hide the modal
-                    var modal = document.getElementById('taskDetailsModal');
-                    if (modal) {
-                        var modalInstance = bootstrap.Modal.getInstance(modal);
-                        if (modalInstance) {
-                            modalInstance.hide();
-                        }
-                    }
-                    // Optionally refresh the page or update the UI
-                    location.reload();
-                } else {
-                    return response.json().then(function(data) {
-                        throw new Error(data.message || 'Failed to delete task.');
-                    });
-                }
-            })
-            .catch(function(error) {
-                alert('Error: ' + error.message);
-            });
-        });
-    }
-});
-</script>
+<!-- Modal logic and inline editing loaded from static JS file -->
+<script src="{{ url_for('project_static', path='js/task_details_modal.js') }}?v=999999"></script>
