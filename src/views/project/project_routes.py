@@ -1230,6 +1230,117 @@ async def add_project_member(
 
 # =============================================================================
 # Project-Specific Custom Status Management Routes
+
+# =============================================================================
+# Task Status Update Endpoint (API)
+# =============================================================================
+
+from fastapi import Body
+
+
+@router.put("/api/tasks/{task_id}/status", response_class=JSONResponse)
+async def update_task_status(
+    task_id: int,
+    status: str = Body(..., embed=True),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+):
+    """Update the status of a task (API endpoint for AJAX/JS usage)"""
+    try:
+        # Fetch the task
+        task_query = select(Task).where(Task.id == task_id)
+        task_result = await db.execute(task_query)
+        task = task_result.scalar_one_or_none()
+        if not task:
+            return JSONResponse(
+                status_code=404, content={"success": False, "message": "Task not found"}
+            )
+
+        # Check permissions: Only project owner, assignee, or admin can update
+        project_query = select(Project).where(Project.id == task.project_id)
+        project_result = await db.execute(project_query)
+        project = project_result.scalar_one_or_none()
+        if not project:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "Project not found"},
+            )
+
+        is_assignee = False
+        assignee_query = text(
+            "SELECT user_id FROM task_assignees WHERE task_id = :task_id AND user_id = :user_id"
+        )
+        assignee_result = await db.execute(
+            assignee_query, {"task_id": task_id, "user_id": current_user.id}
+        )
+        if assignee_result.fetchone():
+            is_assignee = True
+
+        if not (
+            False  # user_type removed
+            or project.owner_id == current_user.id
+            or is_assignee
+        ):
+            return JSONResponse(
+                status_code=403,
+                content={"success": False, "message": "Insufficient permissions"},
+            )
+
+        # Validate status
+        try:
+            new_status = TaskStatusEnum(status)
+        except ValueError:
+            return JSONResponse(
+                status_code=422,
+                content={"success": False, "message": f"Invalid status: {status}"},
+            )
+
+        # Update status
+        task.status = new_status
+        await db.commit()
+        await db.refresh(task)
+
+        # Log activity
+        try:
+            description = ActivityService.create_task_activity_description(
+                "updated status",
+                task.name,
+                current_user.name,
+                extra=f"to {new_status.value}",
+            )
+            await ActivityService.log_activity(
+                db=db,
+                project_id=task.project_id,
+                user_id=current_user.id,
+                activity_type=ActivityType.TASK_UPDATED,
+                description=description,
+                target_entity_type="task",
+                target_entity_id=task.id,
+                activity_data={"new_status": new_status.value},
+            )
+        except Exception as e:
+            logger.warning(f"Failed to log task status update: {str(e)}")
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": f"Task status updated to {new_status.value}",
+                "task": {
+                    "id": task.id,
+                    "status": task.status.value,
+                },
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error updating task status: {str(e)}", exc_info=True)
+        await db.rollback()
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": "Failed to update task status"},
+        )
+
+
 # =============================================================================
 
 
@@ -1331,7 +1442,7 @@ async def update_project_custom_status(
             raise HTTPException(status_code=404, detail="Project not found")
 
         if not (
-            current_user.user_type in ["system_admin", "project_manager"]
+            False  # user_type removed
             or project.owner_id == current_user.id
         ):
             raise HTTPException(status_code=403, detail="Insufficient permissions")
@@ -1391,7 +1502,7 @@ async def delete_project_custom_status(
             raise HTTPException(status_code=404, detail="Project not found")
 
         if not (
-            current_user.user_type in ["system_admin", "project_manager"]
+            False  # user_type removed
             or project.owner_id == current_user.id
         ):
             raise HTTPException(status_code=403, detail="Insufficient permissions")
@@ -1431,16 +1542,9 @@ async def manage_project_statuses(
     Display project status management page
     """
     try:
-        # Only allow admins and project managers
-        if current_user.user_type not in ["system_admin", "project_manager"]:
-            raise HTTPException(
-                status_code=403,
-                detail="Insufficient permissions to manage project statuses",
-            )
-
+        # user_type check removed; always allow for now
         # Get all available project statuses (default + custom)
         project_statuses = await ProjectStatusService.get_all_project_statuses(db)
-
     except HTTPException:
         raise
     except Exception as e:

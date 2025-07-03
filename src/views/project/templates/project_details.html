@@ -206,7 +206,7 @@
         <i class="bi bi-folder"></i> Files
       </button>
     </li>
-    {% if current_user.user_type in ['system_admin', 'project_manager'] or (project.owner_id == current_user.id) %}
+    {% if project.owner_id == current_user.id %}
     <li class="nav-item" role="presentation">
       <button
         class="nav-link"
@@ -1032,7 +1032,7 @@
     </div>
 
     <!-- Status Management Tab -->
-    {% if current_user.user_type in ['system_admin', 'project_manager'] or (project.owner_id == current_user.id) %}
+    {% if project.owner_id == current_user.id %}
     <div
       class="tab-pane fade"
       id="statuses"

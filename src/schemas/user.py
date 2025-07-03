@@ -26,7 +26,7 @@ class UserProfileBase(BaseModel):
     display_name: Optional[str] = None
     avatar_url: Optional[str] = None
     phone_number: Optional[str] = None
-    department: Optional[str] = None
+    # department: Optional[str] = None  # Removed
     position: Optional[str] = None
     bio: Optional[str] = None
     timezone: str = "UTC"

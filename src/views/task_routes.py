@@ -47,7 +47,7 @@ async def task_list(
     try:
         print(f"=== TASK LIST ACCESS ===")
         print(f"User: {current_user.name} (ID: {current_user.id})")
-        print(f"User Type: {current_user.user_type}")
+        # print(f"User Type: {current_user.user_type}")
 
         # Query all tasks directly from database (managers can see all tasks)
         query = text(
@@ -182,7 +182,7 @@ async def task_board(
     try:
         print(f"=== TASK BOARD ACCESS ===")
         print(f"User: {current_user.name} (ID: {current_user.id})")
-        print(f"User Type: {current_user.user_type}")
+        # print(f"User Type: {current_user.user_type}")
 
         # Query all tasks directly from database (managers can see all tasks)
         query = text(

@@ -147,31 +147,7 @@ content %}
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <!-- Department -->
-                        <div class="col-md-6">
-                            <div class="card mb-4">
-                                <div class="card-header py-3">
-                                    <h6
-                                        class="m-0 font-weight-bold text-primary"
-                                    >
-                                        Department
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    {% if user.primary_department %}
-                                    <h5>{{ user.primary_department.name }}</h5>
-                                    <p>
-                                        {{ user.primary_department.description
-                                        }}
-                                    </p>
-                                    {% else %}
-                                    <p class="text-muted">
-                                        No department assigned
-                                    </p>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
+                        <!-- Department section removed -->
 
                         <!-- Position -->
                         <div class="col-md-6">

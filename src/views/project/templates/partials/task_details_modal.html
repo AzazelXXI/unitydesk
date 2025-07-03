@@ -18,6 +18,63 @@
         ></button>
       </div>
       <div class="modal-body">
+        <div class="mb-3">
+          <h4 id="taskTitle">{{ task.name }}</h4>
+          <div class="d-flex align-items-center gap-2">
+            <!-- Status Dropdown -->
+            <div class="dropdown">
+              <button
+                class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                type="button"
+                id="taskStatusDropdown"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <span id="currentTaskStatus"
+                  >{{ task.status.replace('_', ' ').title() }}</span
+                >
+              </button>
+              <ul class="dropdown-menu" aria-labelledby="taskStatusDropdown">
+                <li>
+                  <a
+                    class="dropdown-item"
+                    href="#"
+                    onclick="updateTaskStatus('{{ task.id }}', 'NOT_STARTED')"
+                    >Not Started</a
+                  >
+                </li>
+                <li>
+                  <a
+                    class="dropdown-item"
+                    href="#"
+                    onclick="updateTaskStatus('{{ task.id }}', 'IN_PROGRESS')"
+                    >In Progress</a
+                  >
+                </li>
+                <li>
+                  <a
+                    class="dropdown-item"
+                    href="#"
+                    onclick="updateTaskStatus('{{ task.id }}', 'BLOCKED')"
+                    >Blocked</a
+                  >
+                </li>
+                <li>
+                  <a
+                    class="dropdown-item"
+                    href="#"
+                    onclick="updateTaskStatus('{{ task.id }}', 'COMPLETED')"
+                    >Completed</a
+                  >
+                </li>
+              </ul>
+            </div>
+            <span
+              class="badge bg-{{ task.priority|lower }} ms-2"
+              >{{ task.priority.title() }}</span
+            >
+          </div>
+        </div>
         <div id="taskDetailsContent">
           <div class="text-center py-3">
             <div class="spinner-border" role="status">
@@ -72,3 +129,30 @@
 </div>
 <!-- Modal logic and inline editing loaded from static JS file -->
 <script src="{{ url_for('project_static', path='js/task_details_modal.js') }}?v=999999"></script>
+<script>
+function updateTaskStatus(taskId, newStatus) {
+  fetch(`/api/tasks/${taskId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+    body: JSON.stringify({ status: newStatus })
+  })
+  .then(response => {
+    if (!response.ok) throw new Error('Failed to update status');
+    return response.json();
+  })
+  .then(data => {
+    if (data.status) {
+      document.getElementById('currentTaskStatus').textContent = data.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+      // Optionally show a toast or alert for success
+    } else {
+      alert('Status update failed.');
+    }
+  })
+  .catch(err => {
+    alert('Error updating status: ' + err.message);
+  });
+}
+</script>

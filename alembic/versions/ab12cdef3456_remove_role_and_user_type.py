@@ -16,13 +16,26 @@ depends_on = None
 
 
 def upgrade():
-    # Remove 'role' column from project_members association table
-    with op.batch_alter_table("project_members", schema=None) as batch_op:
-        batch_op.drop_column("role")
+    # Remove 'role' column from project_members association table, if it exists
+    conn = op.get_bind()
+    result = conn.execute(
+        sa.text(
+            "SELECT column_name FROM information_schema.columns WHERE table_name='project_members' AND column_name='role'"
+        )
+    )
+    if result.first():
+        with op.batch_alter_table("project_members", schema=None) as batch_op:
+            batch_op.drop_column("role")
 
-    # Remove 'user_type' column from users table
-    with op.batch_alter_table("users", schema=None) as batch_op:
-        batch_op.drop_column("user_type")
+    # Remove 'user_type' column from users table, if it exists
+    result = conn.execute(
+        sa.text(
+            "SELECT column_name FROM information_schema.columns WHERE table_name='users' AND column_name='user_type'"
+        )
+    )
+    if result.first():
+        with op.batch_alter_table("users", schema=None) as batch_op:
+            batch_op.drop_column("user_type")
 
 
 def downgrade():

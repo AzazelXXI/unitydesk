@@ -60,7 +60,6 @@ async def create_user(db: AsyncSession, user_data: UserCreate) -> User:
         email=user_data.email,
         name=user_data.name,
         password_hash=hashed_password,
-        user_type=user_data.user_type,  # Use enum directly, not .value
         status=user_data.status,
     )
 
@@ -77,7 +76,7 @@ async def create_user(db: AsyncSession, user_data: UserCreate) -> User:
             avatar_url=user_data.profile.avatar_url,
             bio=user_data.profile.bio,
             phone=user_data.profile.phone_number,
-            location=user_data.profile.department,
+            # location=user_data.profile.department,  # Removed department
             timezone=user_data.profile.timezone,
         )
         db.add(db_profile)
@@ -203,7 +202,7 @@ async def login_for_access_token(
     await db.refresh(user)
     logger.info(f"User {user.name} status updated to ONLINE")
 
-    # Create token with user info - handle user_type properly
+    # Create token with user info
     token_data = {"sub": user.name, "id": user.id}
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
