@@ -244,11 +244,19 @@ class ProjectStatusService:
             tasks_with_status_query = text(
                 "SELECT COUNT(*) FROM tasks WHERE project_id = :project_id AND status = :status_name"
             )
-            result = await db.execute(
-                tasks_with_status_query,
-                {"project_id": project_id, "status_name": custom_status.status_name},
-            )
-            task_count = result.scalar()
+            try:
+                result = await db.execute(
+                    tasks_with_status_query,
+                    {
+                        "project_id": project_id,
+                        "status_name": custom_status.status_name,
+                    },
+                )
+                task_count = result.scalar()
+            except Exception:
+                # If the status is not in the enum, it can't be used by any tasks
+                await db.rollback()
+                task_count = 0
 
             if task_count > 0:
                 # Deactivate instead of delete if tasks are using it
