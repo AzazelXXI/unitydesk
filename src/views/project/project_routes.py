@@ -1441,10 +1441,7 @@ async def update_project_custom_status(
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
 
-        if not (
-            False  # user_type removed
-            or project.owner_id == current_user.id
-        ):
+        if not (False or project.owner_id == current_user.id):  # user_type removed
             raise HTTPException(status_code=403, detail="Insufficient permissions")
 
         custom_status = await ProjectStatusService.update_custom_project_status(
@@ -1501,10 +1498,7 @@ async def delete_project_custom_status(
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
 
-        if not (
-            False  # user_type removed
-            or project.owner_id == current_user.id
-        ):
+        if not (False or project.owner_id == current_user.id):  # user_type removed
             raise HTTPException(status_code=403, detail="Insufficient permissions")
 
         was_deleted = await ProjectStatusService.delete_custom_project_status(
