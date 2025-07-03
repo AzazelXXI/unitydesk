@@ -166,7 +166,9 @@ async def update_user_by_id(
     user_id: int,
     user_update: UserUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),  # Only admins can update other users
+    current_user: User = Depends(
+        get_current_active_user
+    ),  # Only admins can update other users
 ):
     """
     Update a user by ID (admin only)
@@ -183,7 +185,9 @@ async def update_user_by_id(
 async def delete_user_by_id(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),  # Only admins can delete users
+    current_user: User = Depends(
+        get_current_active_user
+    ),  # Only admins can delete users
 ):
     """
     Delete a user (admin only)

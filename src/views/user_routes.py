@@ -78,7 +78,9 @@ async def user_list_view(
 
 
 @router.get("/create", response_class=HTMLResponse)
-async def create_user_view(request: Request, current_user: User = Depends(get_current_user)):
+async def create_user_view(
+    request: Request, current_user: User = Depends(get_current_user)
+):
     """
     Render the create user form.
     """
