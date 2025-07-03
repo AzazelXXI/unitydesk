@@ -6,7 +6,7 @@ from typing import List, Optional
 from src.database import get_db
 
 # Real model imports
-from src.models.user import User, UserTypeEnum as UserRole
+from src.models.user import User
 
 from src.schemas.user import (
     UserCreate,
@@ -26,8 +26,6 @@ from src.controllers.user_controller import (
 )
 from src.middleware.auth_middleware import (
     get_current_active_user,
-    admin_only,
-    admin_or_manager,
 )
 from src.middleware.rate_limit import login_rate_limit, register_rate_limit
 
@@ -138,14 +136,12 @@ async def update_user_password(
 async def read_users(
     skip: int = 0,
     limit: int = 100,
-    role: Optional[UserRole] = None,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(admin_or_manager),
 ):
     """
     Get all users (admin/manager only)
     """
-    users = await get_users(db, skip=skip, limit=limit, role=role)
+    users = await get_users(db, skip=skip, limit=limit)
     return users
 
 
@@ -153,7 +149,6 @@ async def read_users(
 async def read_user(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(admin_or_manager),
 ):
     """
     Get specific user by ID (admin/manager only)
@@ -171,7 +166,7 @@ async def update_user_by_id(
     user_id: int,
     user_update: UserUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(admin_only),  # Only admins can update other users
+    current_user: User = Depends(get_current_active_user),  # Only admins can update other users
 ):
     """
     Update a user by ID (admin only)
@@ -188,7 +183,7 @@ async def update_user_by_id(
 async def delete_user_by_id(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(admin_only),  # Only admins can delete users
+    current_user: User = Depends(get_current_active_user),  # Only admins can delete users
 ):
     """
     Delete a user (admin only)

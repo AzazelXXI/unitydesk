@@ -9,7 +9,7 @@ import logging
 import os
 
 from src.database import get_db
-from src.models.user import User, UserTypeEnum as UserRole, UserStatusEnum
+from src.models.user import User, UserStatusEnum
 
 # JWT constants
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "YOUR_SECRET_KEY_HERE_CHANGE_IN_PRODUCTION")
@@ -179,16 +179,12 @@ async def get_current_active_user(
     return current_user
 
 
-def role_required(allowed_roles: List[UserRole]):
+def role_required():
     """
-    Check if user has one of the required roles.
+    Placeholder for role checks, now removed.
     """
 
     async def role_dependency(current_user: User = Depends(get_current_user)):
-        if current_user.user_type not in allowed_roles:
-            raise HTTPException(
-                status_code=HTTP_403_FORBIDDEN, detail="Not enough permissions"
-            )
         return current_user
 
     return role_dependency
@@ -196,30 +192,8 @@ def role_required(allowed_roles: List[UserRole]):
 
 class RoleChecker:
     """
-    Check user roles on class-based views.
+    Placeholder for role checks, now removed.
     """
 
-    def __init__(self, allowed_roles: List[UserRole]):
-        self.allowed_roles = allowed_roles
-
     async def __call__(self, request: Request, user: User = Depends(get_current_user)):
-        if user.user_type not in self.allowed_roles:
-            raise HTTPException(
-                status_code=HTTP_403_FORBIDDEN, detail="Not enough permissions"
-            )
         return user
-
-
-# Role-based dependency functions using correct enum values
-admin_only = role_required([UserRole.SYSTEM_ADMIN])
-admin_or_manager = role_required([UserRole.SYSTEM_ADMIN, UserRole.PROJECT_MANAGER])
-non_guest = role_required(
-    [
-        UserRole.SYSTEM_ADMIN,
-        UserRole.PROJECT_MANAGER,
-        UserRole.TEAM_LEADER,
-        UserRole.DEVELOPER,
-        UserRole.DESIGNER,
-        UserRole.TESTER,
-    ]
-)

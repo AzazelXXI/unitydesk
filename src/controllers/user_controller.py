@@ -9,7 +9,7 @@ from typing import List, Optional
 from src.database import get_db
 
 # Real model imports
-from src.models.user import User, UserProfile, UserTypeEnum as UserRole
+from src.models.user import User, UserProfile
 
 from src.schemas.user import (
     UserCreate,
@@ -88,16 +88,11 @@ async def create_user(db: AsyncSession, user_data: UserCreate) -> User:
     return db_user
 
 
-async def get_users(
-    db: AsyncSession, skip: int = 0, limit: int = 100, role: Optional[UserRole] = None
-) -> List[User]:
+async def get_users(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[User]:
     """
     Get all users with optional filtering
     """
     query = select(User).options(joinedload(User.profile))
-
-    if role:
-        query = query.filter(User.role == role)
 
     query = query.offset(skip).limit(limit)
     result = await db.execute(query)
@@ -209,11 +204,7 @@ async def login_for_access_token(
     logger.info(f"User {user.name} status updated to ONLINE")
 
     # Create token with user info - handle user_type properly
-    # Check if user_type is already a string or if it's an enum
-    role_value = (
-        user.user_type.value if hasattr(user.user_type, "value") else user.user_type
-    )
-    token_data = {"sub": user.name, "id": user.id, "role": role_value}
+    token_data = {"sub": user.name, "id": user.id}
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     refresh_token_expires = timedelta(days=7)

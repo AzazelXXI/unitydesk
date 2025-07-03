@@ -1,3 +1,168 @@
+from src.database import get_db
+from src.middleware.auth_middleware import get_current_user_web
+from fastapi import status, APIRouter, Depends, Request, HTTPException, Form
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, text, func
+from typing import List, Optional
+import logging
+from datetime import datetime
+import json
+from src.models.user import User
+from src.models.project import Project, ProjectStatusEnum
+from src.models.task import Task, TaskStatusEnum, TaskPriorityEnum
+from src.models.association_tables import task_assignees
+from src.models.activity import ActivityType
+from src.controllers.project_controller import ProjectController
+from src.services.activity_service import ActivityService
+from src.services.project_status_service import ProjectStatusService
+
+router = APIRouter(
+    tags=["web-projects"], responses={404: {"description": "Page not found"}}
+)
+
+
+@router.put("/projects/{project_id}/members/{user_id}")
+async def update_project_member(
+    project_id: int,
+    user_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+):
+    """Update a member in a project"""
+    try:
+        # Check permissions
+        project = await db.execute(select(Project).where(Project.id == project_id))
+        project = project.scalar_one_or_none()
+        if not project:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "Project not found"},
+            )
+
+        if not (
+            current_user.user_type in ["system_admin", "project_manager"]
+            or project.owner_id == current_user.id
+        ):
+            return JSONResponse(
+                status_code=403,
+                content={"success": False, "message": "Insufficient permissions"},
+            )
+
+        # Check membership
+        member_query = text(
+            "SELECT * FROM project_members WHERE project_id = :project_id AND user_id = :user_id"
+        )
+        member_result = await db.execute(
+            member_query, {"project_id": project_id, "user_id": user_id}
+        )
+        if not member_result.fetchone():
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "Member not found in project"},
+            )
+
+        # Log activity
+        try:
+            await ActivityService.log_activity(
+                db=db,
+                project_id=project_id,
+                user_id=current_user.id,
+                activity_type=ActivityType.MEMBER_UPDATED,
+                description=f"{current_user.name} updated member {user_id}",
+                target_entity_type="user",
+                target_entity_id=user_id,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to log member update: {str(e)}")
+
+        return JSONResponse(
+            status_code=200, content={"success": True, "message": "Member updated"}
+        )
+
+    except Exception as e:
+        logger.error(f"Error updating project member: {str(e)}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": "Internal server error"},
+        )
+
+
+# --- Project Member Remove ---
+@router.delete("/projects/{project_id}/members/{user_id}")
+async def remove_project_member(
+    project_id: int,
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+):
+    """Remove a member from a project"""
+    try:
+        # Check permissions
+        project = await db.execute(select(Project).where(Project.id == project_id))
+        project = project.scalar_one_or_none()
+        if not project:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "Project not found"},
+            )
+        if not (
+            current_user.user_type in ["system_admin", "project_manager"]
+            or project.owner_id == current_user.id
+        ):
+            return JSONResponse(
+                status_code=403,
+                content={"success": False, "message": "Insufficient permissions"},
+            )
+
+        # Check membership
+        member_query = text(
+            "SELECT * FROM project_members WHERE project_id = :project_id AND user_id = :user_id"
+        )
+        member_result = await db.execute(
+            member_query, {"project_id": project_id, "user_id": user_id}
+        )
+        if not member_result.fetchone():
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "Member not found in project"},
+            )
+
+        # Remove member
+        delete_query = text(
+            "DELETE FROM project_members WHERE project_id = :project_id AND user_id = :user_id"
+        )
+        await db.execute(delete_query, {"project_id": project_id, "user_id": user_id})
+        await db.commit()
+
+        # Log activity
+        try:
+            await ActivityService.log_activity(
+                db=db,
+                project_id=project_id,
+                user_id=current_user.id,
+                activity_type=ActivityType.MEMBER_REMOVED,
+                description=f"{current_user.name} removed user {user_id} from the project",
+                target_entity_type="user",
+                target_entity_id=user_id,
+                activity_data={},
+            )
+        except Exception as e:
+            logger.warning(f"Failed to log member removal: {str(e)}")
+
+        return JSONResponse(
+            status_code=200, content={"success": True, "message": "Member removed"}
+        )
+    except Exception as e:
+        logger.error(f"Error removing member: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": "Failed to remove member"},
+        )
+
+
 """
 Project Web Router - Handles project web routes and Jinja template rendering
 
@@ -587,14 +752,13 @@ async def project_details(
             db, project_id, limit=50
         )
 
-        # Get project members with their roles and task counts
+        # Get project members with their task counts
         members_query = text(
             """
             SELECT 
                 u.id,
                 u.name,
                 u.email,
-                pm.role,
                 pm.joined_at,
                 COUNT(DISTINCT ta.task_id) as total_tasks,
                 COUNT(DISTINCT CASE WHEN t.status = 'COMPLETED' THEN ta.task_id END) as completed_tasks
@@ -603,7 +767,7 @@ async def project_details(
             LEFT JOIN task_assignees ta ON u.id = ta.user_id
             LEFT JOIN tasks t ON ta.task_id = t.id AND t.project_id = :project_id
             WHERE pm.project_id = :project_id
-            GROUP BY u.id, u.name, u.email, pm.role, pm.joined_at
+            GROUP BY u.id, u.name, u.email, pm.joined_at
             ORDER BY pm.joined_at ASC
         """
         )
@@ -617,7 +781,6 @@ async def project_details(
                 "id": row.id,
                 "name": row.name,
                 "email": row.email,
-                "role": row.role or "Member",
                 "joined_at": row.joined_at,
                 "total_tasks": row.total_tasks or 0,
                 "completed_tasks": row.completed_tasks or 0,
@@ -959,13 +1122,10 @@ async def add_project_member(
         # Get the request body
         body = await request.json()
         user_id = body.get("user_id")
-        role = body.get("role")
 
         # Validate required fields
         if not user_id:
             raise HTTPException(status_code=422, detail="User ID is required")
-        if not role:
-            raise HTTPException(status_code=422, detail="Role is required")
 
         # Convert user_id to int
         try:
@@ -996,11 +1156,13 @@ async def add_project_member(
         if existing_result.fetchone():
             raise HTTPException(
                 status_code=409, detail="User is already a member of this project"
-            )  # Add the member to the project
+            )
+
+        # Add the member to the project
         insert_member_query = text(
             """
-            INSERT INTO project_members (project_id, user_id, role, joined_at)
-            VALUES (:project_id, :user_id, :role, :joined_at)
+            INSERT INTO project_members (project_id, user_id, joined_at)
+            VALUES (:project_id, :user_id, :joined_at)
             """
         )
 
@@ -1009,21 +1171,18 @@ async def add_project_member(
             {
                 "project_id": project_id,
                 "user_id": user_id,
-                "role": role,
                 "joined_at": datetime.utcnow(),
             },
         )
         await db.commit()
 
         logger.info(
-            f"User {user_id} added to project {project_id} with role {role} by user {current_user.id}"
+            f"User {user_id} added to project {project_id} by user {current_user.id}"
         )
 
         # Log activity
         try:
-            description = (
-                f"{current_user.name} added {user_row.name} as {role} to the project"
-            )
+            description = f"{current_user.name} added {user_row.name} to the project"
             await ActivityService.log_activity(
                 db=db,
                 project_id=project_id,
@@ -1035,7 +1194,6 @@ async def add_project_member(
                 activity_data={
                     "user_name": user_row.name,
                     "user_email": user_row.email,
-                    "role": role,
                 },
             )
         except Exception as e:
@@ -1050,7 +1208,6 @@ async def add_project_member(
                     "user_id": user_id,
                     "name": user_row.name,
                     "email": user_row.email,
-                    "role": role,
                 },
             },
         )

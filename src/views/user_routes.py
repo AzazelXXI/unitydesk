@@ -16,7 +16,7 @@ import os
 from src.database import get_db
 
 # Real model imports
-from src.models.user import User, UserTypeEnum as UserRole
+from src.models.user import User
 
 from src.schemas.user import UserUpdate, UserCreate
 from src.controllers.user_controller import (
@@ -26,7 +26,7 @@ from src.controllers.user_controller import (
     create_user,
     delete_user,
 )
-from src.middleware.auth_middleware import get_current_user, admin_only
+from src.middleware.auth_middleware import get_current_user
 
 # Set up templates
 templates_path = os.path.join(os.path.dirname(__file__), "user", "templates")
@@ -45,7 +45,6 @@ async def user_list_view(
     request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
-    role_filter: Optional[UserRole] = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
 ):
@@ -57,7 +56,7 @@ async def user_list_view(
         skip = (page - 1) * limit
 
         # Get users with pagination
-        users = await get_users(db, skip=skip, limit=limit, role=role_filter)
+        users = await get_users(db, skip=skip, limit=limit)
 
         # Get total user count for pagination
         # TODO: Implement count query
@@ -72,8 +71,6 @@ async def user_list_view(
                 "current_user": current_user,
                 "current_page": page,
                 "total_pages": total_pages,
-                "role_filter": role_filter,
-                "roles": list(UserRole),
             },
         )
     except Exception as e:
@@ -81,7 +78,7 @@ async def user_list_view(
 
 
 @router.get("/create", response_class=HTMLResponse)
-async def create_user_view(request: Request, current_user: User = Depends(admin_only)):
+async def create_user_view(request: Request, current_user: User = Depends(get_current_user)):
     """
     Render the create user form.
     """
@@ -90,7 +87,6 @@ async def create_user_view(request: Request, current_user: User = Depends(admin_
         {
             "request": request,
             "current_user": current_user,
-            "roles": list(UserRole),
             "is_edit": False,
         },
     )
@@ -102,12 +98,12 @@ async def create_user_action(
     email: str = Form(...),
     username: str = Form(...),
     password: str = Form(...),
-    role: UserRole = Form(...),
+    role: str = Form(...),
     first_name: Optional[str] = Form(None),
     last_name: Optional[str] = Form(None),
     display_name: Optional[str] = Form(None),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(admin_only),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Handle user creation form submission.
@@ -144,7 +140,6 @@ async def create_user_action(
             {
                 "request": request,
                 "current_user": current_user,
-                "roles": list(UserRole),
                 "is_edit": False,
                 "error": str(e),
                 "form_data": {
@@ -170,8 +165,8 @@ async def user_detail_view(
     Render user detail view.
     """
     # Only allow users to view themselves unless they are admin
-    if current_user.id != user_id and current_user.role != UserRole.ADMIN:
-        raise HTTPException(status_code=403, detail="Not authorized")
+    if current_user.id != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
 
     user = await get_user(db, user_id)
     if not user:
@@ -188,7 +183,7 @@ async def edit_user_view(
     request: Request,
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(admin_only),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Render user edit form.
@@ -203,7 +198,6 @@ async def edit_user_view(
             "request": request,
             "current_user": current_user,
             "user": user,
-            "roles": list(UserRole),
             "is_edit": True,
         },
     )
@@ -215,14 +209,14 @@ async def edit_user_action(
     user_id: int,
     email: str = Form(...),
     username: str = Form(...),
-    role: UserRole = Form(...),
+    role: str = Form(...),
     is_active: bool = Form(False),
     is_verified: bool = Form(False),
     first_name: Optional[str] = Form(None),
     last_name: Optional[str] = Form(None),
     display_name: Optional[str] = Form(None),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(admin_only),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Handle user edit form submission.
@@ -262,7 +256,6 @@ async def edit_user_action(
                 "request": request,
                 "current_user": current_user,
                 "user": user,
-                "roles": list(UserRole),
                 "is_edit": True,
                 "error": str(e),
             },
@@ -273,7 +266,7 @@ async def edit_user_action(
 async def delete_user_action(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(admin_only),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Handle user deletion.

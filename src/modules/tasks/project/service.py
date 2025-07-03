@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import HTTPException
 
 from src.models.project import Project
-from src.models.user import User, ProjectManager
+from src.models.user import User
 from src.models.association_tables import project_members
 from .schemas import ProjectCreate, ProjectUpdate, ProjectResponse
 from .exceptions import ProjectNotFoundError, UnauthorizedProjectAccessError

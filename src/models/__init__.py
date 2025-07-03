@@ -2,12 +2,6 @@ from .base import Base
 from .user import (
     User,
     UserProfile,
-    ProjectManager,
-    TeamLeader,
-    Developer,
-    Tester,
-    Designer,
-    SystemAdmin,
 )
 from .project import Project
 from .custom_project_status import ProjectCustomStatus
@@ -32,12 +26,6 @@ __all__ = [
     "Base",
     "User",
     "UserProfile",
-    "ProjectManager",
-    "TeamLeader",
-    "Developer",
-    "Tester",
-    "Designer",
-    "SystemAdmin",
     "Project",
     "ProjectCustomStatus",
     "Task",

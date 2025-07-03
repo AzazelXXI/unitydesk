@@ -152,18 +152,8 @@ async def verify_token(token: str, token_type: str = "access") -> Optional[Token
             )
             return None
 
-        # Convert role string to enum if role is present
-        from src.models.user import UserTypeEnum
-
-        role_enum = None
-        if role:
-            try:
-                role_enum = UserTypeEnum(role)  # Convert string to enum
-            except ValueError:
-                logger.warning(f"Invalid role value in token: {role}")
-
         logger.info("Token validation successful")
-        return TokenData(username=username, user_id=user_id, role=role_enum)
+        return TokenData(username=username, user_id=user_id)
     except jwt.ExpiredSignatureError:
         logger.info("Token validation failed: Token has expired")
         return None

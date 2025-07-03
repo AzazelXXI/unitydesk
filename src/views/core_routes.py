@@ -132,7 +132,7 @@ async def register_submit(
     """
     from src.controllers.user_controller import create_user
     from src.schemas.user import UserCreate
-    from src.models.user import UserTypeEnum, UserStatusEnum
+    from src.models.user import UserStatusEnum
 
     try:
         logger.info(f"Registration attempt for username: {username}, email: {email}")
@@ -151,7 +151,6 @@ async def register_submit(
             email=email,
             name=username,
             password=password,
-            user_type=UserTypeEnum.TEAM_MEMBER,  # Default user type
             status=UserStatusEnum.ONLINE,  # Use ONLINE instead of ACTIVE
             profile=(
                 {

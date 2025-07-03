@@ -1231,9 +1231,9 @@
               <div id="assigneeContainer">
                 <div class="assignee-row d-flex align-items-center mb-2">
                   <select class="form-select assignee-select me-2" name="taskAssignees">
-                    <option value="">Select a user...</option>
-                    {% for user in users %}
-                    <option value="{{ user.id }}">{{ user.name }}</option>
+                    <option value="">Select a member...</option>
+                    {% for member in members %}
+                    <option value="{{ member.id }}">{{ member.name }}</option>
                     {% endfor %}
                   </select>
                   <button type="button" class="btn btn-outline-success btn-sm add-assignee-btn" title="Add another assignee">

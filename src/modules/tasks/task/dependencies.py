@@ -5,11 +5,6 @@ from sqlalchemy import select
 from src.database import get_db
 from src.models.user import (
     User,
-    ProjectManager,
-    TeamLeader,
-    Developer,
-    Designer,
-    Tester,
 )
 from src.models.task import Task
 from src.models.project import Project
@@ -26,20 +21,18 @@ async def get_current_user(current_user: User = Depends(auth_get_current_user)) 
 async def require_project_manager_or_team_leader(
     current_user: User = Depends(get_current_user),
 ) -> User:
-    """Require user to be a Project Manager or Team Leader"""
-    if not isinstance(current_user, (ProjectManager, TeamLeader)):
+    """Require user to have elevated permissions"""
+    if not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only Project Managers and Team Leaders can perform this action",
+            detail="Only admins can perform this action",
         )
     return current_user
 
 
 async def require_team_member(current_user: User = Depends(get_current_user)) -> User:
-    """Require user to be a team member (Developer, Designer, Tester)"""
-    if not isinstance(
-        current_user, (Developer, Designer, Tester, TeamLeader, ProjectManager)
-    ):
+    """Require user to be a team member"""
+    if not current_user.is_team_member:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only team members can perform this action",

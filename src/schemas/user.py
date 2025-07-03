@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
 
-from src.models.user import UserTypeEnum, UserStatusEnum  # Import both enums
+from src.models.user import UserStatusEnum  # Import only UserStatusEnum
 
 
 # Base user schemas
@@ -55,9 +55,6 @@ class UserBase(BaseModel):
 
     email: EmailStr
     name: str  # Changed from 'username' to 'name' to match User model
-    user_type: UserTypeEnum = (
-        UserTypeEnum.TEAM_MEMBER
-    )  # Changed from 'role' to 'user_type'
     status: UserStatusEnum = (
         UserStatusEnum.OFFLINE
     )  # Changed from 'is_active'/'is_verified' to 'status'
@@ -82,7 +79,6 @@ class UserUpdate(BaseModel):
 
     email: Optional[EmailStr] = None
     name: Optional[str] = None  # Changed from 'username' to 'name'
-    user_type: Optional[UserTypeEnum] = None  # Changed from 'role' to 'user_type'
     status: Optional[UserStatusEnum] = (
         None  # Changed from 'is_active'/'is_verified' to 'status'
     )
@@ -116,7 +112,7 @@ class TokenData(BaseModel):
 
     username: Optional[str] = None  # Keep as username for JWT compatibility
     user_id: Optional[int] = None
-    role: Optional[UserTypeEnum] = None
+    role: Optional[UserStatusEnum] = None
 
 
 class LoginRequest(BaseModel):

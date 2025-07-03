@@ -1,3 +1,64 @@
+// --- Member Role Update and Remove Functionality ---
+document.addEventListener("DOMContentLoaded", function () {
+  // Role change
+  document.querySelectorAll(".save-role-btn").forEach(function (btn) {
+    btn.addEventListener("click", async function (e) {
+      e.preventDefault();
+      const memberId = btn.getAttribute("data-member-id");
+      const select = document.querySelector(
+        `.member-role-select[data-member-id='${memberId}']`
+      );
+      const newRole = select.value;
+      const projectId = getProjectIdFromUrl();
+      btn.disabled = true;
+      try {
+        const response = await fetch(`/projects/${projectId}/members/${memberId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role: newRole }),
+          credentials: "include",
+        });
+        const result = await response.json();
+        if (result.success) {
+          alert("Role updated successfully!");
+          window.location.reload();
+        } else {
+          alert("Failed to update role: " + (result.message || "Unknown error"));
+        }
+      } catch (err) {
+        alert("Error updating role. Please try again.");
+      }
+      btn.disabled = false;
+    });
+  });
+
+  // Remove member
+  document.querySelectorAll(".remove-member-btn").forEach(function (btn) {
+    btn.addEventListener("click", async function (e) {
+      e.preventDefault();
+      if (!confirm("Are you sure you want to remove this member from the project?")) return;
+      const memberId = btn.getAttribute("data-member-id");
+      const projectId = getProjectIdFromUrl();
+      btn.disabled = true;
+      try {
+        const response = await fetch(`/projects/${projectId}/members/${memberId}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        const result = await response.json();
+        if (result.success) {
+          alert("Member removed successfully!");
+          window.location.reload();
+        } else {
+          alert("Failed to remove member: " + (result.message || "Unknown error"));
+        }
+      } catch (err) {
+        alert("Error removing member. Please try again.");
+      }
+      btn.disabled = false;
+    });
+  });
+});
 /**
  * Project Details Page JavaScript
  * Handles task management, modals, filtering, and project interactions

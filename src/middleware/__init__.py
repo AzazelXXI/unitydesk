@@ -14,9 +14,6 @@ from src.middleware.auth_middleware import (
     get_current_user,
     get_current_active_user,
     role_required,
-    admin_only,
-    admin_or_manager,
-    non_guest,
 )
 
 logger = logging.getLogger(__name__)
@@ -71,7 +68,4 @@ __all__ = [
     "get_current_user",
     "get_current_active_user",
     "role_required",
-    "admin_only",
-    "admin_or_manager",
-    "non_guest",
 ]

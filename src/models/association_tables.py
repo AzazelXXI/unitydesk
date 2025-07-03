@@ -10,7 +10,6 @@ project_members = Table(
     Base.metadata,
     Column("project_id", Integer, ForeignKey("projects.id"), primary_key=True),
     Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
-    Column("role", String(50), default="Member", nullable=False),  # Member, Lead, etc.
     Column("joined_at", DateTime, default=datetime.utcnow),
 )
 
