@@ -18,6 +18,8 @@ from src.controllers.project_controller import ProjectController
 from src.services.activity_service import ActivityService
 from src.services.project_status_service import ProjectStatusService
 
+
+# Only define the router ONCE at the top of the file and use it for all routes
 router = APIRouter(
     tags=["web-projects"], responses={404: {"description": "Page not found"}}
 )
@@ -42,10 +44,7 @@ async def update_project_member(
                 content={"success": False, "message": "Project not found"},
             )
 
-        if not (
-            current_user.user_type in ["system_admin", "project_manager"]
-            or project.owner_id == current_user.id
-        ):
+        if not (project.owner_id == current_user.id):
             return JSONResponse(
                 status_code=403,
                 content={"success": False, "message": "Insufficient permissions"},
@@ -100,18 +99,20 @@ async def remove_project_member(
 ):
     """Remove a member from a project"""
     try:
+        logger.info(f"Attempting to remove user {user_id} from project {project_id}")
         # Check permissions
         project = await db.execute(select(Project).where(Project.id == project_id))
         project = project.scalar_one_or_none()
         if not project:
+            logger.warning(f"Project {project_id} not found")
             return JSONResponse(
                 status_code=404,
                 content={"success": False, "message": "Project not found"},
             )
-        if not (
-            current_user.user_type in ["system_admin", "project_manager"]
-            or project.owner_id == current_user.id
-        ):
+        if not (project.owner_id == current_user.id):
+            logger.warning(
+                f"User {current_user.id} does not have permission to remove members from project {project_id}"
+            )
             return JSONResponse(
                 status_code=403,
                 content={"success": False, "message": "Insufficient permissions"},
@@ -124,7 +125,12 @@ async def remove_project_member(
         member_result = await db.execute(
             member_query, {"project_id": project_id, "user_id": user_id}
         )
-        if not member_result.fetchone():
+        member = member_result.fetchone()
+        logger.info(
+            f"Membership check result for user {user_id} in project {project_id}: {member}"
+        )
+        if not member:
+            logger.warning(f"User {user_id} is not a member of project {project_id}")
             return JSONResponse(
                 status_code=404,
                 content={"success": False, "message": "Member not found in project"},
@@ -196,10 +202,9 @@ from src.services.project_status_service import ProjectStatusService
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# Create router for project web routes
-router = APIRouter(
-    tags=["web-projects"], responses={404: {"description": "Page not found"}}
-)
+
+# (REMOVED duplicate router definition here)
+
 
 # Templates - use absolute path to avoid issues
 templates_path = "src/views"
@@ -1264,11 +1269,8 @@ async def create_project_custom_status(
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
 
-        # Check permissions: owner, admin, or project manager
-        if not (
-            current_user.user_type in ["system_admin", "project_manager"]
-            or project.owner_id == current_user.id
-        ):
+        # Check permissions: owner
+        if not (project.owner_id == current_user.id):
             raise HTTPException(status_code=403, detail="Insufficient permissions")
 
         custom_status = await ProjectStatusService.create_custom_project_status(
