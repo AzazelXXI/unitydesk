@@ -19,7 +19,7 @@
       </div>
       <div class="modal-body">
         <div class="mb-3">
-          <h4 id="taskTitle">{{ task.name }}</h4>
+          <h4 id="taskTitle"></h4>
           <div class="d-flex align-items-center gap-2">
             <!-- Status Dropdown -->
             <div class="dropdown">
@@ -30,16 +30,14 @@
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
               >
-                <span id="currentTaskStatus"
-                  >{{ task.status.replace('_', ' ').title() }}</span
-                >
+                <span id="currentTaskStatus"></span>
               </button>
               <ul class="dropdown-menu" aria-labelledby="taskStatusDropdown">
                 <li>
                   <a
                     class="dropdown-item"
                     href="#"
-                    onclick="updateTaskStatus('{{ task.id }}', 'NOT_STARTED')"
+                    onclick="updateTaskStatus('', 'NOT_STARTED')"
                     >Not Started</a
                   >
                 </li>
@@ -47,7 +45,7 @@
                   <a
                     class="dropdown-item"
                     href="#"
-                    onclick="updateTaskStatus('{{ task.id }}', 'IN_PROGRESS')"
+                    onclick="updateTaskStatus('', 'IN_PROGRESS')"
                     >In Progress</a
                   >
                 </li>
@@ -55,7 +53,7 @@
                   <a
                     class="dropdown-item"
                     href="#"
-                    onclick="updateTaskStatus('{{ task.id }}', 'BLOCKED')"
+                    onclick="updateTaskStatus('', 'BLOCKED')"
                     >Blocked</a
                   >
                 </li>
@@ -63,16 +61,13 @@
                   <a
                     class="dropdown-item"
                     href="#"
-                    onclick="updateTaskStatus('{{ task.id }}', 'COMPLETED')"
+                    onclick="updateTaskStatus('', 'COMPLETED')"
                     >Completed</a
                   >
                 </li>
               </ul>
             </div>
-            <span
-              class="badge bg-{{ task.priority|lower }} ms-2"
-              >{{ task.priority.title() }}</span
-            >
+            <span class="badge ms-2" id="taskPriorityBadge"></span>
           </div>
         </div>
         <div id="taskDetailsContent">
