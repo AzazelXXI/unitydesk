@@ -158,9 +158,8 @@ async def register_submit(
                     "last_name": last_name,
                     "display_name": f"{first_name} {last_name}",
                     "phone_number": phone_number,
-                    "department": department,
                 }
-                if first_name or last_name or phone_number or department
+                if first_name or last_name or phone_number
                 else None
             ),
         )
