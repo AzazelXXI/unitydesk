@@ -157,20 +157,27 @@ function initializeTaskModal() {
     // Set the clone form action for this task
     setCloneTaskFormAction(task.id);
 
+
+
+    // Clear previous content to avoid ReferenceError
+    taskDetailsContent.innerHTML = "";
+    // Now set the modal content
     taskDetailsContent.innerHTML = `
       <div class="task-details-container">
         <!-- Task Header Container -->
         <div class="task-section-container bg-light rounded p-3 mb-4">
           <div class="task-header">
             <div class="d-flex justify-content-between align-items-start mb-3">
-              <h3 class="task-title mb-0">${task.name}</h3>
-              <div class="task-badges">
-                <span class="badge ${statusClass} me-2">${
-      task.status ? task.status.replace("_", " ").toUpperCase() : "NOT STARTED"
-    }</span>
-                <span class="badge ${priorityClass}">${
-      task.priority || "MEDIUM"
-    }</span>
+              <div class="d-flex align-items-center">
+                <h3 class="task-title mb-0">${task.name}</h3>
+              </div>
+              <div class="d-flex flex-column align-items-end ms-3">
+                <span class="badge ${statusClass} mb-1" id="taskStatusBadge">
+                  ${task.status ? task.status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Not Started'}
+                </span>
+                <span class="badge ${priorityClass}" id="taskPriorityBadge">
+                  ${task.priority ? task.priority.charAt(0) + task.priority.slice(1).toLowerCase() : 'Medium'}
+                </span>
               </div>
             </div>
             <div class="task-meta text-muted">
@@ -181,6 +188,40 @@ function initializeTaskModal() {
             </div>
           </div>
         </div>
+
+        <!-- Status & Priority Section -->
+        <div class="task-section-container bg-white border rounded p-3 mb-4">
+          <div class="task-section">
+            <div class="section-header d-flex align-items-center justify-content-between mb-3">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-flag me-2 text-primary"></i>
+                <h5 class="section-title mb-0">Status & Priority</h5>
+              </div>
+              <button class="btn btn-primary btn-sm" id="applyStatusChangeBtn" type="button">Change</button>
+            </div>
+            <div class="section-content">
+              <div class="mb-2 d-flex align-items-center">
+                <label class="form-label fw-bold mb-0 me-2">Status</label>
+                <select class="form-select form-select-sm d-inline-block w-auto align-middle" id="taskStatusDropdown">
+                  <option value="NOT_STARTED" ${!task.status || task.status === 'NOT_STARTED' ? 'selected' : ''}>Not Started</option>
+                  <option value="IN_PROGRESS" ${task.status === 'IN_PROGRESS' ? 'selected' : ''}>In Progress</option>
+                  <option value="BLOCKED" ${task.status === 'BLOCKED' ? 'selected' : ''}>Blocked</option>
+                  <option value="COMPLETED" ${task.status === 'COMPLETED' ? 'selected' : ''}>Completed</option>
+                </select>
+              </div>
+              <div class="mb-2">
+                <label class="form-label fw-bold">Priority</label>
+                <select class="form-select form-select-sm w-auto d-inline-block" id="taskPriorityDropdown">
+                  <option value="LOW" ${task.priority === 'LOW' ? 'selected' : ''}>Low</option>
+                  <option value="MEDIUM" ${!task.priority || task.priority === 'MEDIUM' ? 'selected' : ''}>Medium</option>
+                  <option value="HIGH" ${task.priority === 'HIGH' ? 'selected' : ''}>High</option>
+                  <option value="URGENT" ${task.priority === 'URGENT' ? 'selected' : ''}>Urgent</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
 
         <!-- Description Container -->
         <div class="task-section-container bg-white border rounded p-3 mb-4">
@@ -328,8 +369,52 @@ function initializeTaskModal() {
     `;
   }
 
-  // Make loadTaskDetails available globally for potential external calls
-  window.loadTaskDetails = loadTaskDetails;
+    // Add event listener for status change button to update status via API
+    setTimeout(function() {
+      var statusDropdown = document.getElementById("taskStatusDropdown");
+      var applyBtn = document.getElementById("applyStatusChangeBtn");
+      if (statusDropdown && applyBtn) {
+        applyBtn.addEventListener("click", function () {
+          var newStatus = statusDropdown.value;
+          statusDropdown.disabled = true;
+          applyBtn.disabled = true;
+          fetch(`/api/tasks/` + task.id, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify({ status: newStatus })
+          })
+          .then(function(response) {
+            if (response.ok) {
+              return response.json();
+            } else {
+              alert("Failed to update status");
+              throw new Error("Failed to update status");
+            }
+          })
+          .then(function(updatedTask) {
+            var badge = document.getElementById("taskStatusBadge");
+            if (badge) {
+              badge.className = "badge " + getStatusClass(updatedTask.status) + " mb-1";
+              badge.textContent = updatedTask.status.replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+            }
+            alert("Status updated!");
+          })
+          .catch(function() {
+            alert("Error updating status");
+          })
+          .finally(function() {
+            statusDropdown.disabled = false;
+            applyBtn.disabled = false;
+          });
+        });
+      }
+    }, 0);
+
+    // Make loadTaskDetails available globally for potential external calls
+    window.loadTaskDetails = loadTaskDetails;
 }
 
 /**

@@ -18,85 +18,73 @@
         ></button>
       </div>
       <div class="modal-body">
-        <div class="mb-3">
-          <h4 id="taskTitle"></h4>
-          <div class="d-flex align-items-center gap-2">
-            <!-- Status Dropdown -->
-            <div class="dropdown">
-              <button
-                class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                type="button"
-                id="taskStatusDropdown"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                <span id="currentTaskStatus"></span>
-              </button>
-              <ul class="dropdown-menu" aria-labelledby="taskStatusDropdown">
-                <li>
-                  <a
-                    class="dropdown-item"
-                    href="#"
-                    onclick="updateTaskStatus('', 'NOT_STARTED')"
-                    >Not Started</a
-                  >
-                </li>
-                <li>
-                  <a
-                    class="dropdown-item"
-                    href="#"
-                    onclick="updateTaskStatus('', 'IN_PROGRESS')"
-                    >In Progress</a
-                  >
-                </li>
-                <li>
-                  <a
-                    class="dropdown-item"
-                    href="#"
-                    onclick="updateTaskStatus('', 'BLOCKED')"
-                    >Blocked</a
-                  >
-                </li>
-                <li>
-                  <a
-                    class="dropdown-item"
-                    href="#"
-                    onclick="updateTaskStatus('', 'COMPLETED')"
-                    >Completed</a
-                  >
-                </li>
-              </ul>
-            </div>
-            <span class="badge ms-2" id="taskPriorityBadge"></span>
-          </div>
+        <!-- Task Title/Header -->
+        <div id="taskHeaderContent">
+          <!-- Task header/title will be loaded here by JS or server (status badge removed) -->
         </div>
+        <!-- Status & Priority Section removed as requested -->
+        <!-- End Status & Priority Section -->
+        <!-- Description Section -->
         <div id="taskDetailsContent">
-          <div class="text-center py-3">
-            <div class="spinner-border" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-          </div>
+          <!-- Description and other details will be loaded here -->
         </div>
-        <!-- Inline-editable fields for status and priority (hidden by default, shown when context loaded) -->
-        <div id="taskInlineEditFields" style="display: none;">
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label for="taskStatusDropdown" class="form-label">Status</label>
-              <select id="taskStatusDropdown" class="form-select">
-                <!-- Options injected dynamically -->
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label for="taskPriorityDropdown" class="form-label">Priority</label>
-              <select id="taskPriorityDropdown" class="form-select">
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
-                <option value="URGENT">Urgent</option>
-              </select>
-            </div>
-          </div>
-        </div>
+        <script>
+        // Set dropdowns to current values and handle changes
+        document.addEventListener('DOMContentLoaded', function() {
+          const modal = document.getElementById('taskDetailsModal');
+          if (!modal) return;
+          modal.addEventListener('show.bs.modal', async function(event) {
+            setTimeout(async () => {
+              const taskId = modal.getAttribute('data-task-id');
+              if (!taskId) return;
+              // Fetch task details
+              const res = await fetch(`/api/tasks/${taskId}`);
+              const data = await res.json();
+              if (data.success && data.task) {
+                // Set status
+                const statusDropdown = document.getElementById('taskStatusDropdown');
+                if (statusDropdown) {
+                  statusDropdown.value = data.task.status || 'NOT_STARTED';
+                  statusDropdown.disabled = !data.task.can_edit_status;
+                  statusDropdown.onchange = function() {
+                    updateTaskField(taskId, 'status', statusDropdown.value);
+                  };
+                }
+                // Set priority
+                const priorityDropdown = document.getElementById('taskPriorityDropdown');
+                if (priorityDropdown) {
+                  priorityDropdown.value = data.task.priority || 'MEDIUM';
+                  priorityDropdown.disabled = !data.task.can_edit_priority;
+                  priorityDropdown.onchange = function() {
+                    updateTaskField(taskId, 'priority', priorityDropdown.value);
+                  };
+                }
+                // No need to move or show/hide the row, it's always visible now
+              }
+            }, 100);
+          });
+        });
+        function updateTaskField(taskId, field, value) {
+          if (!taskId) return;
+          fetch(`/api/tasks/${taskId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ [field]: value })
+          })
+          .then(response => response.json())
+          .then data => {
+            if (!data.success) {
+              alert(`Failed to update ${field}: ${data.error || 'Unknown error'}`);
+            }
+          })
+          .catch(err => {
+            alert(`Error updating ${field}: ${err.message}`);
+          });
+        }
+        </script>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -124,30 +112,3 @@
 </div>
 <!-- Modal logic and inline editing loaded from static JS file -->
 <script src="{{ url_for('project_static', path='js/task_details_modal.js') }}?v=999999"></script>
-<script>
-function updateTaskStatus(taskId, newStatus) {
-  fetch(`/api/tasks/${taskId}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-    },
-    body: JSON.stringify({ status: newStatus })
-  })
-  .then(response => {
-    if (!response.ok) throw new Error('Failed to update status');
-    return response.json();
-  })
-  .then(data => {
-    if (data.status) {
-      document.getElementById('currentTaskStatus').textContent = data.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
-      // Optionally show a toast or alert for success
-    } else {
-      alert('Status update failed.');
-    }
-  })
-  .catch(err => {
-    alert('Error updating status: ' + err.message);
-  });
-}
-</script>
