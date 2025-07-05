@@ -266,9 +266,15 @@ async def projects_dashboard(
             where_conditions.append("p.budget <= :budget_max")
             params["budget_max"] = budget_max
 
-        where_clause = (
-            "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
-        )
+        # Restrict to projects where user is owner or member
+        user_access_condition = "(p.owner_id = :user_id OR EXISTS (SELECT 1 FROM project_members pm WHERE pm.project_id = p.id AND pm.user_id = :user_id))"
+        params["user_id"] = current_user.id
+        if where_conditions:
+            where_clause = (
+                f"WHERE {user_access_condition} AND {' AND '.join(where_conditions)}"
+            )
+        else:
+            where_clause = f"WHERE {user_access_condition}"
 
         # Build ORDER BY clause
         valid_sort_fields = {
@@ -569,13 +575,15 @@ async def project_details(
                 p.end_date,
                 p.created_at,
                 p.updated_at,
+                p.owner_id,
                 COUNT(t.id) as task_count,
                 COUNT(CASE WHEN t.status = 'COMPLETED' THEN 1 END) as completed_tasks,
                 COUNT(CASE WHEN t.status = 'IN_PROGRESS' THEN 1 END) as active_tasks
             FROM projects p
             LEFT JOIN tasks t ON p.id = t.project_id
             WHERE p.id = :project_id
-            GROUP BY p.id, p.name, p.description, p.status, p.progress, p.budget,                     p.start_date, p.end_date, p.created_at, p.updated_at        """
+            GROUP BY p.id, p.name, p.description, p.status, p.progress, p.budget, p.start_date, p.end_date, p.created_at, p.updated_at, p.owner_id
+        """
         )
 
         result = await db.execute(project_query, {"project_id": project_id})
@@ -619,6 +627,9 @@ async def project_details(
             or 0,  # Use progress as workflow progress
             "client_brief": None,  # No client brief available
         }
+
+        # Add owner_id to project dict for template logic
+        project["owner_id"] = project_row.owner_id
 
         # Get project tasks with filtering
         print(
