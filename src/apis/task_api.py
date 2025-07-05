@@ -213,8 +213,9 @@ async def update_task(
             )
             await db.commit()
 
-            # Refresh the task object
-            await db.refresh(task)
+        # Refresh the task object
+        await db.refresh(task)
+
         # Send notifications for status changes
         if "status" in update_data and update_data["status"] != old_status:
             await NotificationService.notify_task_status_change(
@@ -250,7 +251,42 @@ async def update_task(
                     updated_by_id=current_user.id,
                 )
 
-        return task
+        # --- Build response dict with assignee info (copied from get_task) ---
+        from src.models.association_tables import task_assignees
+
+        assignees_query = (
+            select(User.id, User.name)
+            .join(task_assignees, User.id == task_assignees.c.user_id)
+            .where(task_assignees.c.task_id == task_id)
+        )
+        assignees_result = await db.execute(assignees_query)
+        assignees = assignees_result.fetchall()
+
+        assignee_ids = [assignee.id for assignee in assignees]
+        assignee_names = [assignee.name for assignee in assignees]
+
+        task_dict = {
+            "id": task.id,
+            "name": task.name,
+            "description": task.description,
+            "status": task.status,
+            "priority": task.priority,
+            "estimated_hours": task.estimated_hours,
+            "actual_hours": task.actual_hours,
+            "start_date": task.start_date,
+            "due_date": task.due_date,
+            "completed_date": task.completed_date,
+            "created_at": task.created_at,
+            "updated_at": task.updated_at,
+            "project_id": task.project_id,
+            "assignee_ids": assignee_ids,
+            "assignee_names": assignee_names,
+            "assignee_id": assignee_ids[0] if assignee_ids else None,
+            "assignee_name": assignee_names[0] if assignee_names else None,
+            "tags": task.tags,
+        }
+
+        return TaskResponse(**task_dict)
 
     except HTTPException:
         raise

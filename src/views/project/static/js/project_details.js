@@ -1,5 +1,11 @@
+// Declare taskDetailsModal globally at the top of the script
+let taskDetailsModal = null;
+
 // --- Member Role Update and Remove Functionality ---
 document.addEventListener("DOMContentLoaded", function () {
+  // Initialize taskDetailsModal once when the DOM is fully loaded
+  taskDetailsModal = document.getElementById("taskDetailsModal");
+
   // Role change
   document.querySelectorAll(".save-role-btn").forEach(function (btn) {
     btn.addEventListener("click", async function (e) {
@@ -58,13 +64,7 @@ document.addEventListener("DOMContentLoaded", function () {
       btn.disabled = false;
     });
   });
-});
-/**
- * Project Details Page JavaScript
- * Handles task management, modals, filtering, and project interactions
- */
 
-document.addEventListener("DOMContentLoaded", function () {
   // Initialize page functionality
   initializeProjectTabs();
   initializeTaskModal();
@@ -99,7 +99,6 @@ function initializeProjectTabs() {
  * Initialize task details modal functionality
  */
 function initializeTaskModal() {
-  const taskDetailsModal = document.getElementById("taskDetailsModal");
   const taskDetailsContent = document.getElementById("taskDetailsContent");
 
   // Handle task card clicks
@@ -367,51 +366,98 @@ function initializeTaskModal() {
         </div>
       </div>
     `;
+
+    // Store the current task ID on the modal for event handlers
+    if (taskDetailsModal) {
+      taskDetailsModal.setAttribute('data-task-id', task.id);
+      const modalInstance = bootstrap.Modal.getOrCreateInstance(taskDetailsModal);
+      modalInstance.show();
+    }
   }
 
-    // Add event listener for status change button to update status via API
-    setTimeout(function() {
-      var statusDropdown = document.getElementById("taskStatusDropdown");
-      var applyBtn = document.getElementById("applyStatusChangeBtn");
-      if (statusDropdown && applyBtn) {
-        applyBtn.addEventListener("click", function () {
-          var newStatus = statusDropdown.value;
-          statusDropdown.disabled = true;
-          applyBtn.disabled = true;
-          fetch(`/api/tasks/` + task.id, {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            credentials: "include",
-            body: JSON.stringify({ status: newStatus })
-          })
-          .then(function(response) {
-            if (response.ok) {
-              return response.json();
-            } else {
-              alert("Failed to update status");
-              throw new Error("Failed to update status");
+    // Removed setTimeout and direct event attachment for Change button. Use only event delegation.
+
+    // Use event delegation for the "Change" button to handle dynamic content
+    const taskDetailsModal = document.getElementById("taskDetailsModal");
+    if (taskDetailsModal) {
+      taskDetailsModal.addEventListener("click", async function (event) {
+        if (event.target && event.target.id === "applyStatusChangeBtn") {
+          console.log('[DEBUG] Change button clicked');
+
+          const statusDropdown = document.getElementById("taskStatusDropdown");
+          const priorityDropdown = document.getElementById("taskPriorityDropdown");
+          const applyBtn = event.target;
+
+          // Get the current task ID from the modal's data attribute
+          const taskId = taskDetailsModal.getAttribute('data-task-id');
+          if (statusDropdown && priorityDropdown && applyBtn && taskId) {
+            // Map enum-style values to backend-expected strings
+            const statusMap = {
+              NOT_STARTED: 'Not Started',
+              IN_PROGRESS: 'In Progress',
+              BLOCKED: 'Blocked',
+              COMPLETED: 'Completed',
+              CANCELLED: 'Cancelled'
+            };
+            const priorityMap = {
+              LOW: 'Low',
+              MEDIUM: 'Medium',
+              HIGH: 'High',
+              URGENT: 'Urgent'
+            };
+            const newStatus = statusMap[statusDropdown.value] || statusDropdown.value;
+            const newPriority = priorityMap[priorityDropdown.value] || priorityDropdown.value;
+            statusDropdown.disabled = true;
+            priorityDropdown.disabled = true;
+            applyBtn.disabled = true;
+            applyBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Saving...';
+
+            try {
+              console.log('[DEBUG] Attempting PATCH /api/tasks/' + taskId, { status: newStatus, priority: newPriority });
+              const response = await fetch(`/api/tasks/` + taskId, {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                credentials: "include",
+                body: JSON.stringify({ status: newStatus, priority: newPriority })
+              });
+
+              console.log('[DEBUG] PATCH response status:', response.status);
+              if (!response.ok) {
+                alert("Failed to update status/priority");
+                throw new Error("Failed to update status/priority");
+              }
+
+              const updatedTask = await response.json();
+              console.log('[DEBUG] PATCH response data:', updatedTask);
+
+              const statusBadge = document.getElementById("taskStatusBadge");
+              const priorityBadge = document.getElementById("taskPriorityBadge");
+              if (statusBadge) {
+                statusBadge.className = "badge " + getStatusClass(updatedTask.status) + " mb-1";
+                statusBadge.textContent = updatedTask.status;
+              }
+              if (priorityBadge) {
+                priorityBadge.className = "badge " + getPriorityClass(updatedTask.priority);
+                priorityBadge.textContent = updatedTask.priority || 'Medium';
+              }
+              alert("Status & Priority updated!");
+            } catch (err) {
+              console.error('[DEBUG] Error in PATCH:', err);
+              alert("Error updating status/priority");
+            } finally {
+              statusDropdown.disabled = false;
+              priorityDropdown.disabled = false;
+              applyBtn.disabled = false;
+              applyBtn.innerHTML = 'Change';
             }
-          })
-          .then(function(updatedTask) {
-            var badge = document.getElementById("taskStatusBadge");
-            if (badge) {
-              badge.className = "badge " + getStatusClass(updatedTask.status) + " mb-1";
-              badge.textContent = updatedTask.status.replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
-            }
-            alert("Status updated!");
-          })
-          .catch(function() {
-            alert("Error updating status");
-          })
-          .finally(function() {
-            statusDropdown.disabled = false;
-            applyBtn.disabled = false;
-          });
-        });
-      }
-    }, 0);
+          } else {
+            console.error('[DEBUG] Could not find status/priority dropdowns or change button or taskId');
+          }
+        }
+      });
+    }
 
     // Make loadTaskDetails available globally for potential external calls
     window.loadTaskDetails = loadTaskDetails;
@@ -771,6 +817,69 @@ function initializeProjectActions() {
       }
     });
   }
+}
+
+// Ensure taskDetailsModal is declared only once at the top of the script
+// let taskDetailsModal = document.getElementById("taskDetailsModal");
+
+if (taskDetailsModal) {
+  taskDetailsModal.addEventListener("click", async function (event) {
+    if (event.target && event.target.id === "applyStatusChangeBtn") {
+      console.log('[DEBUG] Change button clicked');
+      const statusDropdown = document.getElementById("taskStatusDropdown");
+      const priorityDropdown = document.getElementById("taskPriorityDropdown");
+      const applyBtn = event.target;
+      // Get the current task ID from the modal's data attribute
+      const taskId = taskDetailsModal.getAttribute('data-task-id');
+      if (statusDropdown && priorityDropdown && applyBtn && taskId) {
+        const newStatus = statusDropdown.value;
+        const newPriority = priorityDropdown.value;
+        statusDropdown.disabled = true;
+        priorityDropdown.disabled = true;
+        applyBtn.disabled = true;
+        applyBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Saving...';
+        try {
+          console.log('[DEBUG] Attempting PATCH /api/tasks/' + taskId, { status: newStatus, priority: newPriority });
+          const response = await fetch(`/api/tasks/` + taskId, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify({ status: newStatus, priority: newPriority })
+          });
+          console.log('[DEBUG] PATCH response status:', response.status);
+          if (!response.ok) {
+            alert("Failed to update status/priority");
+            throw new Error("Failed to update status/priority");
+          }
+          const updatedTask = await response.json();
+          console.log('[DEBUG] PATCH response data:', updatedTask);
+          const statusBadge = document.getElementById("taskStatusBadge");
+          const priorityBadge = document.getElementById("taskPriorityBadge");
+          if (statusBadge) {
+            statusBadge.className = "badge " + getStatusClass(updatedTask.status) + " mb-1";
+            statusBadge.textContent = updatedTask.status.replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+          }
+          if (priorityBadge) {
+            priorityBadge.className = "badge " + getPriorityClass(updatedTask.priority);
+            priorityBadge.textContent = updatedTask.priority ? updatedTask.priority.charAt(0) + updatedTask.priority.slice(1).toLowerCase() : 'Medium';
+          }
+          alert("Status & Priority updated!");
+        } catch (err) {
+          console.error('[DEBUG] Error in PATCH:', err);
+          alert("Error updating status/priority");
+        } finally {
+          statusDropdown.disabled = false;
+          priorityDropdown.disabled = false;
+          applyBtn.disabled = false;
+          applyBtn.innerHTML = 'Change';
+        }
+      } else {
+        console.error('[DEBUG] Could not find status/priority dropdowns or change button or taskId');
+      }
+    }
+  });
 }
 
 /**
