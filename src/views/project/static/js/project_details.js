@@ -150,8 +150,31 @@ function initializeTaskModal() {
    * Display task details in the modal with organized containers
    */
   function displayTaskDetails(task) {
-    const statusClass = getStatusClass(task.status);
-    const priorityClass = getPriorityClass(task.priority);
+    // Map backend string to enum for color and dropdown selection
+    const statusMap = {
+      NOT_STARTED: 'Not Started',
+      IN_PROGRESS: 'In Progress',
+      BLOCKED: 'Blocked',
+      COMPLETED: 'Completed',
+      CANCELLED: 'Cancelled'
+    };
+    const priorityMap = {
+      LOW: 'Low',
+      MEDIUM: 'Medium',
+      HIGH: 'High',
+      URGENT: 'Urgent'
+    };
+    // Reverse map for backend string to enum key
+    function getStatusEnum(str) {
+      return Object.keys(statusMap).find(key => statusMap[key] === str) || str;
+    }
+    function getPriorityEnum(str) {
+      return Object.keys(priorityMap).find(key => priorityMap[key] === str) || str;
+    }
+    const statusEnum = getStatusEnum(task.status);
+    const priorityEnum = getPriorityEnum(task.priority);
+    const statusClass = getStatusClass(statusEnum);
+    const priorityClass = getPriorityClass(priorityEnum);
 
     // Set the clone form action for this task
     setCloneTaskFormAction(task.id);
@@ -172,10 +195,10 @@ function initializeTaskModal() {
               </div>
               <div class="d-flex flex-column align-items-end ms-3">
                 <span class="badge ${statusClass} mb-1" id="taskStatusBadge">
-                  ${task.status ? task.status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Not Started'}
+                  ${statusMap[statusEnum] || 'Not Started'}
                 </span>
                 <span class="badge ${priorityClass}" id="taskPriorityBadge">
-                  ${task.priority ? task.priority.charAt(0) + task.priority.slice(1).toLowerCase() : 'Medium'}
+                  ${priorityMap[priorityEnum] || 'Medium'}
                 </span>
               </div>
             </div>
@@ -202,19 +225,19 @@ function initializeTaskModal() {
               <div class="mb-2 d-flex align-items-center">
                 <label class="form-label fw-bold mb-0 me-2">Status</label>
                 <select class="form-select form-select-sm d-inline-block w-auto align-middle" id="taskStatusDropdown">
-                  <option value="NOT_STARTED" ${!task.status || task.status === 'NOT_STARTED' ? 'selected' : ''}>Not Started</option>
-                  <option value="IN_PROGRESS" ${task.status === 'IN_PROGRESS' ? 'selected' : ''}>In Progress</option>
-                  <option value="BLOCKED" ${task.status === 'BLOCKED' ? 'selected' : ''}>Blocked</option>
-                  <option value="COMPLETED" ${task.status === 'COMPLETED' ? 'selected' : ''}>Completed</option>
+                  <option value="NOT_STARTED" ${statusEnum === 'NOT_STARTED' ? 'selected' : ''}>Not Started</option>
+                  <option value="IN_PROGRESS" ${statusEnum === 'IN_PROGRESS' ? 'selected' : ''}>In Progress</option>
+                  <option value="BLOCKED" ${statusEnum === 'BLOCKED' ? 'selected' : ''}>Blocked</option>
+                  <option value="COMPLETED" ${statusEnum === 'COMPLETED' ? 'selected' : ''}>Completed</option>
                 </select>
               </div>
               <div class="mb-2">
                 <label class="form-label fw-bold">Priority</label>
                 <select class="form-select form-select-sm w-auto d-inline-block" id="taskPriorityDropdown">
-                  <option value="LOW" ${task.priority === 'LOW' ? 'selected' : ''}>Low</option>
-                  <option value="MEDIUM" ${!task.priority || task.priority === 'MEDIUM' ? 'selected' : ''}>Medium</option>
-                  <option value="HIGH" ${task.priority === 'HIGH' ? 'selected' : ''}>High</option>
-                  <option value="URGENT" ${task.priority === 'URGENT' ? 'selected' : ''}>Urgent</option>
+                  <option value="LOW" ${priorityEnum === 'LOW' ? 'selected' : ''}>Low</option>
+                  <option value="MEDIUM" ${priorityEnum === 'MEDIUM' ? 'selected' : ''}>Medium</option>
+                  <option value="HIGH" ${priorityEnum === 'HIGH' ? 'selected' : ''}>High</option>
+                  <option value="URGENT" ${priorityEnum === 'URGENT' ? 'selected' : ''}>Urgent</option>
                 </select>
               </div>
             </div>
@@ -432,16 +455,21 @@ function initializeTaskModal() {
               const updatedTask = await response.json();
               console.log('[DEBUG] PATCH response data:', updatedTask);
 
-              const statusBadge = document.getElementById("taskStatusBadge");
-              const priorityBadge = document.getElementById("taskPriorityBadge");
-              if (statusBadge) {
-                statusBadge.className = "badge " + getStatusClass(updatedTask.status) + " mb-1";
-                statusBadge.textContent = updatedTask.status;
-              }
-              if (priorityBadge) {
-                priorityBadge.className = "badge " + getPriorityClass(updatedTask.priority);
-                priorityBadge.textContent = updatedTask.priority || 'Medium';
-              }
+              // Update all status/priority badges (header and section)
+              const statusBadges = document.querySelectorAll("#taskStatusBadge");
+              const priorityBadges = document.querySelectorAll("#taskPriorityBadge");
+              statusBadges.forEach(badge => {
+                badge.className = "badge " + getStatusClass(
+                  (Object.keys(statusMap).find(key => statusMap[key] === updatedTask.status) || updatedTask.status)
+                ) + " mb-1";
+                badge.textContent = updatedTask.status;
+              });
+              priorityBadges.forEach(badge => {
+                badge.className = "badge " + getPriorityClass(
+                  (Object.keys(priorityMap).find(key => priorityMap[key] === updatedTask.priority) || updatedTask.priority)
+                );
+                badge.textContent = updatedTask.priority || 'Medium';
+              });
               alert("Status & Priority updated!");
             } catch (err) {
               console.error('[DEBUG] Error in PATCH:', err);
