@@ -227,7 +227,7 @@ function initializeTaskModal() {
                 <div class="section-header d-flex align-items-center mb-3">
                   <i class="bi bi-person me-2 text-primary"></i>
                   <h5 class="section-title mb-0">Assigned To</h5>
-                  <button class="btn btn-primary btn-sm ms-auto" id="changeAssigneesBtn">Assign</button>
+                  <button class="btn btn-primary btn-sm ms-auto" id="changeAssigneesBtn" style="display:none;">Assign</button>
                 </div>
                 <div class="section-content">
                   ${
@@ -324,6 +324,28 @@ function initializeTaskModal() {
         </div>
       </div>
     `;
+    // Show Assign button only for project owner (like Delete/Clone Task)
+    setTimeout(function() {
+      const assignBtn = document.getElementById('changeAssigneesBtn');
+      if (assignBtn) {
+        // Debug output
+        console.log('[DEBUG] Assign button logic:', {
+          projectOwnerId: window.projectOwnerId,
+          currentUserId: window.currentUserId,
+          task_owner_id: task.owner_id,
+          creator_id: task.creator_id
+        });
+        // Show if current user is project owner (from API) or task creator
+        if (
+          (task.owner_id && window.currentUserId && task.owner_id == window.currentUserId) ||
+          (task.creator_id && window.currentUserId && task.creator_id == window.currentUserId)
+        ) {
+          assignBtn.style.display = '';
+        } else {
+          assignBtn.style.display = 'none';
+        }
+      }
+    }, 0);
   }
 
   // Make loadTaskDetails available globally for potential external calls

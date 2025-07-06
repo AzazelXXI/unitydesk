@@ -95,6 +95,7 @@ class TaskResponse(BaseModel):
     assignee_ids: Optional[List[int]] = []  # New field for multiple assignees
     assignee_names: Optional[List[str]] = []  # New field for multiple assignee names
     tags: Optional[str]
+    owner_id: Optional[int] = None  # Project owner for permission logic
 
     class Config:
         from_attributes = True
@@ -360,7 +361,13 @@ async def get_task(
         assignee_ids = [assignee.id for assignee in assignees]
         assignee_names = [assignee.name for assignee in assignees]
 
-        # Create response dict with all assignee information
+        # Get project owner_id
+        project_query = select(Project).where(Project.id == task.project_id)
+        project_result = await db.execute(project_query)
+        project = project_result.scalar_one_or_none()
+        owner_id = project.owner_id if project else None
+
+        # Create response dict with all assignee information and owner_id
         task_dict = {
             "id": task.id,
             "name": task.name,
@@ -375,6 +382,7 @@ async def get_task(
             "created_at": task.created_at,
             "updated_at": task.updated_at,
             "project_id": task.project_id,
+            "owner_id": owner_id,
             "assignee_ids": assignee_ids,
             "assignee_names": assignee_names,
             # For backward compatibility
