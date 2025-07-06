@@ -380,25 +380,41 @@ function initializeTaskModal() {
       const changeBtn = document.getElementById("changeAssigneesBtn");
       if (changeBtn) {
         changeBtn.onclick = null;
-        changeBtn.addEventListener("click", function(e) {
+        changeBtn.addEventListener("click", async function(e) {
           e.preventDefault();
+          console.log('[DEBUG] Assign button clicked');
           const assigneeListContent = document.getElementById("assigneeListContent");
-          // Render the old-style dropdown with all project members (window.projectMembers)
-          const members = window.projectMembers || [];
+          // Fetch assignable members from backend API
+          let members = [];
+          try {
+            const projectId = getProjectIdFromUrl();
+            const resp = await fetch(`/api/projects/${projectId}/tasks/${task.id}/unassigned-members`, { credentials: "include" });
+            if (resp.ok) {
+              const data = await resp.json();
+              console.log('[DEBUG] Assignable members from API:', data);
+              members = Array.isArray(data.unassigned_members) ? data.unassigned_members : [];
+            } else {
+              console.warn('[DEBUG] Failed to fetch assignable members, status:', resp.status);
+            }
+          } catch (err) {
+            console.error('[DEBUG] Error fetching assignable members:', err);
+          }
           let dropdownHtml = `<div class='mb-2'><select id='taskAssigneeDropdown' class='form-select form-select-sm'>`;
-          if (members.length === 0) {
+          let hasAssignable = false;
+          if (!Array.isArray(members) || members.length === 0) {
             dropdownHtml += `<option value=''>No members available</option>`;
           } else {
             dropdownHtml += `<option value=''>Select a member...</option>`;
             for (const member of members) {
-              // Only show members not already assigned
-              if (!task.assignee_ids || !task.assignee_ids.includes(member.id)) {
-                dropdownHtml += `<option value='${member.id}'>${member.name}</option>`;
-              }
+              dropdownHtml += `<option value='${member.id}'>${member.name}</option>`;
+              hasAssignable = true;
+            }
+            if (!hasAssignable) {
+              dropdownHtml = `<div class='mb-2'><select id='taskAssigneeDropdown' class='form-select form-select-sm'><option value=''>No members available</option></select></div>`;
             }
           }
           dropdownHtml += `</select></div>`;
-          dropdownHtml += `<button type='button' class='btn btn-primary btn-sm' id='assignMemberBtn'>Assign</button> `;
+          dropdownHtml += `<button type='button' class='btn btn-primary btn-sm' id='assignMemberBtn'>Apply</button> `;
           dropdownHtml += `<button type='button' class='btn btn-secondary btn-sm ms-2' id='cancelAssigneeEdit'>Cancel</button>`;
           assigneeListContent.innerHTML = dropdownHtml;
 
@@ -414,6 +430,7 @@ function initializeTaskModal() {
             }
             this.disabled = true;
             try {
+              console.log('[DEBUG] PATCH /api/tasks/' + task.id, { assignees: [parseInt(selectedId)] });
               const patchResp = await fetch(`/api/tasks/${task.id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },

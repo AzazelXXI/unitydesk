@@ -109,54 +109,9 @@ import logging
 # ... (other imports remain unchanged)
 
 
-# --- Ensure all imports are before router definition ---
-from fastapi import APIRouter, Request, Depends, HTTPException, Form
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text, func
-from typing import List, Optional
-from datetime import datetime
-from src.database import get_db
-from src.middleware.auth_middleware import get_current_user_web
-from src.models.user import User
-from src.models.project import Project, ProjectStatusEnum
-from src.models.task import Task, TaskStatusEnum, TaskPriorityEnum
-from src.models.association_tables import task_assignees
-from src.models.activity import ActivityType
-from src.controllers.project_controller import ProjectController
-from src.services.activity_service import ActivityService
-from src.services.project_status_service import ProjectStatusService
-
-
-# --- IMPORTS ---
-from fastapi import status, APIRouter, Depends, Request, HTTPException, Form
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text, func
-from typing import List, Optional
-from datetime import datetime
-from src.database import get_db
-from src.middleware.auth_middleware import get_current_user_web
-from src.models.user import User
-from src.models.project import Project, ProjectStatusEnum
-from src.models.task import Task, TaskStatusEnum, TaskPriorityEnum
-from src.models.association_tables import task_assignees
-from src.models.activity import ActivityType
-from src.controllers.project_controller import ProjectController
-from src.services.activity_service import ActivityService
-from src.services.project_status_service import ProjectStatusService
-
-# Only define the router ONCE at the top of the file and use it for all routes
-router = APIRouter(
-    tags=["web-projects"], responses={404: {"description": "Page not found"}}
-)
-
-
 # API: Get project members not assigned to a specific task
 @router.get(
-    "/api/projects/{project_id}/tasks/{task_id}/unassigned-members",
+    "/projects/{project_id}/tasks/{task_id}/unassigned-members",
     response_class=JSONResponse,
 )
 async def get_unassigned_project_members(
@@ -271,12 +226,6 @@ from src.models.activity import ActivityType
 from src.controllers.project_controller import ProjectController
 from src.services.activity_service import ActivityService
 from src.services.project_status_service import ProjectStatusService
-
-
-# Only define the router ONCE at the top of the file and use it for all routes
-router = APIRouter(
-    tags=["web-projects"], responses={404: {"description": "Page not found"}}
-)
 
 
 @router.put("/projects/{project_id}/members/{user_id}")

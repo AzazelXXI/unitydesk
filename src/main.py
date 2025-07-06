@@ -101,8 +101,15 @@ for router in view_web_routers:
 # Task routers are already included in view_web_routers, no need to include them again
 
 # Import and include the project router
+
+# Include the project router with /api prefix for all API endpoints
+
+# Import the project router
 from src.views.project.project_routes import router as project_web_router
 
+# Include for API endpoints
+app.include_router(project_web_router, prefix="/api")
+# Also include for web (HTML) endpoints
 app.include_router(project_web_router)
 
 # Note: Dashboard router temporarily disabled to resolve /projects route conflict
