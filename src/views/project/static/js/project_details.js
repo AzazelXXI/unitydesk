@@ -179,7 +179,17 @@ function initializeTaskModal() {
     // Set the clone form action for this task
     setCloneTaskFormAction(task.id);
 
-
+    // Store users for multi-select (assume window.allUsers is set server-side)
+    const allUsers = window.allUsers || [];
+    // Helper to render assignee avatars
+    function renderAssignees(names) {
+      if (!names || names.length === 0) {
+        return `<div class="d-flex align-items-center"><div class="user-avatar me-2">UN</div><span>Unassigned</span></div>`;
+      }
+      return names.map(function(name) {
+        return `<div class="d-flex align-items-center mb-2"><div class="user-avatar me-2">${name.split(" ").map(function(n){return n[0];}).join("").toUpperCase()}</div><span>${name}</span></div>`;
+      }).join("");
+    }
 
     // Clear previous content to avoid ReferenceError
     taskDetailsContent.innerHTML = "";
@@ -286,40 +296,14 @@ function initializeTaskModal() {
 
             <!-- Assigned To -->
             <div class="col-md-6">
-              <div class="task-section">
+              <div class="task-section" id="assigneeSection">
                 <div class="section-header d-flex align-items-center mb-3">
                   <i class="bi bi-person me-2 text-primary"></i>
                   <h5 class="section-title mb-0">Assigned To</h5>
-                  <button class="btn btn-sm btn-link text-primary ms-auto p-0">
-                    <small>Change</small>
-                  </button>
+                  <button class="btn btn-primary btn-sm ms-auto" id="changeAssigneesBtn">Assign</button>
                 </div>
-                <div class="section-content">
-                  ${
-                    task.assignee_names && task.assignee_names.length > 0
-                      ? task.assignee_names
-                          .map(
-                            (name, index) => `
-                          <div class="d-flex align-items-center mb-2">
-                            <div class="user-avatar me-2">
-                              ${name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                                .toUpperCase()}
-                            </div>
-                            <span>${name}</span>
-                          </div>
-                        `
-                          )
-                          .join("")
-                      : `
-                        <div class="d-flex align-items-center">
-                          <div class="user-avatar me-2">UN</div>
-                          <span>Unassigned</span>
-                        </div>
-                      `
-                  }
+                <div class="section-content" id="assigneeListContent">
+                  ${renderAssignees(task.assignee_names)}
                 </div>
               </div>
             </div>
@@ -390,6 +374,67 @@ function initializeTaskModal() {
       </div>
     `;
 
+    // Attach event handler for Change button (multi-select assignees) after modal HTML is set
+    // This ensures the button is interactive and triggers the dropdown logic handled by task_details_modal.js
+    setTimeout(function() {
+      const changeBtn = document.getElementById("changeAssigneesBtn");
+      if (changeBtn) {
+        changeBtn.onclick = null;
+        changeBtn.addEventListener("click", function(e) {
+          e.preventDefault();
+          const assigneeListContent = document.getElementById("assigneeListContent");
+          // Render the old-style dropdown with all project members (window.projectMembers)
+          const members = window.projectMembers || [];
+          let dropdownHtml = `<div class='mb-2'><select id='taskAssigneeDropdown' class='form-select form-select-sm'>`;
+          if (members.length === 0) {
+            dropdownHtml += `<option value=''>No members available</option>`;
+          } else {
+            dropdownHtml += `<option value=''>Select a member...</option>`;
+            for (const member of members) {
+              // Only show members not already assigned
+              if (!task.assignee_ids || !task.assignee_ids.includes(member.id)) {
+                dropdownHtml += `<option value='${member.id}'>${member.name}</option>`;
+              }
+            }
+          }
+          dropdownHtml += `</select></div>`;
+          dropdownHtml += `<button type='button' class='btn btn-primary btn-sm' id='assignMemberBtn'>Assign</button> `;
+          dropdownHtml += `<button type='button' class='btn btn-secondary btn-sm ms-2' id='cancelAssigneeEdit'>Cancel</button>`;
+          assigneeListContent.innerHTML = dropdownHtml;
+
+          document.getElementById("cancelAssigneeEdit").onclick = function() {
+            assigneeListContent.innerHTML = renderAssignees(task.assignee_names);
+          };
+          document.getElementById("assignMemberBtn").onclick = async function() {
+            const select = document.getElementById("taskAssigneeDropdown");
+            const selectedId = select.value;
+            if (!selectedId) {
+              alert("Please select a member to assign.");
+              return;
+            }
+            this.disabled = true;
+            try {
+              const patchResp = await fetch(`/api/tasks/${task.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ assignees: [parseInt(selectedId)] })
+              });
+              if (!patchResp.ok) throw new Error("Failed to assign member");
+              const updated = await patchResp.json();
+              task.assignee_names = updated.assignee_names || [];
+              task.assignee_ids = updated.assignee_ids || [];
+              assigneeListContent.innerHTML = renderAssignees(task.assignee_names);
+            } catch (err) {
+              alert("Failed to assign member.");
+            } finally {
+              this.disabled = false;
+            }
+          };
+        });
+      }
+    }, 0);
+
     // Store the current task ID on the modal for event handlers
     if (taskDetailsModal) {
       taskDetailsModal.setAttribute('data-task-id', task.id);
@@ -398,94 +443,7 @@ function initializeTaskModal() {
     }
   }
 
-    // Removed setTimeout and direct event attachment for Change button. Use only event delegation.
-
-    // Use event delegation for the "Change" button to handle dynamic content
-    const taskDetailsModal = document.getElementById("taskDetailsModal");
-    if (taskDetailsModal) {
-      taskDetailsModal.addEventListener("click", async function (event) {
-        if (event.target && event.target.id === "applyStatusChangeBtn") {
-          console.log('[DEBUG] Change button clicked');
-
-          const statusDropdown = document.getElementById("taskStatusDropdown");
-          const priorityDropdown = document.getElementById("taskPriorityDropdown");
-          const applyBtn = event.target;
-
-          // Get the current task ID from the modal's data attribute
-          const taskId = taskDetailsModal.getAttribute('data-task-id');
-          if (statusDropdown && priorityDropdown && applyBtn && taskId) {
-            // Map enum-style values to backend-expected strings
-            const statusMap = {
-              NOT_STARTED: 'Not Started',
-              IN_PROGRESS: 'In Progress',
-              BLOCKED: 'Blocked',
-              COMPLETED: 'Completed',
-              CANCELLED: 'Cancelled'
-            };
-            const priorityMap = {
-              LOW: 'Low',
-              MEDIUM: 'Medium',
-              HIGH: 'High',
-              URGENT: 'Urgent'
-            };
-            const newStatus = statusMap[statusDropdown.value] || statusDropdown.value;
-            const newPriority = priorityMap[priorityDropdown.value] || priorityDropdown.value;
-            statusDropdown.disabled = true;
-            priorityDropdown.disabled = true;
-            applyBtn.disabled = true;
-            applyBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Saving...';
-
-            try {
-              console.log('[DEBUG] Attempting PATCH /api/tasks/' + taskId, { status: newStatus, priority: newPriority });
-              const response = await fetch(`/api/tasks/` + taskId, {
-                method: "PATCH",
-                headers: {
-                  "Content-Type": "application/json"
-                },
-                credentials: "include",
-                body: JSON.stringify({ status: newStatus, priority: newPriority })
-              });
-
-              console.log('[DEBUG] PATCH response status:', response.status);
-              if (!response.ok) {
-                alert("Failed to update status/priority");
-                throw new Error("Failed to update status/priority");
-              }
-
-              const updatedTask = await response.json();
-              console.log('[DEBUG] PATCH response data:', updatedTask);
-
-              // Update all status/priority badges (header and section)
-              const statusBadges = document.querySelectorAll("#taskStatusBadge");
-              const priorityBadges = document.querySelectorAll("#taskPriorityBadge");
-              statusBadges.forEach(badge => {
-                badge.className = "badge " + getStatusClass(
-                  (Object.keys(statusMap).find(key => statusMap[key] === updatedTask.status) || updatedTask.status)
-                ) + " mb-1";
-                badge.textContent = updatedTask.status;
-              });
-              priorityBadges.forEach(badge => {
-                badge.className = "badge " + getPriorityClass(
-                  (Object.keys(priorityMap).find(key => priorityMap[key] === updatedTask.priority) || updatedTask.priority)
-                );
-                badge.textContent = updatedTask.priority || 'Medium';
-              });
-              alert("Status & Priority updated!");
-            } catch (err) {
-              console.error('[DEBUG] Error in PATCH:', err);
-              alert("Error updating status/priority");
-            } finally {
-              statusDropdown.disabled = false;
-              priorityDropdown.disabled = false;
-              applyBtn.disabled = false;
-              applyBtn.innerHTML = 'Change';
-            }
-          } else {
-            console.error('[DEBUG] Could not find status/priority dropdowns or change button or taskId');
-          }
-        }
-      });
-    }
+    // Removed duplicate event delegation and redeclaration of taskDetailsModal. Event delegation is handled once at the bottom of the file.
 
     // Make loadTaskDetails available globally for potential external calls
     window.loadTaskDetails = loadTaskDetails;

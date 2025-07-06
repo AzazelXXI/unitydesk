@@ -100,8 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function showInlineEditFields(task) {
   // Show the inline edit fields and populate dropdowns
   const fieldsDiv = document.getElementById('taskInlineEditFields');
-  if (!fieldsDiv) return;
-  fieldsDiv.style.display = '';
+  if (fieldsDiv) fieldsDiv.style.display = '';
 
   // Populate status dropdown
   const statusDropdown = document.getElementById('taskStatusDropdown');
@@ -126,6 +125,56 @@ function showInlineEditFields(task) {
     priorityDropdown.addEventListener('change', function() {
       updateTaskField(task.id, 'priority', priorityDropdown.value);
     });
+  }
+
+  // Populate assignee dropdown using the new API
+  const assigneeDropdown = document.getElementById('taskAssigneeDropdown');
+  const assigneeContainer = document.getElementById('assigneeDropdownContainer');
+  if (assigneeDropdown && assigneeContainer && task.project_id && task.id) {
+    // Debug logging for API call
+    console.log('[DEBUG] showInlineEditFields: task object:', task);
+    console.log('[DEBUG] showInlineEditFields: project_id:', task.project_id, 'task_id:', task.id);
+    const apiUrl = `/api/projects/${task.project_id}/tasks/${task.id}/unassigned-members`;
+    console.log('[DEBUG] showInlineEditFields: Fetching unassigned members from:', apiUrl);
+    // Clear previous options
+    assigneeDropdown.innerHTML = '<option value="">-- Select member to assign --</option>';
+    // Fetch unassigned members
+    fetch(apiUrl)
+      .then(res => res.json())
+      .then(data => {
+        console.log('[DEBUG] showInlineEditFields: API response:', data);
+        if (data.success && Array.isArray(data.unassigned_members)) {
+          if (data.unassigned_members.length === 0) {
+            assigneeDropdown.innerHTML = '<option value="">No available members</option>';
+            assigneeDropdown.disabled = true;
+          } else {
+            data.unassigned_members.forEach(member => {
+              const option = document.createElement('option');
+              option.value = member.id;
+              option.textContent = member.name + (member.email ? ` (${member.email})` : '');
+              assigneeDropdown.appendChild(option);
+            });
+            assigneeDropdown.disabled = false;
+          }
+        } else {
+          assigneeDropdown.innerHTML = '<option value="">Error loading members</option>';
+          assigneeDropdown.disabled = true;
+        }
+      })
+      .catch(err => {
+        console.error('[DEBUG] showInlineEditFields: Error fetching unassigned members:', err);
+        assigneeDropdown.innerHTML = '<option value="">Error loading members</option>';
+        assigneeDropdown.disabled = true;
+      });
+    // Optionally: handle assignment on change
+    assigneeDropdown.onchange = function() {
+      const userId = assigneeDropdown.value;
+      if (!userId) return;
+      // Call your assign API here (implement as needed)
+      // Example: POST /api/tasks/{taskId}/assign { user_id: userId }
+      // For now, just show a message
+      alert('Assign user ' + userId + ' to task ' + task.id + ' (implement API call)');
+    };
   }
 }
 

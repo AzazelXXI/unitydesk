@@ -6,7 +6,12 @@
   rel="stylesheet"
   href="{{ url_for('project_static', path='css/project_details.css') }}?v=999999"
 />
-{% endblock %} {% block content %}
+{% endblock %}
+<!-- Inject project members for JS dropdown functionality -->
+<script>
+  window.projectMembers = {{ project_members | tojson }};
+</script>
+{% block content %}
 <div class="container mt-4">
   <!-- Project Header -->
   <div class="project-header">

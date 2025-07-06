@@ -1,3 +1,257 @@
+# --- IMPORTS ---
+import logging
+from fastapi import APIRouter, Request, Depends, HTTPException, Form, status
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, text, func
+from typing import List, Optional
+from datetime import datetime
+from src.database import get_db
+from src.middleware.auth_middleware import get_current_user_web
+from src.models.user import User
+from src.models.project import Project, ProjectStatusEnum
+from src.models.task import Task, TaskStatusEnum, TaskPriorityEnum
+from src.models.association_tables import task_assignees
+from src.models.activity import ActivityType
+from src.controllers.project_controller import ProjectController
+from src.services.activity_service import ActivityService
+from src.services.project_status_service import ProjectStatusService
+
+# Only define the router ONCE at the top of the file and use it for all routes
+router = APIRouter(
+    tags=["web-projects"], responses={404: {"description": "Page not found"}}
+)
+
+
+# --- API: Get Task Details as JSON ---
+@router.get("/api/tasks/{task_id}", response_class=JSONResponse)
+async def api_get_task_details(
+    task_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+):
+    """Return task details as JSON for AJAX/JS usage."""
+    try:
+        # Fetch the task and its project
+        task_query = text(
+            """
+            SELECT t.id, t.name, t.description, t.status, t.priority, t.start_date, t.due_date, t.completed_date, t.created_at, t.project_id
+            FROM tasks t
+            WHERE t.id = :task_id
+            """
+        )
+        result = await db.execute(task_query, {"task_id": task_id})
+        row = result.fetchone()
+        if not row:
+            return JSONResponse(
+                status_code=404, content={"success": False, "message": "Task not found"}
+            )
+
+        # Get assignees
+        assignees_query = text(
+            """
+            SELECT u.id, u.name, u.email
+            FROM task_assignees ta
+            JOIN users u ON ta.user_id = u.id
+            WHERE ta.task_id = :task_id
+        """
+        )
+        assignees_result = await db.execute(assignees_query, {"task_id": task_id})
+        assignees = assignees_result.fetchall()
+        assignee_ids = [a.id for a in assignees]
+        assignee_names = [a.name for a in assignees]
+
+        # Compose status/priority options (for dropdowns)
+        status_options = [
+            {"value": "NOT_STARTED", "label": "Not Started"},
+            {"value": "IN_PROGRESS", "label": "In Progress"},
+            {"value": "BLOCKED", "label": "Blocked"},
+            {"value": "COMPLETED", "label": "Completed"},
+        ]
+        priority_options = [
+            {"value": "LOW", "label": "Low"},
+            {"value": "MEDIUM", "label": "Medium"},
+            {"value": "HIGH", "label": "High"},
+            {"value": "URGENT", "label": "Urgent"},
+        ]
+
+        task = {
+            "id": row.id,
+            "name": row.name,
+            "description": row.description,
+            "status": row.status,
+            "priority": row.priority,
+            "start_date": row.start_date.isoformat() if row.start_date else None,
+            "due_date": row.due_date.isoformat() if row.due_date else None,
+            "completed_date": (
+                row.completed_date.isoformat() if row.completed_date else None
+            ),
+            "created_at": row.created_at.isoformat() if row.created_at else None,
+            "project_id": row.project_id,
+            "assignee_ids": assignee_ids,
+            "assignee_names": assignee_names,
+            "status_options": status_options,
+            "priority_options": priority_options,
+        }
+
+        return JSONResponse(status_code=200, content={"success": True, "task": task})
+    except Exception as e:
+        logging.error(f"Error fetching task details: {str(e)}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": "Internal server error"},
+        )
+
+
+import logging
+
+# ... (other imports remain unchanged)
+
+
+# --- Ensure all imports are before router definition ---
+from fastapi import APIRouter, Request, Depends, HTTPException, Form
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, text, func
+from typing import List, Optional
+from datetime import datetime
+from src.database import get_db
+from src.middleware.auth_middleware import get_current_user_web
+from src.models.user import User
+from src.models.project import Project, ProjectStatusEnum
+from src.models.task import Task, TaskStatusEnum, TaskPriorityEnum
+from src.models.association_tables import task_assignees
+from src.models.activity import ActivityType
+from src.controllers.project_controller import ProjectController
+from src.services.activity_service import ActivityService
+from src.services.project_status_service import ProjectStatusService
+
+
+# --- IMPORTS ---
+from fastapi import status, APIRouter, Depends, Request, HTTPException, Form
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, text, func
+from typing import List, Optional
+from datetime import datetime
+from src.database import get_db
+from src.middleware.auth_middleware import get_current_user_web
+from src.models.user import User
+from src.models.project import Project, ProjectStatusEnum
+from src.models.task import Task, TaskStatusEnum, TaskPriorityEnum
+from src.models.association_tables import task_assignees
+from src.models.activity import ActivityType
+from src.controllers.project_controller import ProjectController
+from src.services.activity_service import ActivityService
+from src.services.project_status_service import ProjectStatusService
+
+# Only define the router ONCE at the top of the file and use it for all routes
+router = APIRouter(
+    tags=["web-projects"], responses={404: {"description": "Page not found"}}
+)
+
+
+# API: Get project members not assigned to a specific task
+@router.get(
+    "/api/projects/{project_id}/tasks/{task_id}/unassigned-members",
+    response_class=JSONResponse,
+)
+async def get_unassigned_project_members(
+    project_id: int,
+    task_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_web),
+):
+    """Return all project members who are NOT assigned to the given task."""
+    try:
+        # 1. Check project exists and user has access (owner or member)
+        project_query = text("SELECT id, owner_id FROM projects WHERE id = :project_id")
+        project_result = await db.execute(project_query, {"project_id": project_id})
+        project_row = project_result.fetchone()
+        if not project_row:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "Project not found"},
+            )
+
+        # Check access: owner or member
+        access_query = text(
+            """
+            SELECT 1 FROM project_members WHERE project_id = :project_id AND user_id = :user_id
+        """
+        )
+        is_owner = project_row.owner_id == current_user.id
+        access_result = await db.execute(
+            access_query, {"project_id": project_id, "user_id": current_user.id}
+        )
+        is_member = access_result.fetchone() is not None
+        if not (is_owner or is_member):
+            return JSONResponse(
+                status_code=403,
+                content={"success": False, "message": "Insufficient permissions"},
+            )
+
+        # 2. Get all project members
+        members_query = text(
+            """
+            SELECT u.id, u.name, u.email
+            FROM users u
+            JOIN project_members pm ON u.id = pm.user_id
+            WHERE pm.project_id = :project_id
+        """
+        )
+        members_result = await db.execute(members_query, {"project_id": project_id})
+        all_members = members_result.fetchall()
+
+        # 3. Get all user_ids assigned to this task
+        assignees_query = text(
+            """
+            SELECT user_id FROM task_assignees WHERE task_id = :task_id
+        """
+        )
+        assignees_result = await db.execute(assignees_query, {"task_id": task_id})
+        assigned_user_ids = set(row.user_id for row in assignees_result.fetchall())
+
+        # Debug output
+        print(
+            f"[DEBUG][unassigned-members] All project members for project_id={project_id}: {[{'id': row.id, 'name': row.name, 'email': row.email} for row in all_members]}"
+        )
+        print(
+            f"[DEBUG][unassigned-members] Assigned user_ids for task_id={task_id}: {list(assigned_user_ids)}"
+        )
+
+        # 4. Filter members not assigned to this task
+        unassigned_members = [
+            {"id": row.id, "name": row.name, "email": row.email}
+            for row in all_members
+            if row.id not in assigned_user_ids
+        ]
+
+        print(
+            f"[DEBUG][unassigned-members] Unassigned members for task_id={task_id}: {unassigned_members}"
+        )
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "unassigned_members": unassigned_members,
+                "count": len(unassigned_members),
+            },
+        )
+    except Exception as e:
+        logger.error(
+            f"Error fetching unassigned project members: {str(e)}", exc_info=True
+        )
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": "Internal server error"},
+        )
+
+
 from src.database import get_db
 from src.middleware.auth_middleware import get_current_user_web
 from fastapi import status, APIRouter, Depends, Request, HTTPException, Form
@@ -886,6 +1140,7 @@ async def project_details(
             }
             files.append(file_data)
 
+        print(f"[DEBUG] members for project_members: {members}")
         return templates.TemplateResponse(
             "project/templates/project_details.html",
             {
@@ -896,6 +1151,7 @@ async def project_details(
                 "users": users,
                 "activities": activities,
                 "members": members,
+                "project_members": members,  # <-- Fix: provide project_members for JS
                 "files": files,
                 "page_title": f"Project: {project['name']}",
                 # Task filter parameters
