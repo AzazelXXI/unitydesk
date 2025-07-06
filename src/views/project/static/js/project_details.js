@@ -430,18 +430,19 @@ function initializeTaskModal() {
             }
             this.disabled = true;
             try {
-              console.log('[DEBUG] PATCH /api/tasks/' + task.id, { assignees: [parseInt(selectedId)] });
+              // Get current assignees and add the new one to the list
+              const currentAssignees = task.assignee_ids || [];
+              const newAssignees = [...currentAssignees, parseInt(selectedId)];
+              console.log('[DEBUG] PATCH /api/tasks/' + task.id, { assignees: newAssignees });
               const patchResp = await fetch(`/api/tasks/${task.id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify({ assignees: [parseInt(selectedId)] })
+                body: JSON.stringify({ assignees: newAssignees })
               });
               if (!patchResp.ok) throw new Error("Failed to assign member");
-              const updated = await patchResp.json();
-              task.assignee_names = updated.assignee_names || [];
-              task.assignee_ids = updated.assignee_ids || [];
-              assigneeListContent.innerHTML = renderAssignees(task.assignee_names);
+              // Instead of just updating the assignee section, reload the full task details to ensure all assignees are shown
+              await loadTaskDetails(task.id);
             } catch (err) {
               alert("Failed to assign member.");
             } finally {

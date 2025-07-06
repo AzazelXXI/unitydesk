@@ -73,6 +73,7 @@ class TaskUpdate(BaseModel):
     start_date: Optional[datetime] = None
     due_date: Optional[datetime] = None
     tags: Optional[str] = None
+    assignees: Optional[List[int]] = None  # Allow multi-assignee PATCH
 
 
 class TaskResponse(BaseModel):
@@ -188,6 +189,14 @@ async def update_task(
         # Update only provided fields
         update_data = task_data.model_dump(exclude_unset=True)
 
+        # --- Multi-assignee PATCH support ---
+        assignees_field = None
+        # Accept both 'assignees' and 'assignee_ids' for flexibility
+        if "assignees" in update_data:
+            assignees_field = update_data.pop("assignees")
+        elif "assignee_ids" in update_data:
+            assignees_field = update_data.pop("assignee_ids")
+
         # Handle status change logic
         if "status" in update_data:
             new_status = update_data["status"]
@@ -206,11 +215,27 @@ async def update_task(
             ):
                 update_data["completed_date"] = None
 
-        # Update the task
+        # Update the task fields
         if update_data:
             await db.execute(
                 update(Task).where(Task.id == task_id).values(**update_data)
             )
+            await db.commit()
+
+        # --- Multi-assignee DB update logic ---
+        if assignees_field is not None:
+            from src.models.association_tables import task_assignees
+
+            # Remove all current assignees for this task
+            await db.execute(
+                task_assignees.delete().where(task_assignees.c.task_id == task_id)
+            )
+            # Add new assignees if any
+            if assignees_field:
+                values = [
+                    {"task_id": task_id, "user_id": int(uid)} for uid in assignees_field
+                ]
+                await db.execute(task_assignees.insert().values(values))
             await db.commit()
 
         # Refresh the task object
@@ -281,6 +306,7 @@ async def update_task(
             "project_id": task.project_id,
             "assignee_ids": assignee_ids,
             "assignee_names": assignee_names,
+            # For backward compatibility
             "assignee_id": assignee_ids[0] if assignee_ids else None,
             "assignee_name": assignee_names[0] if assignee_names else None,
             "tags": task.tags,
