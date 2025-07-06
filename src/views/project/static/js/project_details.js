@@ -191,6 +191,9 @@ function initializeTaskModal() {
       }).join("");
     }
 
+    // Determine if the current user is the creator
+    // window.currentUserId should be set server-side in the template
+    const isCreator = window.currentUserId && task.creator_id && window.currentUserId === task.creator_id;
     // Clear previous content to avoid ReferenceError
     taskDetailsContent.innerHTML = "";
     // Now set the modal content
@@ -300,7 +303,7 @@ function initializeTaskModal() {
                 <div class="section-header d-flex align-items-center mb-3">
                   <i class="bi bi-person me-2 text-primary"></i>
                   <h5 class="section-title mb-0">Assigned To</h5>
-                  <button class="btn btn-primary btn-sm ms-auto" id="changeAssigneesBtn">Assign</button>
+                  ${isCreator ? `<button class="btn btn-primary btn-sm ms-auto" id="changeAssigneesBtn">Assign</button>` : ""}
                 </div>
                 <div class="section-content" id="assigneeListContent">
                   ${renderAssignees(task.assignee_names)}
@@ -373,6 +376,7 @@ function initializeTaskModal() {
         </div>
       </div>
     `;
+    // End of modal content
 
     // Attach event handler for Change button (multi-select assignees) after modal HTML is set
     // This ensures the button is interactive and triggers the dropdown logic handled by task_details_modal.js
@@ -459,12 +463,10 @@ function initializeTaskModal() {
       const modalInstance = bootstrap.Modal.getOrCreateInstance(taskDetailsModal);
       modalInstance.show();
     }
-  }
+}
 
-    // Removed duplicate event delegation and redeclaration of taskDetailsModal. Event delegation is handled once at the bottom of the file.
-
-    // Make loadTaskDetails available globally for potential external calls
-    window.loadTaskDetails = loadTaskDetails;
+  // Make loadTaskDetails available globally for potential external calls
+  window.loadTaskDetails = loadTaskDetails;
 }
 
 /**
@@ -1018,4 +1020,4 @@ window.deleteTask = async function (taskId) {
       alert("An error occurred while deleting the task");
     }
   }
-};
+}
