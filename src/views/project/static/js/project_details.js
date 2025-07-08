@@ -259,23 +259,31 @@ function initializeTaskModal() {
                 <div class="section-header d-flex align-items-center mb-3">
                   <i class="bi bi-person me-2 text-primary"></i>
                   <h5 class="section-title mb-0">Assigned To</h5>
-                  <button class="btn btn-primary btn-sm ms-auto" id="changeAssigneesBtn" style="display:none;">Assign</button>
+                  <button class="btn btn-primary btn-sm ms-auto" id="changeAssigneesBtn">Assign</button>
                 </div>
-                <div class="section-content">
+                <div class="section-content" id="assignedMembersContent">
                   ${
                     task.assignee_names && task.assignee_names.length > 0
                       ? task.assignee_names
                           .map(
                             (name, index) => `
-                          <div class="d-flex align-items-center mb-2">
-                            <div class="user-avatar me-2">
-                              ${name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                                .toUpperCase()}
+                          <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center">
+                              <div class="user-avatar me-2">
+                                ${name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .toUpperCase()}
+                              </div>
+                              <span>${name}</span>
                             </div>
-                            <span>${name}</span>
+                            <button type="button" class="btn btn-outline-danger btn-sm remove-assignee-btn" 
+                                    data-user-id="${task.assignee_ids[index]}" 
+                                    data-user-name="${name}" 
+                                    title="Remove ${name} from this task">
+                              <i class="bi bi-x"></i>
+                            </button>
                           </div>
                         `
                           )
@@ -358,6 +366,129 @@ function initializeTaskModal() {
     `;
     // Show Assign button only for project owner (like Delete/Clone Task)
     setTimeout(function() {
+      // Add event handlers for remove assignee buttons
+      document.querySelectorAll('.remove-assignee-btn').forEach(function(btn) {
+        btn.addEventListener('click', async function(e) {
+          e.preventDefault();
+          
+          const userId = this.getAttribute('data-user-id');
+          const userName = this.getAttribute('data-user-name');
+          
+          if (!confirm(`Are you sure you want to remove ${userName} from this task?`)) {
+            return;
+          }
+          
+          // Disable button during request
+          this.disabled = true;
+          const originalText = this.innerHTML;
+          this.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+          
+          try {
+            // Remove user from assignees list
+            const currentAssignees = task.assignee_ids || [];
+            const newAssignees = currentAssignees.filter(id => id != userId);
+            
+            console.log('[DEBUG] Removing user from task:', {
+              taskId: task.id,
+              userId: userId,
+              userName: userName,
+              currentAssignees: currentAssignees,
+              newAssignees: newAssignees
+            });
+            
+            const response = await fetch(`/api/tasks/${task.id}`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+              body: JSON.stringify({ assignees: newAssignees })
+            });
+            
+            if (!response.ok) {
+              throw new Error('Failed to remove assignee');
+            }
+            
+            // Update task object
+            task.assignee_ids = newAssignees;
+            task.assignee_names = task.assignee_names.filter((name, index) => 
+              task.assignee_ids.indexOf(parseInt(userId)) === -1 || index !== task.assignee_names.indexOf(userName)
+            );
+            
+            // Update the assigned members display
+            const assignedMembersContent = document.getElementById('assignedMembersContent');
+            if (assignedMembersContent) {
+              assignedMembersContent.innerHTML = `
+                ${
+                  task.assignee_names && task.assignee_names.length > 0
+                    ? task.assignee_names
+                        .map(
+                          (name, index) => `
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                          <div class="d-flex align-items-center">
+                            <div class="user-avatar me-2">
+                              ${name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .toUpperCase()}
+                            </div>
+                            <span>${name}</span>
+                          </div>
+                          <button type="button" class="btn btn-outline-danger btn-sm remove-assignee-btn" 
+                                  data-user-id="${task.assignee_ids[index]}" 
+                                  data-user-name="${name}" 
+                                  title="Remove ${name} from this task">
+                            <i class="bi bi-x"></i>
+                          </button>
+                        </div>
+                      `
+                        )
+                        .join("")
+                    : `
+                      <div class="d-flex align-items-center">
+                        <div class="user-avatar me-2">UN</div>
+                        <span>Unassigned</span>
+                      </div>
+                    `
+                }
+              `;
+              
+              // Re-add event handlers for the new remove buttons
+              assignedMembersContent.querySelectorAll('.remove-assignee-btn').forEach(function(newBtn) {
+                newBtn.addEventListener('click', arguments.callee);
+              });
+            }
+            
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.className = 'alert alert-success alert-dismissible fade show mt-2';
+            successMsg.innerHTML = `
+              <strong>Success!</strong> ${userName} has been removed from this task.
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            // Insert success message after the assigned members content
+            assignedMembersContent.parentNode.insertBefore(successMsg, assignedMembersContent.nextSibling);
+            
+            // Auto-dismiss after 3 seconds
+            setTimeout(() => {
+              if (successMsg.parentNode) {
+                successMsg.remove();
+              }
+            }, 3000);
+            
+          } catch (error) {
+            console.error('Error removing assignee:', error);
+            alert('Failed to remove assignee. Please try again.');
+          } finally {
+            // Re-enable button
+            this.disabled = false;
+            this.innerHTML = originalText;
+          }
+        });
+      });
+      
       const assignBtn = document.getElementById('changeAssigneesBtn');
       if (assignBtn) {
         // Debug output
@@ -376,6 +507,438 @@ function initializeTaskModal() {
         } else {
           assignBtn.style.display = 'none';
         }
+        
+        // Add event handler for Assign button
+        assignBtn.addEventListener('click', async function(e) {
+          e.preventDefault();
+          console.log('[DEBUG] Assign button clicked');
+          
+          const assigneeSection = document.querySelector('#changeAssigneesBtn').closest('.task-section');
+          const assigneeContent = assigneeSection.querySelector('.section-content');
+          
+          // Show loading state
+          assigneeContent.innerHTML = `
+            <div class="text-center py-2">
+              <div class="spinner-border spinner-border-sm" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <span class="ms-2">Loading available members...</span>
+            </div>
+          `;
+          
+          try {
+            // Fetch available members from API
+            const projectId = getProjectIdFromUrl();
+            const response = await fetch(`/projects/${projectId}/tasks/${task.id}/unassigned-members`, {
+              credentials: 'include'
+            });
+            
+            if (!response.ok) {
+              throw new Error('Failed to fetch available members');
+            }
+            
+            const data = await response.json();
+            const availableMembers = data.unassigned_members || [];
+            
+            console.log('[DEBUG] Available members:', availableMembers);
+            
+            // Create assignment interface
+            let assignmentHTML = '';
+            
+            if (availableMembers.length === 0) {
+              assignmentHTML = `
+                <div class="alert alert-info">
+                  <i class="bi bi-info-circle me-2"></i>
+                  There are no available members to assign to this task.
+                </div>
+                <div class="d-flex justify-content-end mt-3">
+                  <button type="button" class="btn btn-secondary btn-sm" id="cancelAssignBtn">Cancel</button>
+                </div>
+              `;
+            } else {
+              assignmentHTML = `
+                <div class="mb-3">
+                  <label class="form-label fw-bold">Select Member *</label>
+                  <select class="form-select" id="memberToAssignSelect">
+                    <option value="">Choose a member...</option>
+                    ${availableMembers.map(member => 
+                      `<option value="${member.id}">${member.name} (${member.email})</option>`
+                    ).join('')}
+                  </select>
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                  <button type="button" class="btn btn-secondary btn-sm" id="cancelAssignBtn">Cancel</button>
+                  <button type="button" class="btn btn-primary btn-sm" id="applyAssignBtn">Apply</button>
+                </div>
+              `;
+            }
+            
+            assigneeContent.innerHTML = assignmentHTML;
+            
+            // Add event handlers
+            document.getElementById('cancelAssignBtn').addEventListener('click', function() {
+              // Restore original assignee display
+              const assignedMembersContent = document.getElementById('assignedMembersContent');
+              assignedMembersContent.innerHTML = `
+                ${
+                  task.assignee_names && task.assignee_names.length > 0
+                    ? task.assignee_names
+                        .map(
+                          (name, index) => `
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                          <div class="d-flex align-items-center">
+                            <div class="user-avatar me-2">
+                              ${name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .toUpperCase()}
+                            </div>
+                            <span>${name}</span>
+                          </div>
+                          <button type="button" class="btn btn-outline-danger btn-sm remove-assignee-btn" 
+                                  data-user-id="${task.assignee_ids[index]}" 
+                                  data-user-name="${name}" 
+                                  title="Remove ${name} from this task">
+                            <i class="bi bi-x"></i>
+                          </button>
+                        </div>
+                      `
+                        )
+                        .join("")
+                    : `
+                      <div class="d-flex align-items-center">
+                        <div class="user-avatar me-2">UN</div>
+                        <span>Unassigned</span>
+                      </div>
+                    `
+                }
+              `;
+              
+              // Re-add event handlers for remove buttons
+              assignedMembersContent.querySelectorAll('.remove-assignee-btn').forEach(function(btn) {
+                btn.addEventListener('click', async function(e) {
+                  e.preventDefault();
+                  
+                  const userId = this.getAttribute('data-user-id');
+                  const userName = this.getAttribute('data-user-name');
+                  
+                  if (!confirm(`Are you sure you want to remove ${userName} from this task?`)) {
+                    return;
+                  }
+                  
+                  // Disable button during request
+                  this.disabled = true;
+                  const originalText = this.innerHTML;
+                  this.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+                  
+                  try {
+                    // Remove user from assignees list
+                    const currentAssignees = task.assignee_ids || [];
+                    const newAssignees = currentAssignees.filter(id => id != userId);
+                    
+                    const response = await fetch(`/api/tasks/${task.id}`, {
+                      method: 'PATCH',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      credentials: 'include',
+                      body: JSON.stringify({ assignees: newAssignees })
+                    });
+                    
+                    if (!response.ok) {
+                      throw new Error('Failed to remove assignee');
+                    }
+                    
+                    // Update task object
+                    task.assignee_ids = newAssignees;
+                    task.assignee_names = task.assignee_names.filter(name => name !== userName);
+                    
+                    // Reload task details to refresh the display
+                    await loadTaskDetails(task.id);
+                    
+                  } catch (error) {
+                    console.error('Error removing assignee:', error);
+                    alert('Failed to remove assignee. Please try again.');
+                  } finally {
+                    // Re-enable button
+                    this.disabled = false;
+                    this.innerHTML = originalText;
+                  }
+                });
+              });
+            });
+            
+            const applyBtn = document.getElementById('applyAssignBtn');
+            if (applyBtn) {
+              applyBtn.addEventListener('click', async function() {
+                const selectedMemberId = document.getElementById('memberToAssignSelect').value;
+                
+                if (!selectedMemberId) {
+                  alert('Please select a member to assign.');
+                  return;
+                }
+                
+                // Disable button during request
+                applyBtn.disabled = true;
+                applyBtn.textContent = 'Assigning...';
+                
+                try {
+                  // Get current assignees and add the new one
+                  const currentAssignees = task.assignee_ids || [];
+                  const newAssignees = [...currentAssignees, parseInt(selectedMemberId)];
+                  
+                  console.log('[DEBUG] PATCH /api/tasks/' + task.id, { assignees: newAssignees });
+                  
+                  const patchResponse = await fetch(`/api/tasks/${task.id}`, {
+                    method: 'PATCH',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ assignees: newAssignees })
+                  });
+                  
+                  if (!patchResponse.ok) {
+                    throw new Error('Failed to assign member');
+                  }
+                  
+                  // Find the selected member's name
+                  const selectedMember = availableMembers.find(m => m.id == selectedMemberId);
+                  
+                  // Update the task object with new assignee
+                  if (selectedMember) {
+                    task.assignee_ids = newAssignees;
+                    task.assignee_names = [...(task.assignee_names || []), selectedMember.name];
+                  }
+                  
+                  // Update the display with new assignee
+                  const assignedMembersContent = document.getElementById('assignedMembersContent');
+                  assignedMembersContent.innerHTML = `
+                    ${
+                      task.assignee_names && task.assignee_names.length > 0
+                        ? task.assignee_names
+                            .map(
+                              (name, index) => `
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                              <div class="d-flex align-items-center">
+                                <div class="user-avatar me-2">
+                                  ${name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")
+                                    .toUpperCase()}
+                                </div>
+                                <span>${name}</span>
+                              </div>
+                              <button type="button" class="btn btn-outline-danger btn-sm remove-assignee-btn" 
+                                      data-user-id="${task.assignee_ids[index]}" 
+                                      data-user-name="${name}" 
+                                      title="Remove ${name} from this task">
+                                <i class="bi bi-x"></i>
+                              </button>
+                            </div>
+                          `
+                            )
+                            .join("")
+                        : `
+                          <div class="d-flex align-items-center">
+                            <div class="user-avatar me-2">UN</div>
+                            <span>Unassigned</span>
+                          </div>
+                        `
+                    }
+                  `;
+                  
+                  // Re-add event handlers for remove buttons
+                  assignedMembersContent.querySelectorAll('.remove-assignee-btn').forEach(function(btn) {
+                    btn.addEventListener('click', async function(e) {
+                      e.preventDefault();
+                      
+                      const userId = this.getAttribute('data-user-id');
+                      const userName = this.getAttribute('data-user-name');
+                      
+                      if (!confirm(`Are you sure you want to remove ${userName} from this task?`)) {
+                        return;
+                      }
+                      
+                      // Disable button during request
+                      this.disabled = true;
+                      const originalText = this.innerHTML;
+                      this.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+                      
+                      try {
+                        // Remove user from assignees list
+                        const currentAssignees = task.assignee_ids || [];
+                        const newAssignees = currentAssignees.filter(id => id != userId);
+                        
+                        const response = await fetch(`/api/tasks/${task.id}`, {
+                          method: 'PATCH',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          credentials: 'include',
+                          body: JSON.stringify({ assignees: newAssignees })
+                        });
+                        
+                        if (!response.ok) {
+                          throw new Error('Failed to remove assignee');
+                        }
+                        
+                        // Update task object
+                        task.assignee_ids = newAssignees;
+                        task.assignee_names = task.assignee_names.filter(name => name !== userName);
+                        
+                        // Reload task details to refresh the display
+                        await loadTaskDetails(task.id);
+                        
+                      } catch (error) {
+                        console.error('Error removing assignee:', error);
+                        alert('Failed to remove assignee. Please try again.');
+                      } finally {
+                        // Re-enable button
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                      }
+                    });
+                  });
+                  
+                  // Show success message
+                  const successMsg = document.createElement('div');
+                  successMsg.className = 'alert alert-success alert-dismissible fade show mt-2';
+                  successMsg.innerHTML = `
+                    <strong>Success!</strong> Member assigned successfully.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                  `;
+                  
+                  // Insert success message after the assignee content
+                  assignedMembersContent.parentNode.insertBefore(successMsg, assignedMembersContent.nextSibling);
+                  
+                  // Auto-dismiss after 3 seconds
+                  setTimeout(() => {
+                    if (successMsg.parentNode) {
+                      successMsg.remove();
+                    }
+                  }, 3000);
+                  
+                } catch (error) {
+                  console.error('Error assigning member:', error);
+                  alert('Failed to assign member. Please try again.');
+                } finally {
+                  // Re-enable button
+                  applyBtn.disabled = false;
+                  applyBtn.textContent = 'Apply';
+                }
+              });
+            }
+            
+          } catch (error) {
+            console.error('Error fetching available members:', error);
+            assigneeContent.innerHTML = `
+              <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Failed to load available members. Please try again.
+              </div>
+              <div class="d-flex justify-content-end mt-3">
+                <button type="button" class="btn btn-secondary btn-sm" id="cancelAssignBtn">Cancel</button>
+              </div>
+            `;
+            
+            // Add cancel handler for error case
+            document.getElementById('cancelAssignBtn').addEventListener('click', function() {
+              // Restore original assignee display
+              const assignedMembersContent = document.getElementById('assignedMembersContent');
+              assignedMembersContent.innerHTML = `
+                ${
+                  task.assignee_names && task.assignee_names.length > 0
+                    ? task.assignee_names
+                        .map(
+                          (name, index) => `
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                          <div class="d-flex align-items-center">
+                            <div class="user-avatar me-2">
+                              ${name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .toUpperCase()}
+                            </div>
+                            <span>${name}</span>
+                          </div>
+                          <button type="button" class="btn btn-outline-danger btn-sm remove-assignee-btn" 
+                                  data-user-id="${task.assignee_ids[index]}" 
+                                  data-user-name="${name}" 
+                                  title="Remove ${name} from this task">
+                            <i class="bi bi-x"></i>
+                          </button>
+                        </div>
+                      `
+                        )
+                        .join("")
+                    : `
+                      <div class="d-flex align-items-center">
+                        <div class="user-avatar me-2">UN</div>
+                        <span>Unassigned</span>
+                      </div>
+                    `
+                }
+              `;
+              
+              // Re-add event handlers for remove buttons
+              assignedMembersContent.querySelectorAll('.remove-assignee-btn').forEach(function(btn) {
+                btn.addEventListener('click', async function(e) {
+                  e.preventDefault();
+                  
+                  const userId = this.getAttribute('data-user-id');
+                  const userName = this.getAttribute('data-user-name');
+                  
+                  if (!confirm(`Are you sure you want to remove ${userName} from this task?`)) {
+                    return;
+                  }
+                  
+                  // Disable button during request
+                  this.disabled = true;
+                  const originalText = this.innerHTML;
+                  this.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+                  
+                  try {
+                    // Remove user from assignees list
+                    const currentAssignees = task.assignee_ids || [];
+                    const newAssignees = currentAssignees.filter(id => id != userId);
+                    
+                    const response = await fetch(`/api/tasks/${task.id}`, {
+                      method: 'PATCH',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      credentials: 'include',
+                      body: JSON.stringify({ assignees: newAssignees })
+                    });
+                    
+                    if (!response.ok) {
+                      throw new Error('Failed to remove assignee');
+                    }
+                    
+                    // Update task object
+                    task.assignee_ids = newAssignees;
+                    task.assignee_names = task.assignee_names.filter(name => name !== userName);
+                    
+                    // Reload task details to refresh the display
+                    await loadTaskDetails(task.id);
+                    
+                  } catch (error) {
+                    console.error('Error removing assignee:', error);
+                    alert('Failed to remove assignee. Please try again.');
+                  } finally {
+                    // Re-enable button
+                    this.disabled = false;
+                    this.innerHTML = originalText;
+                  }
+                });
+              });
+            });
+          }
+        });
       }
     }, 0);
 
