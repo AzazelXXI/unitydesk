@@ -155,7 +155,7 @@ function initializeTaskModal() {
     const priorityClass = getPriorityClass(task.priority);
 
     // Set the clone form action for this task
-    setCloneTaskFormAction(task.id);
+    // setCloneTaskFormAction(task.id);
 
     taskDetailsContent.innerHTML = `
       <div class="task-details-container">
@@ -165,12 +165,8 @@ function initializeTaskModal() {
             <div class="d-flex justify-content-between align-items-start mb-3">
               <h3 class="task-title mb-0">${task.name}</h3>
               <div class="task-badges">
-                <span class="badge ${statusClass} me-2">${
-      task.status ? task.status.replace("_", " ").toUpperCase() : "NOT STARTED"
-    }</span>
-                <span class="badge ${priorityClass}">${
-      task.priority || "MEDIUM"
-    }</span>
+                <span class="badge ${statusClass} me-2">${task.status || "Not Started"}</span>
+                <span class="badge ${priorityClass}">${task.priority || "Medium"}</span>
               </div>
             </div>
             <div class="task-meta text-muted">
@@ -178,6 +174,42 @@ function initializeTaskModal() {
                 "en-US",
                 { year: "numeric", month: "short", day: "numeric" }
               )}</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status & Priority Section -->
+        <div class="task-section-container bg-white border rounded p-3 mb-4">
+          <div class="task-section">
+            <div class="section-header d-flex align-items-center justify-content-between mb-3">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-flag me-2 text-primary"></i>
+                <h5 class="section-title mb-0">Status & Priority</h5>
+              </div>
+              <button class="btn btn-primary btn-sm" id="changeStatusPriorityBtn" type="button">Change</button>
+            </div>
+            <div class="section-content">
+              <div class="row">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Status</label>
+                  <select class="form-select form-select-sm" id="taskStatusDropdown">
+                    <option value="NOT_STARTED" ${task.status === 'Not Started' ? 'selected' : ''}>Not Started</option>
+                    <option value="IN_PROGRESS" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                    <option value="BLOCKED" ${task.status === 'Blocked' ? 'selected' : ''}>Blocked</option>
+                    <option value="COMPLETED" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                    <option value="CANCELLED" ${task.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Priority</label>
+                  <select class="form-select form-select-sm" id="taskPriorityDropdown">
+                    <option value="LOW" ${task.priority === 'Low' ? 'selected' : ''}>Low</option>
+                    <option value="MEDIUM" ${task.priority === 'Medium' ? 'selected' : ''}>Medium</option>
+                    <option value="HIGH" ${task.priority === 'High' ? 'selected' : ''}>High</option>
+                    <option value="URGENT" ${task.priority === 'Urgent' ? 'selected' : ''}>Urgent</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -344,6 +376,108 @@ function initializeTaskModal() {
         } else {
           assignBtn.style.display = 'none';
         }
+      }
+    }, 0);
+
+    // Add event handler for Status & Priority Change button
+    setTimeout(function() {
+      const changeBtn = document.getElementById('changeStatusPriorityBtn');
+      if (changeBtn) {
+        changeBtn.addEventListener('click', async function(e) {
+          e.preventDefault();
+          
+          const statusDropdown = document.getElementById('taskStatusDropdown');
+          const priorityDropdown = document.getElementById('taskPriorityDropdown');
+          
+          if (!statusDropdown || !priorityDropdown) {
+            console.error('Status or Priority dropdown not found');
+            return;
+          }
+          
+          const newStatus = statusDropdown.value;
+          const newPriority = priorityDropdown.value;
+          
+          // Map frontend values to backend enum values
+          const statusMap = {
+            'NOT_STARTED': 'Not Started',
+            'IN_PROGRESS': 'In Progress',
+            'BLOCKED': 'Blocked',
+            'COMPLETED': 'Completed',
+            'CANCELLED': 'Cancelled'
+          };
+          
+          const priorityMap = {
+            'LOW': 'Low',
+            'MEDIUM': 'Medium',
+            'HIGH': 'High',
+            'URGENT': 'Urgent'
+          };
+          
+          // Disable button during request
+          changeBtn.disabled = true;
+          changeBtn.textContent = 'Updating...';
+          
+          try {
+            const response = await fetch(`/api/tasks/${task.id}`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                status: statusMap[newStatus] || newStatus,
+                priority: priorityMap[newPriority] || newPriority
+              })
+            });
+            
+            if (response.ok) {
+              // Update the task badges in the header
+              const statusBadge = document.querySelector('.task-badges .badge:first-child');
+              const priorityBadge = document.querySelector('.task-badges .badge:last-child');
+              
+              if (statusBadge) {
+                const displayStatus = statusMap[newStatus] || newStatus;
+                statusBadge.className = `badge ${getStatusClass(displayStatus)} me-2`;
+                statusBadge.textContent = displayStatus;
+              }
+              
+              if (priorityBadge) {
+                const displayPriority = priorityMap[newPriority] || newPriority;
+                priorityBadge.className = `badge ${getPriorityClass(displayPriority)}`;
+                priorityBadge.textContent = displayPriority;
+              }
+              
+              // Show success message
+              const successMsg = document.createElement('div');
+              successMsg.className = 'alert alert-success alert-dismissible fade show mt-2';
+              successMsg.innerHTML = `
+                <strong>Success!</strong> Status and priority updated successfully.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              `;
+              
+              // Insert success message after the Change button
+              changeBtn.parentNode.insertBefore(successMsg, changeBtn.nextSibling);
+              
+              // Auto-dismiss after 3 seconds
+              setTimeout(() => {
+                if (successMsg.parentNode) {
+                  successMsg.remove();
+                }
+              }, 3000);
+              
+            } else {
+              const errorData = await response.json();
+              alert('Failed to update task: ' + (errorData.message || 'Unknown error'));
+            }
+          } catch (error) {
+            console.error('Error updating task:', error);
+            alert('An error occurred while updating the task. Please try again.');
+          } finally {
+            // Re-enable button
+            changeBtn.disabled = false;
+            changeBtn.textContent = 'Change';
+          }
+        });
       }
     }, 0);
   }
@@ -714,12 +848,18 @@ function initializeProjectActions() {
 
 function getStatusClass(status) {
   switch (status) {
+    case "Completed":
     case "COMPLETED":
       return "bg-success";
+    case "In Progress":
     case "IN_PROGRESS":
       return "bg-primary";
+    case "Blocked":
     case "BLOCKED":
       return "bg-warning text-dark";
+    case "Cancelled":
+    case "CANCELLED":
+      return "bg-danger";
     default:
       return "bg-secondary";
   }
@@ -727,11 +867,15 @@ function getStatusClass(status) {
 
 function getPriorityClass(priority) {
   switch (priority) {
+    case "High":
     case "HIGH":
+    case "Urgent":
     case "URGENT":
       return "bg-danger";
+    case "Medium":
     case "MEDIUM":
       return "bg-warning text-dark";
+    case "Low":
     case "LOW":
       return "bg-info";
     default:
