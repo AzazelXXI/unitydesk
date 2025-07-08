@@ -278,12 +278,17 @@ function initializeTaskModal() {
                               </div>
                               <span>${name}</span>
                             </div>
-                            <button type="button" class="btn btn-outline-danger btn-sm remove-assignee-btn" 
-                                    data-user-id="${task.assignee_ids[index]}" 
-                                    data-user-name="${name}" 
-                                    title="Remove ${name} from this task">
-                              <i class="bi bi-x"></i>
-                            </button>
+                            ${
+                              (task.owner_id && window.currentUserId && task.owner_id == window.currentUserId) ||
+                              (task.creator_id && window.currentUserId && task.creator_id == window.currentUserId)
+                                ? `<button type="button" class="btn btn-outline-danger btn-sm remove-assignee-btn" 
+                                          data-user-id="${task.assignee_ids[index]}" 
+                                          data-user-name="${name}" 
+                                          title="Remove ${name} from this task">
+                                    <i class="bi bi-x"></i>
+                                  </button>`
+                                : ''
+                            }
                           </div>
                         `
                           )
@@ -435,12 +440,17 @@ function initializeTaskModal() {
                             </div>
                             <span>${name}</span>
                           </div>
-                          <button type="button" class="btn btn-outline-danger btn-sm remove-assignee-btn" 
-                                  data-user-id="${task.assignee_ids[index]}" 
-                                  data-user-name="${name}" 
-                                  title="Remove ${name} from this task">
-                            <i class="bi bi-x"></i>
-                          </button>
+                          ${
+                            (task.owner_id && window.currentUserId && task.owner_id == window.currentUserId) ||
+                            (task.creator_id && window.currentUserId && task.creator_id == window.currentUserId)
+                              ? `<button type="button" class="btn btn-outline-danger btn-sm remove-assignee-btn" 
+                                        data-user-id="${task.assignee_ids[index]}" 
+                                        data-user-name="${name}" 
+                                        title="Remove ${name} from this task">
+                                  <i class="bi bi-x"></i>
+                                </button>`
+                              : ''
+                          }
                         </div>
                       `
                         )
@@ -596,12 +606,17 @@ function initializeTaskModal() {
                             </div>
                             <span>${name}</span>
                           </div>
-                          <button type="button" class="btn btn-outline-danger btn-sm remove-assignee-btn" 
-                                  data-user-id="${task.assignee_ids[index]}" 
-                                  data-user-name="${name}" 
-                                  title="Remove ${name} from this task">
-                            <i class="bi bi-x"></i>
-                          </button>
+                          ${
+                            (task.owner_id && window.currentUserId && task.owner_id == window.currentUserId) ||
+                            (task.creator_id && window.currentUserId && task.creator_id == window.currentUserId)
+                              ? `<button type="button" class="btn btn-outline-danger btn-sm remove-assignee-btn" 
+                                        data-user-id="${task.assignee_ids[index]}" 
+                                        data-user-name="${name}" 
+                                        title="Remove ${name} from this task">
+                                  <i class="bi bi-x"></i>
+                                </button>`
+                              : ''
+                          }
                         </div>
                       `
                         )
@@ -731,12 +746,17 @@ function initializeTaskModal() {
                                 </div>
                                 <span>${name}</span>
                               </div>
-                              <button type="button" class="btn btn-outline-danger btn-sm remove-assignee-btn" 
-                                      data-user-id="${task.assignee_ids[index]}" 
-                                      data-user-name="${name}" 
-                                      title="Remove ${name} from this task">
-                                <i class="bi bi-x"></i>
-                              </button>
+                              ${
+                                (task.owner_id && window.currentUserId && task.owner_id == window.currentUserId) ||
+                                (task.creator_id && window.currentUserId && task.creator_id == window.currentUserId)
+                                  ? `<button type="button" class="btn btn-outline-danger btn-sm remove-assignee-btn" 
+                                            data-user-id="${task.assignee_ids[index]}" 
+                                            data-user-name="${name}" 
+                                            title="Remove ${name} from this task">
+                                      <i class="bi bi-x"></i>
+                                    </button>`
+                                  : ''
+                              }
                             </div>
                           `
                             )
@@ -865,12 +885,17 @@ function initializeTaskModal() {
                             </div>
                             <span>${name}</span>
                           </div>
-                          <button type="button" class="btn btn-outline-danger btn-sm remove-assignee-btn" 
-                                  data-user-id="${task.assignee_ids[index]}" 
-                                  data-user-name="${name}" 
-                                  title="Remove ${name} from this task">
-                            <i class="bi bi-x"></i>
-                          </button>
+                          ${
+                            (task.owner_id && window.currentUserId && task.owner_id == window.currentUserId) ||
+                            (task.creator_id && window.currentUserId && task.creator_id == window.currentUserId)
+                              ? `<button type="button" class="btn btn-outline-danger btn-sm remove-assignee-btn" 
+                                        data-user-id="${task.assignee_ids[index]}" 
+                                        data-user-name="${name}" 
+                                        title="Remove ${name} from this task">
+                                  <i class="bi bi-x"></i>
+                                </button>`
+                              : ''
+                          }
                         </div>
                       `
                         )
