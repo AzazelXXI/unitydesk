@@ -43,3 +43,6 @@ class Attachment(Base):
     tasks = relationship(
         "Task", secondary="task_attachments", back_populates="attachments"
     )
+    comments = relationship(
+        "Comment", secondary="comment_attachments", back_populates="attachments"
+    )

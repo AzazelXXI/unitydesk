@@ -1,3 +1,64 @@
+// --- Utility Functions ---
+/**
+ * Extract project ID from the current URL
+ * URL format: /projects/{project_id}
+ */
+function getProjectIdFromUrl() {
+  const path = window.location.pathname;
+  const match = path.match(/\/projects\/(\d+)/);
+  return match ? match[1] : null;
+}
+
+/**
+ * Get CSS class for task status
+ */
+function getStatusClass(status) {
+  switch (status?.toLowerCase()) {
+    case 'pending':
+      return 'bg-secondary text-light';
+    case 'in_progress':
+      return 'bg-primary text-light';
+    case 'completed':
+      return 'bg-success text-light';
+    case 'cancelled':
+      return 'bg-danger text-light';
+    default:
+      return 'bg-secondary text-light';
+  }
+}
+
+/**
+ * Get CSS class for task priority
+ */
+function getPriorityClass(priority) {
+  switch (priority?.toLowerCase()) {
+    case 'low':
+      return 'bg-success text-light';
+    case 'medium':
+      return 'bg-warning text-dark';
+    case 'high':
+      return 'bg-danger text-light';
+    default:
+      return 'bg-secondary text-light';
+  }
+}
+
+/**
+ * Get project name from the page title or heading
+ */
+function getProjectNameFromPage() {
+  // Try to get from page title first
+  const titleElement = document.querySelector('h1, .project-title, [data-project-name]');
+  if (titleElement) {
+    return titleElement.textContent.trim();
+  }
+  
+  // Fallback to document title
+  const title = document.title;
+  const match = title.match(/Project: (.+)/);
+  return match ? match[1] : 'Project';
+}
+
 // --- Member Role Update and Remove Functionality ---
 document.addEventListener("DOMContentLoaded", function () {
   // Role change
@@ -72,6 +133,7 @@ document.addEventListener("DOMContentLoaded", function () {
   initializeAddMemberForm();
   initializeTaskFiltering();
   initializeProjectActions();
+  initializeFilesTab();
 });
 
 /**
@@ -1431,145 +1493,192 @@ function initializeProjectActions() {
 }
 
 /**
- * Utility Functions
+ * Initialize Files Tab functionality
  */
-
-function getStatusClass(status) {
-  switch (status) {
-    case "Completed":
-    case "COMPLETED":
-      return "bg-success";
-    case "In Progress":
-    case "IN_PROGRESS":
-      return "bg-primary";
-    case "Blocked":
-    case "BLOCKED":
-      return "bg-warning text-dark";
-    case "Cancelled":
-    case "CANCELLED":
-      return "bg-danger";
-    default:
-      return "bg-secondary";
+function initializeFilesTab() {
+  console.log('🔧 [DEBUG] Initializing Files tab...');
+  
+  const filesTab = document.getElementById('files-tab');
+  if (!filesTab) {
+    console.warn('⚠️ [DEBUG] Files tab not found');
+    return;
   }
-}
-
-function getPriorityClass(priority) {
-  switch (priority) {
-    case "High":
-    case "HIGH":
-    case "Urgent":
-    case "URGENT":
-      return "bg-danger";
-    case "Medium":
-    case "MEDIUM":
-      return "bg-warning text-dark";
-    case "Low":
-    case "LOW":
-      return "bg-info";
-    default:
-      return "bg-warning text-dark";
-  }
-}
-
-function getProjectIdFromUrl() {
-  // Extract project ID from the current URL
-  const pathParts = window.location.pathname.split("/");
-  const projectIndex = pathParts.indexOf("projects");
-  return projectIndex !== -1 && pathParts[projectIndex + 1]
-    ? pathParts[projectIndex + 1]
-    : null;
-}
-
-function getProjectNameFromPage() {
-  // Get project name from the page title or header
-  const projectHeader = document.querySelector(".project-header h1");
-  return projectHeader ? projectHeader.textContent.trim() : "Project";
-}
-
-/**
- * Global Functions - Available for external calls
- */
-
-// Function to show a specific tab
-window.showTab = function (tabName) {
-  const tabButton = document.querySelector(`#${tabName}-tab`);
-  if (tabButton) {
-    const tab = new bootstrap.Tab(tabButton);
-    tab.show();
-  }
-};
-
-// Task filtering functionality
-window.clearTaskFilters = function () {
-  // Clear all task filter values
-  document.getElementById("task_status").value = "all";
-  document.getElementById("task_priority").value = "all";
-  document.getElementById("task_assignee").value = "all";
-  document.getElementById("task_sort_by").value = "created_at";
-  document.getElementById("task_sort_order").value = "desc";
-  document.getElementById("task_search").value = "";
-
-  // Submit the form to apply cleared filters
-  document.getElementById("taskFilterForm").submit();
-};
-
-// Task action functions
-window.markTaskComplete = async function (taskId) {
-  try {
-    const response = await fetch(`/api/tasks/${taskId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({ status: "COMPLETED" }),
-    });
-
-    if (response.ok) {
-      // Reload task details and refresh the page
-      await window.loadTaskDetails(taskId);
-      location.reload();
-    } else {
-      alert("Failed to update task status");
+  
+  // Load files when tab is shown
+  filesTab.addEventListener('shown.bs.tab', function() {
+    console.log('📁 [DEBUG] Files tab activated, loading project files...');
+    loadProjectFiles();
+  });
+  
+  async function loadProjectFiles() {
+    const projectId = getProjectIdFromUrl();
+    if (!projectId) {
+      console.error('❌ [DEBUG] No project ID found');
+      return;
     }
-  } catch (error) {
-    console.error("Error updating task:", error);
-    alert("An error occurred while updating the task");
-  }
-};
-
-window.editTask = function (taskId) {
-  // Close the details modal and open edit modal
-  const detailsModal = bootstrap.Modal.getInstance(
-    document.getElementById("taskDetailsModal")
-  );
-  detailsModal.hide();
-
-  // You can implement task editing here
-  alert("Task editing feature coming soon!");
-};
-
-window.deleteTask = async function (taskId) {
-  if (confirm("Are you sure you want to delete this task?")) {
+    
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        // Close modal and refresh page
-        const detailsModal = bootstrap.Modal.getInstance(
-          document.getElementById("taskDetailsModal")
-        );
-        detailsModal.hide();
-        location.reload();
-      } else {
-        alert("Failed to delete task");
+      // Show loading state
+      const tableBody = document.querySelector('#files table tbody');
+      if (tableBody) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center py-4">
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <div class="mt-2">Loading files...</div>
+            </td>
+          </tr>
+        `;
       }
+      
+      console.log('🌐 [DEBUG] Fetching files from:', `/projects/${projectId}/files`);
+      
+      const response = await fetch(`/projects/${projectId}/files`, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('📁 [DEBUG] Files loaded:', data);
+      
+      displayProjectFiles(data.files || []);
+      
     } catch (error) {
-      console.error("Error deleting task:", error);
-      alert("An error occurred while deleting the task");
+      console.error('❌ [DEBUG] Error loading project files:', error);
+      const tableBody = document.querySelector('#files table tbody');
+      if (tableBody) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center py-4">
+              <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle"></i>
+                Failed to load files. Please try again.
+              </div>
+            </td>
+          </tr>
+        `;
+      }
     }
   }
-};
+  
+  function displayProjectFiles(files) {
+    const tableBody = document.querySelector('#files table tbody');
+    if (!tableBody) {
+      console.error('❌ [DEBUG] Files table body not found');
+      return;
+    }
+    
+    if (files.length === 0) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center py-4">
+            <div class="text-muted">
+              <i class="bi bi-folder" style="font-size: 2rem;"></i>
+              <p class="mb-0 mt-2">No files uploaded yet.</p>
+              <small>Files will appear here when uploaded to tasks.</small>
+            </div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+    
+    let html = '';
+    files.forEach(file => {
+      const uploadDate = file.created_at ? new Date(file.created_at).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }) : 'Unknown';
+      
+      html += `
+        <tr>
+          <td>
+            <div class="d-flex align-items-center">
+              <i class="${file.file_icon} ${file.file_color} me-2" style="font-size: 1.5rem"></i>
+              <div>
+                <div class="fw-medium">${file.file_name}</div>
+                <small class="text-muted">Task: <a href="#" onclick="showTaskDetails(${file.task_id})">${file.task_name}</a></small>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="badge bg-light text-dark">${file.mime_type}</span>
+          </td>
+          <td>${file.file_size_formatted}</td>
+          <td>
+            <div class="d-flex align-items-center">
+              <div class="user-avatar-small me-2">
+                ${file.uploader_name.split(' ').map(n => n[0]).join('').toUpperCase()}
+              </div>
+              ${file.uploader_name}
+            </div>
+          </td>
+          <td>${uploadDate}</td>
+          <td>
+            <div class="btn-group" role="group">
+              <a href="${file.download_url}" target="_blank" class="btn btn-sm btn-outline-primary" title="Download">
+                <i class="bi bi-download"></i>
+              </a>
+              <button class="btn btn-sm btn-outline-info" onclick="showTaskDetails(${file.task_id})" title="View Task">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteProjectFile(${file.id})" title="Delete">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+    
+    tableBody.innerHTML = html;
+  }
+  
+  // Global function to show task details from files tab
+  window.showTaskDetails = function(taskId) {
+    // Switch to tasks tab first
+    const tasksTab = document.getElementById('tasks-tab');
+    if (tasksTab) {
+      const tab = new bootstrap.Tab(tasksTab);
+      tab.show();
+      
+      // Wait a bit for tab transition, then show task details
+      setTimeout(() => {
+        if (window.loadTaskDetails) {
+          window.loadTaskDetails(taskId);
+        }
+      }, 300);
+    }
+  };
+  
+  // Global function to delete project file
+  window.deleteProjectFile = async function(fileId) {
+    if (!confirm('Are you sure you want to delete this file?')) return;
+    
+    try {
+      const response = await fetch(`/api/attachments/${fileId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete file');
+      }
+      
+      console.log('✅ [DEBUG] File deleted successfully');
+      
+      // Reload files
+      loadProjectFiles();
+      
+    } catch (error) {
+      console.error('❌ [DEBUG] Error deleting file:', error);
+      alert('Failed to delete file. Please try again.');
+    }
+  };
+}

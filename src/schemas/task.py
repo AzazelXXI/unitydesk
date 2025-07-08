@@ -84,7 +84,7 @@ class TaskCommentBase(BaseModel):
 class TaskCommentCreate(TaskCommentBase):
     """Schema for creating a new task comment"""
 
-    pass
+    attachment_ids: Optional[List[int]] = []
 
 
 class TaskCommentUpdate(BaseModel):
@@ -96,7 +96,8 @@ class TaskCommentUpdate(BaseModel):
 class TaskCommentRead(TaskCommentBase, BaseSchema):
     """Schema for reading task comment information"""
 
-    user: Dict[str, Any]  # Simplified user info
+    author: Dict[str, Any]  # User info for comment author
+    attachments: List[Dict[str, Any]] = []  # Attachment info
 
 
 class TaskBase(BaseModel):

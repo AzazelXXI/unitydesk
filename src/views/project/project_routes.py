@@ -1784,3 +1784,129 @@ async def manage_project_statuses(
             "page_title": "Manage Project Statuses",
         },
     )
+
+
+@router.get("/{project_id}/files")
+async def get_project_files(
+    project_id: int,
+    request: Request,
+    current_user: User = Depends(get_current_user_web),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get all files for a project with task information
+    """
+    try:
+        # Check if user has access to the project
+        project_query = text(
+            """
+            SELECT id, name FROM projects 
+            WHERE id = :project_id 
+            AND (owner_id = :user_id OR id IN (
+                SELECT project_id FROM project_members WHERE user_id = :user_id
+            ))
+        """
+        )
+        project_result = await db.execute(
+            project_query, {"project_id": project_id, "user_id": current_user.id}
+        )
+        project = project_result.fetchone()
+
+        if not project:
+            raise HTTPException(
+                status_code=404, detail="Project not found or access denied"
+            )
+
+        # Get all attachments for tasks in this project
+        files_query = text(
+            """
+            SELECT 
+                a.id,
+                a.file_name,
+                a.file_path,
+                a.file_size,
+                a.mime_type,
+                a.created_at,
+                u.name as uploader_name,
+                t.id as task_id,
+                t.name as task_name
+            FROM attachments a
+            JOIN task_attachments ta ON a.id = ta.attachment_id
+            JOIN tasks t ON ta.task_id = t.id
+            JOIN users u ON a.uploader_id = u.id
+            WHERE t.project_id = :project_id
+            ORDER BY a.created_at DESC
+        """
+        )
+
+        files_result = await db.execute(files_query, {"project_id": project_id})
+        files = files_result.fetchall()
+
+        # Format files data
+        files_data = []
+        for file in files:
+            # Determine file icon based on mime type
+            if file.mime_type.startswith("image/"):
+                file_icon = "bi-image"
+                file_color = "text-success"
+            elif file.mime_type == "application/pdf":
+                file_icon = "bi-file-pdf"
+                file_color = "text-danger"
+            elif "word" in file.mime_type:
+                file_icon = "bi-file-word"
+                file_color = "text-primary"
+            elif "excel" in file.mime_type or "spreadsheet" in file.mime_type:
+                file_icon = "bi-file-excel"
+                file_color = "text-success"
+            else:
+                file_icon = "bi-file-earmark"
+                file_color = "text-secondary"
+
+            # Format file size
+            if file.file_size < 1024:
+                size_str = f"{file.file_size} B"
+            elif file.file_size < 1024 * 1024:
+                size_str = f"{file.file_size / 1024:.1f} KB"
+            else:
+                size_str = f"{file.file_size / (1024 * 1024):.1f} MB"
+
+            files_data.append(
+                {
+                    "id": file.id,
+                    "file_name": file.file_name,
+                    "file_path": file.file_path,
+                    "file_size": file.file_size,
+                    "file_size_formatted": size_str,
+                    "mime_type": file.mime_type,
+                    "file_icon": file_icon,
+                    "file_color": file_color,
+                    "created_at": (
+                        file.created_at.isoformat() if file.created_at else None
+                    ),
+                    "uploader_name": file.uploader_name,
+                    "task_id": file.task_id,
+                    "task_name": file.task_name,
+                    "download_url": f"http://localhost:4001{file.file_path}",
+                }
+            )
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "files": files_data,
+                "total_files": len(files_data),
+            },
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error fetching project files: {str(e)}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "message": f"Error fetching project files: {str(e)}",
+            },
+        )

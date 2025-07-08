@@ -27,6 +27,10 @@ from src.schemas.marketing_project import (
     TaskCommentCreate,
     TaskCommentRead,
 )
+from src.schemas.attachment import (
+    AttachmentRead,
+    TaskAttachmentCreate,
+)
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -195,3 +199,37 @@ async def delete_task_comment(
     Delete a task comment
     """
     await TaskController.delete_task_comment(task_id, comment_id, user_id, db)
+
+
+# ==================== Task Attachment Endpoints ====================
+@task_router.post("/{task_id}/attachments", response_model=AttachmentRead)
+async def create_task_attachment(
+    task_id: int,
+    attachment_data: TaskAttachmentCreate,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Add an attachment to a task
+    """
+    return await TaskController.create_task_attachment(task_id, attachment_data, db)
+
+
+@task_router.get("/{task_id}/attachments", response_model=List[AttachmentRead])
+async def get_task_attachments(task_id: int, db: AsyncSession = Depends(get_db)):
+    """
+    Get all attachments for a task
+    """
+    return await TaskController.get_task_attachments(task_id, db)
+
+
+@task_router.delete(
+    "/attachments/{attachment_id}", status_code=status.HTTP_204_NO_CONTENT
+)
+async def delete_attachment(
+    attachment_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Delete an attachment
+    """
+    await TaskController.delete_attachment(attachment_id, db)

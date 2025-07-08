@@ -22,10 +22,13 @@ from typing import Any
 
 MarketingProject = Any
 WorkflowStep = Any
-MarketingTask = Any
 TaskStatus = Any
 TaskPriority = Any
-TaskComment = Any
+
+# Import the actual models
+from src.models.task import Task as MarketingTask
+from src.models.comment import Comment as TaskComment
+from src.models.user import User
 
 # Changed from src.models_backup.marketing_project
 
@@ -520,17 +523,30 @@ class TaskController:
                 content=comment_data.content,
             )
 
+            # Associate attachments if provided
+            if hasattr(comment_data, "attachment_ids") and comment_data.attachment_ids:
+                from src.models.attachment import Attachment
+
+                attachments = await db.execute(
+                    select(Attachment).where(
+                        Attachment.id.in_(comment_data.attachment_ids)
+                    )
+                )
+                new_comment.attachments = attachments.scalars().all()
+
             db.add(new_comment)
             await db.commit()
             await db.refresh(new_comment)
 
             logger.info(f"Added comment to task {task_id}")
 
-            # Return comment with user info
+            # Return comment with user info and attachments
             comment_query = (
                 select(TaskComment)
                 .filter(TaskComment.id == new_comment.id)
-                .options(joinedload(TaskComment.user))
+                .options(
+                    joinedload(TaskComment.author), joinedload(TaskComment.attachments)
+                )
             )
 
             result = await db.execute(comment_query)
@@ -565,11 +581,13 @@ class TaskController:
                     detail=f"Task with ID {task_id} not found",
                 )
 
-            # Get comments with user info
+            # Get comments with user info and attachments
             query = (
                 select(TaskComment)
                 .filter(TaskComment.task_id == task_id)
-                .options(joinedload(TaskComment.user))
+                .options(
+                    joinedload(TaskComment.author), joinedload(TaskComment.attachments)
+                )
                 .order_by(TaskComment.created_at)
             )
 
@@ -745,12 +763,156 @@ class TaskController:
         from sqlalchemy.future import select
         from src.models.user import User
 
-        try:
-            query = select(User).order_by(User.name)
-            result = await db.execute(query)
-            users = result.scalars().all()
+        query = select(User).order_by(User.name)
+        result = await db.execute(query)
+        return result.scalars().all()
 
-            return users
+    # ==================== Task Attachment Methods ====================
+    @staticmethod
+    async def create_task_attachment(
+        task_id: int, attachment_data: Any, db: AsyncSession
+    ) -> Any:
+        """
+        Add an attachment to a task
+        """
+        try:
+            from src.models.attachment import Attachment
+            from src.models.task import Task
+            from src.models.association_tables import task_attachments
+            from sqlalchemy import insert
+
+            # Verify task exists
+            task_query = select(Task).filter(Task.id == task_id)
+            task_result = await db.execute(task_query)
+            task = task_result.scalars().first()
+
+            if not task:
+                logger.warning(f"Task with ID {task_id} not found")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Task with ID {task_id} not found",
+                )
+
+            # Create attachment
+            new_attachment = Attachment(
+                file_name=attachment_data.file_name,
+                file_path=attachment_data.file_path,
+                file_size=attachment_data.file_size,
+                mime_type=attachment_data.mime_type,
+                uploader_id=attachment_data.uploaded_by,
+            )
+
+            db.add(new_attachment)
+            await db.commit()
+            await db.refresh(new_attachment)
+
+            # Link attachment to task using association table
+            stmt = insert(task_attachments).values(
+                task_id=task_id, attachment_id=new_attachment.id
+            )
+            await db.execute(stmt)
+            await db.commit()
+
+            logger.info(f"Added attachment to task {task_id}")
+            return new_attachment
+
+        except HTTPException:
+            raise
         except Exception as e:
-            print(f"Error fetching users for assignment: {e}")
-            return []
+            logger.error(f"Error creating task attachment: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to create task attachment: {str(e)}",
+            )
+
+    @staticmethod
+    async def get_task_attachments(task_id: int, db: AsyncSession) -> List[Any]:
+        """
+        Get all attachments for a task
+        """
+        try:
+            from src.models.attachment import Attachment
+            from src.models.task import Task
+            from src.models.association_tables import task_attachments
+
+            # Verify task exists
+            task_query = select(Task).filter(Task.id == task_id)
+            task_result = await db.execute(task_query)
+            task = task_result.scalars().first()
+
+            if not task:
+                logger.warning(f"Task with ID {task_id} not found")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Task with ID {task_id} not found",
+                )
+
+            # Get attachments through association table
+            query = (
+                select(Attachment)
+                .join(
+                    task_attachments, Attachment.id == task_attachments.c.attachment_id
+                )
+                .filter(task_attachments.c.task_id == task_id)
+                .order_by(Attachment.created_at.desc())
+            )
+
+            result = await db.execute(query)
+            attachments = result.scalars().all()
+
+            logger.info(f"Retrieved {len(attachments)} attachments for task {task_id}")
+            return attachments
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error retrieving task attachments: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to retrieve task attachments: {str(e)}",
+            )
+
+    @staticmethod
+    async def delete_attachment(attachment_id: int, db: AsyncSession):
+        """
+        Delete an attachment
+        """
+        try:
+            from src.models.attachment import Attachment
+            from src.models.association_tables import task_attachments
+
+            # Get attachment
+            attachment_query = select(Attachment).filter(Attachment.id == attachment_id)
+            attachment_result = await db.execute(attachment_query)
+            attachment = attachment_result.scalars().first()
+
+            if not attachment:
+                logger.warning(f"Attachment with ID {attachment_id} not found")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Attachment with ID {attachment_id} not found",
+                )
+
+            # Delete from association table first
+            delete_stmt = delete(task_attachments).where(
+                task_attachments.c.attachment_id == attachment_id
+            )
+            await db.execute(delete_stmt)
+
+            # Delete attachment
+            delete_attachment_stmt = delete(Attachment).where(
+                Attachment.id == attachment_id
+            )
+            await db.execute(delete_attachment_stmt)
+            await db.commit()
+
+            logger.info(f"Deleted attachment {attachment_id}")
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error deleting attachment: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to delete attachment: {str(e)}",
+            )

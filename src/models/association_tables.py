@@ -1,3 +1,13 @@
+# Association table for comment attachments
+from sqlalchemy import Table, Column, Integer, ForeignKey
+from .base import Base
+
+comment_attachments = Table(
+    "comment_attachments",
+    Base.metadata,
+    Column("comment_id", Integer, ForeignKey("comments.id"), primary_key=True),
+    Column("attachment_id", Integer, ForeignKey("attachments.id"), primary_key=True),
+)
 from sqlalchemy import Column, ForeignKey, Table, Integer, String, DateTime
 from datetime import datetime
 from .base import Base

@@ -178,6 +178,7 @@ class TaskCommentBase(BaseModel):
     task_id: int
     user_id: int
     content: str
+    attachment_ids: Optional[List[int]] = None  # List of attachment IDs
 
 
 class TaskCommentCreate(TaskCommentBase):
@@ -190,6 +191,7 @@ class TaskCommentUpdate(BaseModel):
 
 class TaskCommentRead(TaskCommentBase, BaseSchema):
     user: Optional[Dict[str, Any]] = None
+    attachments: Optional[List[Dict[str, Any]]] = None  # List of attachment metadata
 
 
 class MarketingTaskBase(BaseModel):

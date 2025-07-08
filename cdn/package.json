@@ -1,0 +1,19 @@
+{
+  "name": "cdn",
+  "version": "1.0.0",
+  "main": "cdn_server.js",
+  "scripts": {
+    "start": "node cdn_server.js",
+    "dev": "nodemon cdn_server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "multer": "^2.0.1"
+  }
+}

@@ -7,3 +7,4 @@ myVC
 **/pytest_cache/
 .pytest_cache
 tasks.todo
+**/node_modules/

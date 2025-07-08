@@ -37,3 +37,9 @@ class Comment(Base):
     # Relationships
     author = relationship("User", back_populates="comments")
     task = relationship("Task", back_populates="comments")
+    attachments = relationship(
+        "Attachment",
+        secondary="comment_attachments",
+        backref="comment_attachments",
+        cascade="all, delete",
+    )

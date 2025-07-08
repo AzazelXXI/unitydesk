@@ -187,6 +187,32 @@
   font-weight: 600;
 }
 
+.user-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #007bff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.user-avatar-small {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #6c757d;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 600;
+}
+
 /* Badge Styles */
 .task-section-container .badge {
   font-size: 0.7rem;
@@ -396,6 +422,19 @@
   align-items: center;
   justify-content: center;
   font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.user-avatar-small {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #6c757d;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
   font-weight: 600;
 }
 
@@ -749,8 +788,241 @@
   color: #6c757d;
 }
 
-/* Remove old styles that are no longer needed */
-/* .priority-indicator, .checklist, .checklist-item, .checklist-checkbox, */
-/* .checklist-text, .comments-section .comment, .comment-header, */
-/* .comment-author, .comment-date, .comment-text, .comment-input */
-/* These styles are no longer used and have been replaced with new container-based styles */
+/* Comment System Styles */
+.comment-textarea {
+  border-radius: 20px;
+  border: 1px solid #e1e5e9;
+  padding: 12px 45px 12px 16px;
+  font-size: 14px;
+  line-height: 1.4;
+  resize: vertical;
+  min-height: 50px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.comment-textarea:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.comment-textarea.drag-over {
+  border-color: #007bff;
+  background-color: #f0f8ff;
+}
+
+.comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.comment-attach-btn {
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.comment-attach-btn:hover {
+  background-color: #e9ecef;
+}
+
+.comment-attachment-preview {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.comment-attachment-item {
+  background-color: #f8f9fa;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.comment-attachment-thumbnail {
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.comment-attachment-thumbnail:hover {
+  transform: scale(1.05);
+}
+
+.comment-item {
+  transition: all 0.3s ease;
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.comment-item:hover {
+  background-color: #f8f9fa;
+}
+
+.comment-avatar .user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.comment-author {
+  color: #365899;
+  font-size: 14px;
+}
+
+.comment-text {
+  color: #1c1e21;
+  font-size: 14px;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.comment-attachments {
+  margin-top: 8px;
+}
+
+.comment-attachment-image img {
+  border-radius: 8px;
+  border: 1px solid #e4e6ea;
+  transition: transform 0.2s ease;
+}
+
+.comment-attachment-image img:hover {
+  transform: scale(1.02);
+}
+
+.comment-attachment-video video {
+  border-radius: 8px;
+  border: 1px solid #e4e6ea;
+}
+
+.comment-attachment-file {
+  background-color: #f0f2f5;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: inline-block;
+}
+
+.comment-attachment-file a {
+  color: #365899;
+  text-decoration: none;
+}
+
+.comment-attachment-file a:hover {
+  text-decoration: underline;
+}
+
+.comment-form-actions {
+  font-size: 12px;
+  color: #65676b;
+}
+
+.comment-post-btn {
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.comment-post-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Attachment System Styles */
+.attachment-preview-item {
+  background-color: #f8f9fa;
+  animation: slideIn 0.3s ease-out;
+}
+
+.attachment-preview-area {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.attachment-area {
+  transition: all 0.3s ease;
+}
+
+.attachment-area:hover {
+  background-color: #f0f8ff;
+  border-color: #007bff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .comment-textarea {
+    padding: 10px 40px 10px 12px;
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+  
+  .comment-attach-btn {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .comment-avatar .user-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 12px;
+  }
+  
+  .comment-attachment-image img,
+  .comment-attachment-video video {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* Loading states */
+.comment-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #65676b;
+}
+
+.attachment-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #65676b;
+}
+
+/* Error states */
+.comment-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+}
+
+.attachment-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
