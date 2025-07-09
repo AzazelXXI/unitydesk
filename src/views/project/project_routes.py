@@ -1786,7 +1786,7 @@ async def manage_project_statuses(
     )
 
 
-@router.get("/{project_id}/files")
+@router.get("/projects/{project_id}/files")
 async def get_project_files(
     project_id: int,
     request: Request,

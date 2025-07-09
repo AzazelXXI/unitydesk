@@ -1,4 +1,8 @@
-run: # run the project locally with uvicorn and reload on changes without ssl
+
+cdn:
+	clear
+	node cdn/cdn_server.js
+server: # run the project locally with uvicorn and reload on changes without ssl
 	clear
 	uvicorn src.main:app --reload --log-level debug --port 8000
 

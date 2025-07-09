@@ -1130,6 +1130,11 @@ function initializeTaskModal() {
         });
       }
     }, 0);
+
+    // Initialize attachment handlers after modal is rendered
+    setTimeout(function() {
+      initializeAttachmentHandlers(task);
+    }, 0);
   }
 
   // Make loadTaskDetails available globally for potential external calls
@@ -1535,7 +1540,8 @@ function initializeFilesTab() {
       
       console.log('🌐 [DEBUG] Fetching files from:', `/projects/${projectId}/files`);
       
-      const response = await fetch(`/projects/${projectId}/files`, {
+      console.log('🌐 [DEBUG] Fetching files from:', `/api/projects/${projectId}/files`);
+      const response = await fetch(`/api/projects/${projectId}/files`, {
         credentials: 'include'
       });
       
@@ -1595,14 +1601,17 @@ function initializeFilesTab() {
         month: 'short',
         day: 'numeric'
       }) : 'Unknown';
-      
+      // Detect if file is image
+      const isImage = file.mime_type && file.mime_type.startsWith('image/');
       html += `
         <tr>
           <td>
             <div class="d-flex align-items-center">
               <i class="${file.file_icon} ${file.file_color} me-2" style="font-size: 1.5rem"></i>
               <div>
-                <div class="fw-medium">${file.file_name}</div>
+                <div class="fw-medium">
+                  <a href="#" class="file-link" data-url="${file.download_url}" data-mime="${file.mime_type}" data-name="${file.file_name}">${file.file_name}</a>
+                </div>
                 <small class="text-muted">Task: <a href="#" onclick="showTaskDetails(${file.task_id})">${file.task_name}</a></small>
               </div>
             </div>
@@ -1636,8 +1645,55 @@ function initializeFilesTab() {
         </tr>
       `;
     });
-    
     tableBody.innerHTML = html;
+
+    // Add click handler for file links (image preview or open)
+    tableBody.querySelectorAll('.file-link').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const url = this.getAttribute('data-url');
+        const mime = this.getAttribute('data-mime');
+        const name = this.getAttribute('data-name');
+        if (mime && mime.startsWith('image/')) {
+          showImagePreviewModal(url, name);
+        } else {
+          window.open(url, '_blank');
+        }
+      });
+    });
+  }
+
+// Image preview modal logic
+function showImagePreviewModal(url, name) {
+  let modal = document.getElementById('imagePreviewModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'imagePreviewModal';
+    modal.className = 'modal fade';
+    modal.tabIndex = -1;
+    modal.innerHTML = `
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">${name}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body text-center">
+            <img src="${url}" alt="${name}" class="img-fluid rounded shadow" style="max-height:60vh; max-width:100%; object-fit:contain;" />
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  } else {
+    modal.querySelector('.modal-title').textContent = name;
+    modal.querySelector('img').src = url;
+    modal.querySelector('img').alt = name;
+  }
+  // Show modal using Bootstrap
+  const bsModal = new bootstrap.Modal(modal);
+  bsModal.show();
+}
   }
   
   // Global function to show task details from files tab
@@ -1681,4 +1737,377 @@ function initializeFilesTab() {
       alert('Failed to delete file. Please try again.');
     }
   };
+// End of displayProjectFiles and image preview modal logic
+
+/**
+ * Initialize attachment handlers for task modal
+ */
+function initializeAttachmentHandlers(task) {
+  console.log('[DEBUG] Initializing attachment handlers for task:', task.id);
+  
+  // Get attachment elements
+  const browseBtn = document.querySelector('.attachment-area .btn-outline-secondary');
+  const uploadBtn = document.querySelector('.attachment-area .btn-primary');
+  const attachmentArea = document.querySelector('.attachment-area');
+  
+  if (!browseBtn || !uploadBtn || !attachmentArea) {
+    console.warn('[DEBUG] Attachment elements not found in modal');
+    return;
+  }
+  
+  // Remove any existing event listeners by cloning elements
+  const newBrowseBtn = browseBtn.cloneNode(true);
+  const newUploadBtn = uploadBtn.cloneNode(true);
+  browseBtn.parentNode.replaceChild(newBrowseBtn, browseBtn);
+  uploadBtn.parentNode.replaceChild(newUploadBtn, uploadBtn);
+  
+  // Create hidden file input
+  let fileInput = document.getElementById('attachmentFileInput');
+  if (fileInput) {
+    fileInput.remove(); // Remove existing to avoid duplicates
+  }
+  
+  fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.id = 'attachmentFileInput';
+  fileInput.multiple = true;
+  fileInput.style.display = 'none';
+  fileInput.accept = '.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.jpg,.jpeg,.png,.gif,.mp4,.mov,.avi';
+  document.body.appendChild(fileInput);
+  
+  let selectedFiles = [];
+  
+  // Browse button handler
+  newBrowseBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    console.log('[DEBUG] Browse button clicked');
+    fileInput.click();
+  });
+  
+  // File input change handler
+  fileInput.addEventListener('change', function(e) {
+    const files = Array.from(e.target.files);
+    selectedFiles = files;
+    console.log('[DEBUG] Files selected:', selectedFiles.length);
+    
+    // Update UI to show selected files
+    if (selectedFiles.length > 0) {
+      const fileNames = selectedFiles.map(f => f.name).join(', ');
+      const truncatedNames = fileNames.length > 50 ? fileNames.substring(0, 50) + '...' : fileNames;
+      
+      // Update only the content, keep the same structure
+      const statusSpan = attachmentArea.querySelector('.text-muted, .text-success');
+      if (statusSpan) {
+        statusSpan.className = 'text-muted';
+        statusSpan.textContent = `${selectedFiles.length} file(s) selected: ${truncatedNames}`;
+      }
+      
+      // Enable upload button
+      const currentUploadBtn = attachmentArea.querySelector('.btn-primary');
+      if (currentUploadBtn) {
+        currentUploadBtn.disabled = false;
+        currentUploadBtn.innerHTML = 'Upload';
+      }
+    }
+  });
+  
+  // Upload button handler
+  newUploadBtn.addEventListener('click', async function(e) {
+    e.preventDefault();
+    console.log('[DEBUG] Upload button clicked, files:', selectedFiles.length);
+    
+    if (selectedFiles.length === 0) {
+      alert('Please select files to upload.');
+      return;
+    }
+    
+    // Disable upload button during upload
+    const currentUploadBtn = e.target;
+    currentUploadBtn.disabled = true;
+    currentUploadBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Uploading...';
+    
+    let uploadedCount = 0;
+    
+    try {
+      for (const file of selectedFiles) {
+        // Validate file size (10MB max)
+        if (file.size > 10 * 1024 * 1024) {
+          alert(`File ${file.name} is too large. Maximum size is 10MB.`);
+          continue;
+        }
+        
+        // Upload to CDN
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        console.log('[DEBUG] Uploading file to CDN:', file.name);
+        const cdnResponse = await fetch('http://localhost:4001/upload', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!cdnResponse.ok) {
+          throw new Error(`Failed to upload ${file.name} to CDN`);
+        }
+        
+        const cdnResult = await cdnResponse.json();
+        console.log('[DEBUG] CDN upload result:', cdnResult);
+        
+        // Associate file with task
+        const attachmentData = {
+          file_name: file.name,
+          file_path: cdnResult.url,
+          file_size: file.size,
+          mime_type: file.type || 'application/octet-stream',
+          uploaded_by: window.currentUserId,
+          task_id: task.id
+        };
+        
+        console.log('[DEBUG] Creating task attachment:', attachmentData);
+        const attachResponse = await fetch(`/api/tasks/${task.id}/attachments`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify(attachmentData)
+        });
+        
+        if (!attachResponse.ok) {
+          throw new Error(`Failed to associate ${file.name} with task`);
+        }
+        
+        uploadedCount++;
+        console.log('[DEBUG] File successfully attached to task:', file.name);
+      }
+      
+      // Reset form and show success
+      selectedFiles = [];
+      fileInput.value = '';
+      
+      // Update UI to show success
+      const statusSpan = attachmentArea.querySelector('.text-muted, .text-success');
+      if (statusSpan) {
+        statusSpan.className = 'text-success';
+        statusSpan.textContent = `✓ ${uploadedCount} file(s) uploaded successfully!`;
+      }
+      
+      // Update attachment count badge
+      const attachmentBadge = document.querySelector('.task-section .section-header .badge');
+      if (attachmentBadge) {
+        // Fetch current attachment count
+        try {
+          const response = await fetch(`/api/tasks/${task.id}/attachments`, {
+            credentials: 'include'
+          });
+          if (response.ok) {
+            const attachments = await response.json();
+            attachmentBadge.textContent = attachments.length;
+          }
+        } catch (error) {
+          console.warn('Failed to update attachment count:', error);
+        }
+      }
+      
+      // Update Files tab if visible
+      if (typeof loadProjectFiles === 'function') {
+        await loadProjectFiles();
+      }
+      
+    } catch (error) {
+      console.error('[DEBUG] Upload error:', error);
+      alert('Failed to upload files: ' + error.message);
+      
+      // Show error in UI
+      const statusSpan = attachmentArea.querySelector('.text-muted, .text-success');
+      if (statusSpan) {
+        statusSpan.className = 'text-danger';
+        statusSpan.textContent = 'Upload failed. Please try again.';
+      }
+    } finally {
+      // Re-enable upload button
+      currentUploadBtn.disabled = false;
+      currentUploadBtn.innerHTML = 'Upload';
+    }
+  });
+  
+  // Drag and drop support
+  attachmentArea.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    attachmentArea.classList.add('drag-over');
+  });
+  
+  attachmentArea.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    attachmentArea.classList.remove('drag-over');
+  });
+  
+  attachmentArea.addEventListener('drop', function(e) {
+    e.preventDefault();
+    attachmentArea.classList.remove('drag-over');
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      selectedFiles = files;
+      const fileNames = files.map(f => f.name).join(', ');
+      const truncatedNames = fileNames.length > 50 ? fileNames.substring(0, 50) + '...' : fileNames;
+      
+      const statusSpan = attachmentArea.querySelector('.text-muted, .text-success');
+      if (statusSpan) {
+        statusSpan.className = 'text-muted';
+        statusSpan.textContent = `${files.length} file(s) dropped: ${truncatedNames}`;
+      }
+      
+      const currentUploadBtn = attachmentArea.querySelector('.btn-primary');
+      if (currentUploadBtn) {
+        currentUploadBtn.disabled = false;
+        currentUploadBtn.innerHTML = 'Upload';
+      }
+    }
+  });
+  
+  console.log('[DEBUG] Attachment handlers initialized successfully');
 }
+
+// --- Enhanced Upload Logic: Progress Bar, Loading Spinner, Error State ---
+// Patch the upload logic to show progress, loading, and error UI
+// Find the upload handler (where uploadBtn is clicked)
+// This code assumes the upload button event is set up as in previous code
+const originalUploadHandler = async function(task, selectedFiles, fileInput, attachmentArea, currentUploadBtn) {
+  let uploadedCount = 0;
+  try {
+    // Show loading spinner
+    let statusSpan = attachmentArea.querySelector('.text-muted, .text-success, .attachment-error');
+    if (!statusSpan) {
+      statusSpan = document.createElement('span');
+      statusSpan.className = 'attachment-loading';
+      attachmentArea.appendChild(statusSpan);
+    }
+    statusSpan.className = 'attachment-loading';
+    statusSpan.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading...';
+
+    for (const file of selectedFiles) {
+      // Validate file size (10MB max)
+      if (file.size > 10 * 1024 * 1024) {
+        statusSpan.className = 'attachment-error';
+        statusSpan.textContent = `File ${file.name} is too large. Maximum size is 10MB.`;
+        continue;
+      }
+
+      // Progress bar
+      let progressBar = document.createElement('div');
+      progressBar.className = 'progress my-2';
+      progressBar.innerHTML = '<div class="progress-bar" role="progressbar" style="width: 0%">0%</div>';
+      attachmentArea.appendChild(progressBar);
+
+      // Upload to CDN with progress
+      const formData = new FormData();
+      formData.append('file', file);
+
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'http://localhost:4001/upload');
+        xhr.upload.onprogress = function(e) {
+          if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            progressBar.querySelector('.progress-bar').style.width = percent + '%';
+            progressBar.querySelector('.progress-bar').textContent = percent + '%';
+          }
+        };
+        xhr.onload = function() {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(JSON.parse(xhr.responseText));
+          } else {
+            progressBar.querySelector('.progress-bar').classList.add('bg-danger');
+            progressBar.querySelector('.progress-bar').textContent = 'Error';
+            statusSpan.className = 'attachment-error';
+            statusSpan.textContent = `Failed to upload ${file.name} to CDN.`;
+            reject(new Error(`Failed to upload ${file.name} to CDN`));
+          }
+        };
+        xhr.onerror = function() {
+          progressBar.querySelector('.progress-bar').classList.add('bg-danger');
+          progressBar.querySelector('.progress-bar').textContent = 'Error';
+          statusSpan.className = 'attachment-error';
+          statusSpan.textContent = `Network error uploading ${file.name}.`;
+          reject(new Error(`Network error uploading ${file.name}`));
+        };
+        xhr.send(formData);
+      }).then(async (cdnResult) => {
+        // Associate file with task
+        const attachmentData = {
+          file_name: file.name,
+          file_path: cdnResult.url,
+          file_size: file.size,
+          mime_type: file.type || 'application/octet-stream',
+          uploaded_by: window.currentUserId,
+          task_id: task.id
+        };
+        const attachResponse = await fetch(`/api/tasks/${task.id}/attachments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(attachmentData)
+        });
+        if (!attachResponse.ok) {
+          progressBar.querySelector('.progress-bar').classList.add('bg-danger');
+          progressBar.querySelector('.progress-bar').textContent = 'Error';
+          statusSpan.className = 'attachment-error';
+          statusSpan.textContent = `Failed to associate ${file.name} with task.`;
+          throw new Error(`Failed to associate ${file.name} with task`);
+        }
+        progressBar.querySelector('.progress-bar').classList.add('bg-success');
+        progressBar.querySelector('.progress-bar').textContent = 'Done';
+        uploadedCount++;
+      }).catch((err) => {
+        // Already handled above
+      });
+    }
+
+    // Reset form and show success
+    selectedFiles = [];
+    fileInput.value = '';
+    statusSpan.className = 'text-success';
+    statusSpan.textContent = `✓ ${uploadedCount} file(s) uploaded successfully!`;
+
+    // Remove progress bars after short delay
+    setTimeout(() => {
+      attachmentArea.querySelectorAll('.progress').forEach(el => el.remove());
+    }, 1000);
+
+    // Update attachment count badge
+    const attachmentBadge = document.querySelector('.task-section .section-header .badge');
+    if (attachmentBadge) {
+      try {
+        const response = await fetch(`/api/tasks/${task.id}/attachments`, { credentials: 'include' });
+        if (response.ok) {
+          const attachments = await response.json();
+          attachmentBadge.textContent = attachments.length;
+        }
+      } catch (error) {
+        // Silent fail
+      }
+    }
+
+    // Update Files tab if visible
+    if (typeof loadProjectFiles === 'function') {
+      await loadProjectFiles();
+    }
+  } catch (error) {
+    console.error('[DEBUG] Upload error:', error);
+    let statusSpan = attachmentArea.querySelector('.text-muted, .text-success, .attachment-error');
+    if (!statusSpan) {
+      statusSpan = document.createElement('span');
+      attachmentArea.appendChild(statusSpan);
+    }
+    statusSpan.className = 'attachment-error';
+    statusSpan.textContent = 'Upload failed: ' + error.message;
+  } finally {
+    // Re-enable upload button
+    if (currentUploadBtn) {
+      currentUploadBtn.disabled = false;
+      currentUploadBtn.innerHTML = 'Upload';
+    }
+  }
+};

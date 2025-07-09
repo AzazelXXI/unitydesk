@@ -154,6 +154,33 @@
   border-color: #007bff !important;
 }
 
+.attachment-area {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.attachment-area:hover {
+  background-color: #e9ecef !important;
+  border-color: #007bff !important;
+}
+
+.attachment-area.drag-over {
+  background-color: #e3f2fd !important;
+  border-color: #2196f3 !important;
+  border-style: solid !important;
+}
+
+.attachment-area.drag-over::before {
+  content: "Drop files here";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-weight: bold;
+  color: #2196f3;
+  z-index: 10;
+}
+
 /* Comments Area Styles */
 .task-section-container .comment-form {
   border: 1px solid #e9ecef;
