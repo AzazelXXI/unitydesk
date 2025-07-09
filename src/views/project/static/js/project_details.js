@@ -46,23 +46,58 @@ function renderCommentItem(comment) {
 async function loadCommentsForTask(taskId) {
   const commentsArea = document.querySelector('.comments-area');
   if (!commentsArea) return;
-  commentsArea.innerHTML = '<div class="text-center text-muted py-3"><i class="bi bi-chat-dots" style="font-size: 2rem;"></i><p class="mb-0 mt-2">Loading comments...</p></div>';
+  // Always keep the comment form at the top
+  let commentForm = commentsArea.querySelector('.comment-form');
+  if (!commentForm) {
+    // If not present, create and insert it
+    commentForm = document.createElement('div');
+    commentForm.className = 'comment-form mb-3';
+    commentForm.innerHTML = `
+      <textarea class="form-control" rows="3" placeholder="Add a comment..."></textarea>
+      <div class="d-flex justify-content-end mt-2">
+        <button class="btn btn-primary btn-sm">
+          <i class="bi bi-send me-1"></i>Post Comment
+        </button>
+      </div>
+    `;
+    commentsArea.prepend(commentForm);
+    // (Re-)initialize comment form logic
+    if (typeof initializeCommentForm === 'function') {
+      initializeCommentForm(taskId);
+    }
+  }
+  // Remove all comments except the form
+  Array.from(commentsArea.children).forEach(child => {
+    if (!child.classList.contains('comment-form')) child.remove();
+  });
+  // Show loading state
+  const loadingDiv = document.createElement('div');
+  loadingDiv.className = 'text-center text-muted py-3';
+  loadingDiv.innerHTML = '<i class="bi bi-chat-dots" style="font-size: 2rem;"></i><p class="mb-0 mt-2">Loading comments...</p>';
+  commentsArea.appendChild(loadingDiv);
   try {
     const res = await fetch(`/api/tasks/${taskId}/comments`, { credentials: 'include' });
     if (!res.ok) throw new Error('Failed to fetch comments');
     const comments = await res.json();
-    commentsArea.innerHTML = '';
+    loadingDiv.remove();
     if (!comments.length) {
-      commentsArea.innerHTML = '<div class="text-center text-muted py-3"><i class="bi bi-chat-dots" style="font-size: 2rem;"></i><p class="mb-0 mt-2">No comments yet. Be the first to add one!</p></div>';
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = 'text-center text-muted py-3';
+      emptyDiv.innerHTML = '<i class="bi bi-chat-dots" style="font-size: 2rem;"></i><p class="mb-0 mt-2">No comments yet. Be the first to add one!</p>';
+      commentsArea.appendChild(emptyDiv);
       updateCommentCountBadge(0);
       return;
     }
     for (const c of comments) {
-      commentsArea.insertAdjacentHTML('beforeend', renderCommentItem(c));
+      commentsArea.appendChild(document.createRange().createContextualFragment(renderCommentItem(c)));
     }
     updateCommentCountBadge(comments.length);
   } catch (err) {
-    commentsArea.innerHTML = `<div class="alert alert-danger mt-2">Failed to load comments.</div>`;
+    loadingDiv.remove();
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'alert alert-danger mt-2';
+    errorDiv.textContent = 'Failed to load comments.';
+    commentsArea.appendChild(errorDiv);
   }
 }
 
@@ -503,7 +538,7 @@ function initializeTaskModal() {
             <div class="section-header d-flex align-items-center mb-3">
               <i class="bi bi-chat-dots me-2 text-primary"></i>
               <h5 class="section-title mb-0">Comments</h5>
-              <span class="badge bg-secondary ms-2">0</span>
+              <span class="badge bg-secondary ms-2 comment-count-badge">0</span>
             </div>
             <div class="section-content">
               <div class="comments-area">
@@ -514,10 +549,6 @@ function initializeTaskModal() {
                       <i class="bi bi-send me-1"></i>Post Comment
                     </button>
                   </div>
-                </div>
-                <div class="text-center text-muted py-3">
-                  <i class="bi bi-chat-dots" style="font-size: 2rem;"></i>
-                  <p class="mb-0 mt-2">No comments yet. Be the first to add one!</p>
                 </div>
               </div>
             </div>
@@ -1230,6 +1261,8 @@ function initializeTaskModal() {
       initializeAttachmentHandlers(task);
       // Initialize comment form logic for this task
       initializeCommentForm(task.id);
+      // Load and render comments for this task
+      loadCommentsForTask(task.id);
     }, 0);
 // --- Comment Form Logic ---
 function initializeCommentForm(taskId) {
@@ -1397,10 +1430,6 @@ function initializeCommentForm(taskId) {
           errorMsg = `Failed to upload ${escapeHTML(file.name)}`;
         }
       }
-    }
-    // Deduplicate attachment IDs before sending to backend
-    if (uploadedAttachmentIds.length > 0) {
-      uploadedAttachmentIds = Array.from(new Set(uploadedAttachmentIds));
     }
     // Post comment
     try {
