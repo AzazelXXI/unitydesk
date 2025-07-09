@@ -1,3 +1,97 @@
+// --- Comment System: Render, Sanitize, and Attachments ---
+// Escape HTML utility
+function escapeHTML(str) {
+  return (str || '').replace(/[&<>"']/g, function(tag) {
+    const charsToReplace = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    };
+    return charsToReplace[tag] || tag;
+  });
+}
+
+// Render a single comment (text + attachments)
+function renderCommentItem(comment) {
+  const userName = comment.user?.name || 'User';
+  const createdAt = new Date(comment.created_at).toLocaleString();
+  const content = escapeHTML(comment.content || '').replace(/\n/g, '<br>');
+  let html = `<div class="comment mb-3 p-2 border rounded">
+    <div class="d-flex align-items-center mb-1">
+      <div class="fw-bold me-2">${escapeHTML(userName)}</div>
+      <span class="text-muted small">${createdAt}</span>
+    </div>
+    <div class="mb-1 comment-text">${content}</div>`;
+  if (comment.attachments && comment.attachments.length > 0) {
+    html += '<div class="comment-attachments mb-1 d-flex flex-wrap">';
+    for (const a of comment.attachments) {
+      let url = a.url || a.file_path || '';
+      if (url && !url.startsWith('http')) url = 'http://localhost:4001' + url;
+      if ((a.mime_type || a.mimetype || '').startsWith('image/')) {
+        html += `<a href="${url}" target="_blank" class="me-2 mb-2"><img src="${url}" style="max-width:80px;max-height:80px;border-radius:6px;border:1px solid #ccc;object-fit:cover;" alt="${escapeHTML(a.file_name || a.filename || '')}"></a>`;
+      } else {
+        const fname = escapeHTML(a.file_name || a.filename || 'file');
+        html += `<div class="me-2 mb-2"><i class="bi bi-paperclip"></i> <a href="${url}" target="_blank">${fname}</a></div>`;
+      }
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+// Render all comments for a task
+async function loadCommentsForTask(taskId) {
+  const commentsArea = document.querySelector('.comments-area');
+  if (!commentsArea) return;
+  commentsArea.innerHTML = '<div class="text-center text-muted py-3"><i class="bi bi-chat-dots" style="font-size: 2rem;"></i><p class="mb-0 mt-2">Loading comments...</p></div>';
+  try {
+    const res = await fetch(`/api/tasks/${taskId}/comments`, { credentials: 'include' });
+    if (!res.ok) throw new Error('Failed to fetch comments');
+    const comments = await res.json();
+    commentsArea.innerHTML = '';
+    if (!comments.length) {
+      commentsArea.innerHTML = '<div class="text-center text-muted py-3"><i class="bi bi-chat-dots" style="font-size: 2rem;"></i><p class="mb-0 mt-2">No comments yet. Be the first to add one!</p></div>';
+      updateCommentCountBadge(0);
+      return;
+    }
+    for (const c of comments) {
+      commentsArea.insertAdjacentHTML('beforeend', renderCommentItem(c));
+    }
+    updateCommentCountBadge(comments.length);
+  } catch (err) {
+    commentsArea.innerHTML = `<div class="alert alert-danger mt-2">Failed to load comments.</div>`;
+  }
+}
+
+// Add a new comment to the list (after posting)
+function addNewCommentToList(comment) {
+  const commentsArea = document.querySelector('.comments-area');
+  if (!commentsArea) return;
+  // Remove empty state if present
+  commentsArea.querySelector('.text-center.text-muted')?.remove();
+  commentsArea.insertAdjacentHTML('beforeend', renderCommentItem(comment));
+  updateCommentCountBadge();
+}
+
+// Update the comment count badge
+function updateCommentCountBadge(count) {
+  const badge = document.querySelector('.comment-count-badge');
+  if (badge) {
+    if (typeof count === 'undefined') {
+      // Try to count rendered comments
+      const commentsArea = document.querySelector('.comments-area');
+      if (commentsArea) {
+        count = commentsArea.querySelectorAll('.comment').length;
+      } else {
+        count = 0;
+      }
+    }
+    badge.textContent = count;
+  }
+}
 // --- Utility Functions ---
 /**
  * Extract project ID from the current URL
@@ -1134,7 +1228,252 @@ function initializeTaskModal() {
     // Initialize attachment handlers after modal is rendered
     setTimeout(function() {
       initializeAttachmentHandlers(task);
+      // Initialize comment form logic for this task
+      initializeCommentForm(task.id);
     }, 0);
+// --- Comment Form Logic ---
+function initializeCommentForm(taskId) {
+  // Always select the latest visible .comment-form in the modal (avoid old handlers)
+  const forms = document.querySelectorAll('.comment-form');
+  let form = null;
+  if (forms.length === 1) {
+    form = forms[0];
+  } else if (forms.length > 1) {
+    // Pick the one that is visible (not display:none)
+    form = Array.from(forms).find(f => f.offsetParent !== null);
+  }
+  if (!form) return;
+  // Remove any previous submit handler to avoid double submit
+  form.onsubmit = null;
+  // Remove any previous click handler on the send button
+  const textarea = form.querySelector('textarea');
+  const sendBtn = form.querySelector('button.btn-primary');
+  if (sendBtn) {
+    sendBtn.onclick = null;
+  }
+  // Attachment preview area
+  let previewArea = form.querySelector('.comment-attachment-preview');
+  if (!previewArea) {
+    previewArea = document.createElement('div');
+    previewArea.className = 'comment-attachment-preview d-flex flex-wrap mb-2';
+    form.insertBefore(previewArea, form.querySelector('.d-flex'));
+  }
+  let attachments = [];
+  let uploading = false;
+  // Helper: update send button state
+  function updateSendBtn() {
+    sendBtn.disabled = uploading || (!textarea.value.trim() && attachments.length === 0);
+  }
+  // Helper: render attachment preview
+  function renderPreview() {
+    previewArea.innerHTML = '';
+    attachments.forEach((file, idx) => {
+      const isImage = file.type && file.type.startsWith('image/');
+      const url = file.previewUrl || '';
+      const el = document.createElement('div');
+      el.className = 'me-2 mb-2 position-relative';
+      if (isImage && url) {
+        el.innerHTML = `<img src="${url}" alt="${escapeHTML(file.name)}" class="img-thumbnail" style="max-width:60px;max-height:60px;object-fit:cover;">`;
+      } else {
+        el.innerHTML = `<div class="border rounded bg-light px-2 py-1 small"><i class="bi bi-paperclip me-1"></i>${escapeHTML(file.name)}</div>`;
+      }
+      // Remove button
+      const rmBtn = document.createElement('button');
+      rmBtn.type = 'button';
+      rmBtn.className = 'btn btn-sm btn-danger position-absolute top-0 end-0 p-0 m-0';
+      rmBtn.style.width = '18px';
+      rmBtn.style.height = '18px';
+      rmBtn.innerHTML = '<i class="bi bi-x"></i>';
+      rmBtn.onclick = () => {
+        attachments.splice(idx, 1);
+        renderPreview();
+        updateSendBtn();
+      };
+      el.appendChild(rmBtn);
+      previewArea.appendChild(el);
+    });
+  }
+  // File input for attachments
+  let fileInput = form.querySelector('input[type="file"]');
+  if (!fileInput) {
+    fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.multiple = true;
+    fileInput.accept = '.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.jpg,.jpeg,.png,.gif,.mp4,.mov,.avi';
+    fileInput.style.display = 'none';
+    form.appendChild(fileInput);
+  }
+  // Add file via file input
+  fileInput.addEventListener('change', e => {
+    for (const file of Array.from(e.target.files)) {
+      if (file.size > 10 * 1024 * 1024) continue;
+      file.previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : '';
+      attachments.push(file);
+    }
+    renderPreview();
+    updateSendBtn();
+    fileInput.value = '';
+  });
+  // Add file via paste
+  textarea.addEventListener('paste', e => {
+    if (e.clipboardData && e.clipboardData.files.length > 0) {
+      for (const file of Array.from(e.clipboardData.files)) {
+        if (file.size > 10 * 1024 * 1024) continue;
+        file.previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : '';
+        attachments.push(file);
+      }
+      renderPreview();
+      updateSendBtn();
+      e.preventDefault();
+    }
+  });
+  // Add file via drag-drop
+  form.addEventListener('dragover', e => {
+    e.preventDefault();
+    form.classList.add('drag-over');
+  });
+  form.addEventListener('dragleave', e => {
+    e.preventDefault();
+    form.classList.remove('drag-over');
+  });
+  form.addEventListener('drop', e => {
+    e.preventDefault();
+    form.classList.remove('drag-over');
+    if (e.dataTransfer && e.dataTransfer.files.length > 0) {
+      for (const file of Array.from(e.dataTransfer.files)) {
+        if (file.size > 10 * 1024 * 1024) continue;
+        file.previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : '';
+        attachments.push(file);
+      }
+      renderPreview();
+      updateSendBtn();
+    }
+  });
+  // Click to open file input
+  previewArea.addEventListener('click', e => {
+    if (e.target === previewArea) fileInput.click();
+  });
+  // Add a button to open file input
+  let addBtn = form.querySelector('.add-attachment-btn');
+  if (!addBtn) {
+    addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'btn btn-outline-secondary btn-sm add-attachment-btn mb-2';
+    addBtn.innerHTML = '<i class="bi bi-paperclip"></i> Add file';
+    form.insertBefore(addBtn, previewArea);
+  }
+  addBtn.onclick = () => fileInput.click();
+  // Send button logic
+  textarea.addEventListener('input', updateSendBtn);
+  updateSendBtn();
+  // Post comment handler (works for both Enter and button click)
+  async function handleCommentSubmit(e) {
+    if (e) e.preventDefault();
+    if (uploading) return;
+    uploading = true;
+    updateSendBtn();
+    sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Posting...';
+    sendBtn.disabled = true;
+    // Debug: log submit event
+    console.debug('[CommentForm] Submitting comment', { text: textarea.value, attachments });
+    // Upload attachments to CDN first
+    let uploadedAttachmentIds = [];
+    let errorMsg = '';
+    if (attachments.length > 0) {
+      for (const file of attachments) {
+        if (file.size > 10 * 1024 * 1024) {
+          errorMsg = `File ${escapeHTML(file.name)} is too large.`;
+          continue;
+        }
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+          const res = await fetch('http://localhost:4001/upload', { method: 'POST', body: formData });
+          if (!res.ok) throw new Error('Upload failed');
+          const data = await res.json();
+          if (!data.id) throw new Error('No id returned');
+          uploadedAttachmentIds.push(data.id);
+        } catch (err) {
+          errorMsg = `Failed to upload ${escapeHTML(file.name)}`;
+        }
+      }
+    }
+    // Deduplicate attachment IDs before sending to backend
+    if (uploadedAttachmentIds.length > 0) {
+      uploadedAttachmentIds = Array.from(new Set(uploadedAttachmentIds));
+    }
+    // Post comment
+    try {
+      // Build payload according to backend schema: content, task_id, user_id, attachment_ids (if any)
+      const payload = {
+        content: textarea.value.trim(),
+        task_id: taskId,
+        user_id: window.currentUserId
+      };
+      if (uploadedAttachmentIds.length > 0) {
+        payload.attachment_ids = uploadedAttachmentIds;
+      }
+      const res = await fetch(`/api/tasks/${taskId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        // Try to extract error message from backend
+        let msg = 'Failed to post comment.';
+        try {
+          const errData = await res.json();
+          if (errData && errData.detail) msg = typeof errData.detail === 'string' ? errData.detail : JSON.stringify(errData.detail);
+        } catch {}
+        throw new Error(msg);
+      }
+      let comment = await res.json();
+      // If comment is an array, take the first element (defensive, backend bug)
+      if (Array.isArray(comment)) comment = comment[0];
+      // Defensive: if comment is an object with only one key and that key is an array, use that array's first element
+      if (comment && typeof comment === 'object' && Object.keys(comment).length === 1) {
+        const val = comment[Object.keys(comment)[0]];
+        if (Array.isArray(val)) comment = val[0];
+      }
+      // If comment is still not an object, show error
+      if (!comment || typeof comment !== 'object') {
+        throw new Error('Invalid comment response from server.');
+      }
+      addNewCommentToList(comment);
+      textarea.value = '';
+      attachments = [];
+      renderPreview();
+      errorMsg = '';
+    } catch (err) {
+      errorMsg = err.message || 'Failed to post comment.';
+    }
+    // Show error if any
+    let errorArea = form.querySelector('.comment-error-msg');
+    if (!errorArea) {
+      errorArea = document.createElement('div');
+      errorArea.className = 'comment-error-msg text-danger small mt-1';
+      form.insertBefore(errorArea, previewArea.nextSibling);
+    }
+    errorArea.textContent = errorMsg;
+    if (!errorMsg) errorArea.textContent = '';
+    uploading = false;
+    sendBtn.innerHTML = '<i class="bi bi-send me-1"></i>Post Comment';
+    updateSendBtn();
+    textarea.focus();
+  }
+
+  // Attach both submit and click handler for robustness
+  form.onsubmit = handleCommentSubmit;
+  if (sendBtn) {
+    sendBtn.onclick = function(e) {
+      // Only trigger if not disabled
+      if (!sendBtn.disabled) {
+        handleCommentSubmit(e);
+      }
+    };
+  }
+}
   }
 
   // Make loadTaskDetails available globally for potential external calls
