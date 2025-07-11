@@ -26,8 +26,6 @@ UnityDesk is built on a microservices architecture using containerized services 
 - **Frontend**: Jinja2 templates (server-rendered via FastAPI), JavaScript (vanilla and Bootstrap)
 - **Backend**: FastAPI microservices
 - **Database**: PostgreSQL for relational data  
-- **Storage**: MinIO object storage for files
-- **Messaging**: RabbitMQ/Kafka for inter-service communication
 - **Real-time**: WebSockets for real-time updates and notifications
 - **Video**: WebRTC for video conferencing with signaling and STUN/TURN servers
 

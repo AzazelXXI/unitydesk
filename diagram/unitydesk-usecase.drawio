@@ -1,0 +1,133 @@
+<mxfile host="65bd71144e">
+    <diagram name="UseCase Diagram" id="simple-usecase">
+        <mxGraphModel dx="2323" dy="2103" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="inc_login_messenger" value="«include»" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000FF;fontSize=12;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="uc_messenger" target="uc_login">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="actor_manager" value="Project Manager" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+                    <mxGeometry x="-540" y="230" width="30" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="actor_member" value="Member" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+                    <mxGeometry x="730" y="110" width="30" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc_login" value="Login/Logout" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="-440" width="140" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc_project" value="Project Management" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="354" y="-110" width="140" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc_task" value="Task Management" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="-120" width="140" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc_messenger" value="Messenger" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="-420" y="510" width="140" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc_meeting" value="Meeting/Calendar" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="-210" y="535" width="140" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc_video" value="Video Conference" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="20" y="535" width="140" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc_docs" value="Docs" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="-160" y="-90" width="140" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc_drive" value="Cloud Drive" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="600" y="400" width="140" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc_email" value="Email" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="240" y="520" width="140" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc_approvals" value="Approvals" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="470" width="140" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="inc_login_project" value="«include»" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000FF;fontSize=12;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="uc_project" target="uc_login">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="inc_login_task" value="«include»" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000FF;fontSize=12;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="uc_task" target="uc_login">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="inc_login_meeting" value="«include»" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000FF;fontSize=12;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="uc_meeting" target="uc_login">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="inc_login_video" value="«include»" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000FF;fontSize=12;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="uc_video" target="uc_login">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="inc_login_docs" value="«include»" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000FF;fontSize=12;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="uc_docs" target="uc_login">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="inc_login_drive" value="«include»" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000FF;fontSize=12;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="uc_drive" target="uc_login">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="inc_login_email" value="«include»" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000FF;fontSize=12;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="uc_email" target="uc_login">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="inc_login_approvals" value="«include»" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000FF;fontSize=12;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="uc_approvals" target="uc_login">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="ext_task_approvals" value="«extend»" style="dashed=1;endArrow=open;html=1;strokeColor=#FF0000;fontSize=12;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="uc_approvals" target="uc_task">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_manager_login" style="endArrow=none;html=1;" edge="1" parent="1" source="actor_manager" target="uc_login">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_manager_project" style="endArrow=none;html=1;" edge="1" parent="1" source="actor_manager" target="uc_project">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_manager_task" style="endArrow=none;html=1;" edge="1" parent="1" source="actor_manager" target="uc_task">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_manager_messenger" style="endArrow=none;html=1;" edge="1" parent="1" source="actor_manager" target="uc_messenger">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_manager_meeting" style="endArrow=none;html=1;" edge="1" parent="1" source="actor_manager" target="uc_meeting">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_manager_video" style="endArrow=none;html=1;" edge="1" parent="1" source="actor_manager" target="uc_video">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_manager_docs" style="endArrow=none;html=1;" edge="1" parent="1" source="actor_manager" target="uc_docs">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_manager_drive" style="endArrow=none;html=1;" edge="1" parent="1" source="actor_manager" target="uc_drive">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_manager_email" style="endArrow=none;html=1;" edge="1" parent="1" source="actor_manager" target="uc_email">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_manager_approvals" style="endArrow=none;html=1;" edge="1" parent="1" source="actor_manager" target="uc_approvals">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_member_login" style="endArrow=none;html=1;" edge="1" parent="1" source="actor_member" target="uc_login">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_member_project" style="endArrow=none;html=1;" edge="1" parent="1" source="actor_member" target="uc_project">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_member_task" style="endArrow=none;html=1;" edge="1" parent="1" source="actor_member" target="uc_task">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_member_messenger" style="endArrow=none;html=1;" edge="1" parent="1" source="actor_member" target="uc_messenger">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_member_meeting" style="endArrow=none;html=1;" edge="1" parent="1" source="actor_member" target="uc_meeting">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_member_video" style="endArrow=none;html=1;" edge="1" parent="1" source="actor_member" target="uc_video">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_member_docs" style="endArrow=none;html=1;" edge="1" parent="1" source="actor_member" target="uc_docs">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_member_drive" style="endArrow=none;html=1;" edge="1" parent="1" source="actor_member" target="uc_drive">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_member_email" style="endArrow=none;html=1;" edge="1" parent="1" source="actor_member" target="uc_email">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

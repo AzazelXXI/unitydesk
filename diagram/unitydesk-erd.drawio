@@ -1,0 +1,436 @@
+<mxfile host="65bd71144e">
+    <diagram name="ERD Diagram" id="unitydesk-erd">
+        <mxGraphModel dx="1735" dy="548" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="user_entity" value="User" style="whiteSpace=wrap;html=1;align=center;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="100" y="100" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_id" value="user_id" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=4;" parent="1" vertex="1">
+                    <mxGeometry x="130" y="30" width="60" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_email" value="email" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="70" y="50" width="50" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_name" value="name" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="20" y="85" width="50" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_status" value="status" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="20" y="150" width="50" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_roles" value="roles" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="180" width="50" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_id_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="user_id" target="user_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_email_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="user_email" target="user_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_name_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="user_name" target="user_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_status_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="user_status" target="user_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_roles_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="user_roles" target="user_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_entity" value="Project" style="whiteSpace=wrap;html=1;align=center;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="470" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_id" value="project_id" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=4;" parent="1" vertex="1">
+                    <mxGeometry x="-40" y="440" width="70" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_name" value="name" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="430" width="50" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_desc" value="description" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="110" y="430" width="70" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_status" value="status" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="-90" y="480" width="50" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_start" value="start_date" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="540" width="70" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_end" value="end_date" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="-40" y="515" width="60" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_id_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="project_id" target="project_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_name_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="project_name" target="project_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_desc_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="project_desc" target="project_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_status_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="project_status" target="project_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_start_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="project_start" target="project_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_end_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="project_end" target="project_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="task_entity" value="Task" style="whiteSpace=wrap;html=1;align=center;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="790" y="670" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="task_id" value="task_id" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=4;" parent="1" vertex="1">
+                    <mxGeometry x="750" y="630" width="60" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="task_title" value="title" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="810" y="630" width="50" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="task_desc" value="description" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="870" y="630" width="70" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="task_status" value="status" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="890" y="710" width="50" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="task_priority" value="priority" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="890" y="750" width="60" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="task_due" value="due_date" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="870" y="790" width="60" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="task_project_fk" value="project_id" style="ellipse;whiteSpace=wrap;html=1;align=center;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="810" y="790" width="70" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="task_assignee_fk" value="assignee_id" style="ellipse;whiteSpace=wrap;html=1;align=center;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="750" y="770" width="70" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="task_id_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="task_id" target="task_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="task_title_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="task_title" target="task_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="task_desc_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="task_desc" target="task_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="task_status_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="task_status" target="task_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="task_priority_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="task_priority" target="task_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="task_due_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="task_due" target="task_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="task_project_fk_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="task_project_fk" target="task_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="task_assignee_fk_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="task_assignee_fk" target="task_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="chat_entity" value="Chat" style="whiteSpace=wrap;html=1;align=center;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="730" y="40" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="chat_id" value="chat_id" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=4;" parent="1" vertex="1">
+                    <mxGeometry x="680" width="60" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="chat_type" value="type" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="750" width="50" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="chat_name" value="name" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="810" width="50" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="chat_avatar" value="avatar" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="830" y="80" width="50" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="chat_created" value="created_at" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="830" y="120" width="70" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="chat_id_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="chat_id" target="chat_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="chat_type_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="chat_type" target="chat_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="chat_name_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="chat_name" target="chat_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="chat_avatar_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="chat_avatar" target="chat_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="chat_created_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="chat_created" target="chat_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="message_entity" value="Message" style="whiteSpace=wrap;html=1;align=center;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="1050" y="220" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="message_id" value="message_id" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=4;" parent="1" vertex="1">
+                    <mxGeometry x="1010" y="180" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="message_content" value="content" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="1090" y="180" width="60" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="message_timestamp" value="timestamp" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="1150" y="180" width="70" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="message_status" value="status" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="1150" y="260" width="50" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="message_chat_fk" value="chat_id" style="ellipse;whiteSpace=wrap;html=1;align=center;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="1090" y="300" width="60" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="message_sender_fk" value="sender_id" style="ellipse;whiteSpace=wrap;html=1;align=center;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="1010" y="300" width="70" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="message_id_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="message_id" target="message_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="message_content_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="message_content" target="message_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="message_timestamp_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="message_timestamp" target="message_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="message_status_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="message_status" target="message_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="message_chat_fk_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="message_chat_fk" target="message_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="message_sender_fk_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="message_sender_fk" target="message_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="document_entity" value="Document" style="whiteSpace=wrap;html=1;align=center;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="750" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="document_id" value="document_id" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=4;" parent="1" vertex="1">
+                    <mxGeometry x="460" y="740" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="document_title" value="title" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="320" y="710" width="50" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="document_content" value="content" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="380" y="710" width="60" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="document_type" value="type" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="790" width="50" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="document_size" value="size" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="830" width="50" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="document_created" value="created_at" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="380" y="870" width="70" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="document_owner_fk" value="owner_id" style="ellipse;whiteSpace=wrap;html=1;align=center;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="320" y="870" width="60" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="document_id_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="document_id" target="document_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="document_title_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="document_title" target="document_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="document_content_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="document_content" target="document_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="document_type_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="document_type" target="document_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="document_size_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="document_size" target="document_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="document_created_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="document_created" target="document_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="document_owner_fk_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="document_owner_fk" target="document_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="event_entity" value="Event" style="whiteSpace=wrap;html=1;align=center;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="1130" y="465" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="event_id" value="event_id" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=4;" parent="1" vertex="1">
+                    <mxGeometry x="1080" y="425" width="60" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="event_title" value="title" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="1150" y="425" width="50" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="event_desc" value="description" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="1210" y="425" width="70" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="event_start" value="start_time" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="1230" y="505" width="70" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="event_end" value="end_time" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="1230" y="545" width="60" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="event_location" value="location" style="ellipse;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="1210" y="585" width="60" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="event_organizer_fk" value="organizer_id" style="ellipse;whiteSpace=wrap;html=1;align=center;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="1150" y="585" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="event_id_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="event_id" target="event_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="event_title_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="event_title" target="event_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="event_desc_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="event_desc" target="event_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="event_start_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="event_start" target="event_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="event_end_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="event_end" target="event_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="event_location_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="event_location" target="event_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="event_organizer_fk_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="event_organizer_fk" target="event_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_task_rel" value="CONTAINS" style="shape=rhombus;perimeter=rhombusPerimeter;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="380" y="540" width="100" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_task_conn1" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="project_entity" target="project_task_rel" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_task_card1" value="1" style="resizable=0;html=1;whiteSpace=wrap;align=right;verticalAlign=bottom;" parent="project_task_conn1" connectable="0" vertex="1">
+                    <mxGeometry x="1" relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_task_conn2" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="project_task_rel" target="task_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_task_card2" value="N" style="resizable=0;html=1;whiteSpace=wrap;align=left;verticalAlign=bottom;" parent="project_task_conn2" connectable="0" vertex="1">
+                    <mxGeometry x="-1" relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="chat_message_rel" value="CONTAINS" style="shape=rhombus;perimeter=rhombusPerimeter;whiteSpace=wrap;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="700" y="270" width="100" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="chat_message_conn1" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="chat_entity" target="chat_message_rel" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="chat_message_card1" value="1" style="resizable=0;html=1;whiteSpace=wrap;align=right;verticalAlign=bottom;" parent="chat_message_conn1" connectable="0" vertex="1">
+                    <mxGeometry x="1" relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="chat_message_conn2" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="chat_message_rel" target="message_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="chat_message_card2" value="N" style="resizable=0;html=1;whiteSpace=wrap;align=left;verticalAlign=bottom;" parent="chat_message_conn2" connectable="0" vertex="1">
+                    <mxGeometry x="-1" relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="up_user_id" value="user_id" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=4;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="290" y="275" width="50" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="up_project_id" value="project_id" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=4;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="270" y="374" width="60" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="up_role" value="role" style="ellipse;whiteSpace=wrap;html=1;align=center;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="330" width="40" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="up_joined_date" value="joined_date" style="ellipse;whiteSpace=wrap;html=1;align=center;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="190" y="394" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="up_user_id_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="up_user_id" target="user_project_junction" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="up_project_id_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="up_project_id" target="user_project_junction" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="up_role_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="up_role" target="user_project_junction" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="up_joined_date_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="up_joined_date" target="user_project_junction" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_up_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="user_entity" target="user_project_junction" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_up_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="user_project_junction" target="project_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_chat_junction" value="User_Chat" style="whiteSpace=wrap;html=1;align=center;fontStyle=0;fontSize=12;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="150" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc_user_id" value="user_id" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=4;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="440" y="90" width="50" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc_chat_id" value="chat_id" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=4;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="520" y="50" width="50" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc_joined_at" value="joined_at" style="ellipse;whiteSpace=wrap;html=1;align=center;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="590" y="80" width="60" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc_user_id_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="uc_user_id" target="user_chat_junction" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc_chat_id_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="uc_chat_id" target="user_chat_junction" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc_joined_at_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="uc_joined_at" target="user_chat_junction" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_uc_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="user_entity" target="user_chat_junction" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="chat_uc_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="user_chat_junction" target="chat_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_event_junction" value="User_Event" style="whiteSpace=wrap;html=1;align=center;fontStyle=0;fontSize=12;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+                    <mxGeometry x="670" y="425" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="ue_user_id" value="user_id" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=4;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="800" y="490" width="50" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="ue_event_id" value="event_id" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=4;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="740" y="520" width="50" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="ue_status" value="status" style="ellipse;whiteSpace=wrap;html=1;align=center;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="600" y="500" width="40" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="ue_response_date" value="response_date" style="ellipse;whiteSpace=wrap;html=1;align=center;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="650" y="520" width="80" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="ue_user_id_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="ue_user_id" target="user_event_junction" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="ue_event_id_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="ue_event_id" target="user_event_junction" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="ue_status_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="ue_status" target="user_event_junction" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="ue_response_date_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="ue_response_date" target="user_event_junction" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="event_ue_conn" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="user_event_junction" target="event_entity" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_project_junction" value="User_Project" style="whiteSpace=wrap;html=1;align=center;fontStyle=0;fontSize=12;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+                    <mxGeometry x="150" y="295" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_document_junction" value="Project_Document" style="whiteSpace=wrap;html=1;align=center;fontStyle=0;fontSize=12;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+                    <mxGeometry x="140" y="670" width="120" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="pd_project_id" value="project_id" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=4;fontSize=10;" vertex="1" parent="1">
+                    <mxGeometry x="65" y="740" width="60" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="pd_document_id" value="document_id" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=4;fontSize=10;" vertex="1" parent="1">
+                    <mxGeometry x="170" y="790" width="60" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="pd_project_id_conn" value="" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1" source="pd_project_id" target="project_document_junction">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="pd_document_id_conn" value="" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1" source="pd_document_id" target="project_document_junction">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="project_pd_conn" value="" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1" source="project_entity" target="project_document_junction">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="document_pd_conn" value="" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1" source="document_entity" target="project_document_junction">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
