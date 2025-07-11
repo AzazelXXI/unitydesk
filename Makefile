@@ -1,5 +1,5 @@
 
-cdn:
+cdn_server:
 	clear
 	node cdn/cdn_server.js
 server: # run the project locally with uvicorn and reload on changes without ssl
