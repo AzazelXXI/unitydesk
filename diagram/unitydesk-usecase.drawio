@@ -1,10 +1,10 @@
 <mxfile host="65bd71144e">
     <diagram name="UseCase Diagram" id="simple-usecase">
-        <mxGraphModel dx="2467" dy="2757" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="1218" dy="1481" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="2" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="2" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="-460" y="-230" width="1220" height="970" as="geometry"/>
                 </mxCell>
                 <mxCell id="inc_login_messenger" value="«include»" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000FF;fontSize=12;labelBackgroundColor=#FFFFFF;" parent="1" source="uc_messenger" target="uc_login" edge="1">
@@ -130,8 +130,8 @@
                 <mxCell id="edge_member_email" style="endArrow=none;html=1;" parent="1" source="actor_member" target="uc_email" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="3" value="&lt;span style=&quot;font-family: system-ui, Ubuntu, &amp;quot;Droid Sans&amp;quot;, sans-serif; text-align: start;&quot;&gt;digitalization project&lt;/span&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=default;fontSize=18;fontStyle=1" vertex="1" parent="1">
-                    <mxGeometry x="45" y="-220" width="210" height="30" as="geometry"/>
+                <mxCell id="3" value="&lt;span style=&quot;font-family: system-ui, Ubuntu, &amp;quot;Droid Sans&amp;quot;, sans-serif; text-align: start;&quot;&gt;Project Management System&lt;/span&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=default;fontSize=18;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="-10" y="-220" width="265" height="30" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
