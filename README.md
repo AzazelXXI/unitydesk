@@ -1,8 +1,8 @@
-# CSA Hello - Enterprise Information & Collaboration System
+# UnityDesk - Enterprise Collaboration System
 
 ## Overview
 
-CSA Hello is an all-in-one enterprise information and collaboration management system designed to enhance productivity, optimize information flow, and strengthen team cohesion within organizations of any size. The platform provides a comprehensive suite of integrated modules that replace the need for multiple disconnected tools.
+UnityDesk is an all-in-one enterprise information and collaboration management system designed to enhance productivity, optimize information flow, and strengthen team cohesion within organizations of any size. The platform provides a comprehensive suite of integrated modules that replace the need for multiple disconnected tools.
 
 ## Core Modules
 
@@ -19,7 +19,7 @@ CSA Hello is an all-in-one enterprise information and collaboration management s
 
 ## Architecture
 
-CSA Hello is built on a microservices architecture using containerized services managed by Kubernetes. The system is designed for deployment flexibility, supporting both on-premises and cloud environments.
+UnityDesk is built on a microservices architecture using containerized services managed by Kubernetes. The system is designed for deployment flexibility, supporting both on-premises and cloud environments.
 
 ### Key Components
 
@@ -34,17 +34,17 @@ CSA Hello is built on a microservices architecture using containerized services 
 ## Getting Started
 
 ### Prerequisites
-- Docker Desktop with Kubernetes enabled
-- Node.js 18+
-- Python 3.9+
 - Git
+- React
+- Node.js
+- PostgreSQL 
 
 ### Installation
 
 1. Clone the repository:
    ```
-   git clone https://github.com/your-organization/csa-hello.git
-   cd csa-hello
+   git clone https://github.com/AzazelXXI/unitydesk.git
+   cd unitydesk
    ```
 
 2. Set up the development environment:
@@ -61,7 +61,7 @@ CSA Hello is built on a microservices architecture using containerized services 
 
 ## Technology Stack
 
-- **Backend**: Python 3.9+ with FastAPI
+- **Backend**: Node.js, FastAPI, Express.js
 - **Frontend**: React, TypeScript, Zustand/Redux Toolkit
 - **Mobile**: Flutter or React Native
 - **Desktop**: Tauri with React
@@ -85,13 +85,11 @@ This project is currently in the initial development phase. Last updated: April 
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contact
 
-For any inquiries, please reach out to the CSA Hello team at csa.vn.agency@csaapp.com
+For any inquiries, please reach out to my email at [trunghoang1124@gmail.com]
 
